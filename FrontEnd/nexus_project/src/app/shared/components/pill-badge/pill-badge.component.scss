@@ -1,0 +1,118 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: all 0.15s ease-in-out;
+
+  /* Size Modifiers */
+  &--sm {
+    padding: 3px 8px;
+    font-size: 0.725rem;
+
+    .pill-badge__dot {
+      width: 5px;
+      height: 5px;
+    }
+  }
+
+  &--md {
+    padding: 5px 12px;
+    font-size: 0.8125rem;
+
+    .pill-badge__dot {
+      width: 6px;
+      height: 6px;
+    }
+  }
+
+  &__dot {
+    border-radius: 50%;
+    background-color: currentColor;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    display: inline-block;
+  }
+
+  /* Type & Semantic Modifiers (Semáforo de Acuerdos) */
+  &--pendiente {
+    background-color: #F6FCFE;
+    color: #57949D;
+    border-color: #57949D;
+  }
+
+  &--en-proceso {
+    background-color: #FEF8F3;
+    color: #B57136;
+    border-color: #B57136;
+  }
+
+  &--concluido {
+    background-color: #E9FEF1;
+    color: #437E5C;
+    border-color: #437E5C;
+  }
+
+  &--vencido {
+    background-color: #F8F1FF;
+    color: #A14D98;
+    border-color: #A14D98;
+  }
+
+  &--activo {
+    background-color: #E9FEF1;
+    color: #437E5C;
+    border-color: #437E5C;
+  }
+
+  &--inactivo {
+    background-color: #F3F4F6;
+    color: #6B7280;
+    border-color: #D1D5DB;
+  }
+
+  &--info,
+  &--default {
+    background-color: #F0F5FF;
+    color: #3B82F6;
+    border-color: #BFDBFE;
+  }
+
+  &--critico,
+  &--alto {
+    background-color: #FDF2F2;
+    color: #DC2626;
+    border-color: #FCA5A5;
+  }
+
+  &--medio {
+    background-color: #FEF8F3;
+    color: #B57136;
+    border-color: #B57136;
+  }
+
+  &--bajo {
+    background-color: #E9FEF1;
+    color: #437E5C;
+    border-color: #437E5C;
+  }
+
+  &--success {
+    background-color: #E9FEF1;
+    color: #437E5C;
+    border-color: #437E5C;
+  }
+}

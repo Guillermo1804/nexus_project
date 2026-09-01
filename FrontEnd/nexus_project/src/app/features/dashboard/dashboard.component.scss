@@ -1,0 +1,1298 @@
+// Dashboard Styles - N.E.X.U.S. Institutional Design System
+$primary: #6365EF;
+$primary-hover: #4E50DC;
+$emphasis: #2C1867;
+$bg-card: #FFFFFF;
+$bg-app: #F5F7FB;
+$border: #E4E7EC;
+$text-main: #1D2939;
+$text-muted: #667085;
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 0 32px 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// -------------------------------------------------------------
+// Header
+// -------------------------------------------------------------
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  .header-titles {
+    .badge-role {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: $primary;
+      background-color: #EEF4FF;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .page-title {
+      font-size: 1.625rem;
+      font-weight: 800;
+      color: $emphasis;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 0.9375rem;
+      color: $text-muted;
+      margin: 0;
+      max-width: 720px;
+      line-height: 1.45;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .period-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background-color: $bg-app;
+      border: 1px solid $border;
+      font-size: 0.8125rem;
+      color: $text-main;
+
+      .period-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #12B76A;
+      }
+    }
+
+    .btn-export-cohort {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background-color: #FFFFFF;
+      color: $primary;
+      border: 1px solid $border;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #F8F9FC;
+        border-color: $primary;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background-color: $primary;
+      color: #FFFFFF;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background-color: $primary-hover;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// -------------------------------------------------------------
+// Loading & Error States
+// -------------------------------------------------------------
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  color: $text-muted;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #F2F4F7;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background-color: #FEF3F2;
+  border: 1px solid #FECDCA;
+  border-radius: 10px;
+  color: #B42318;
+
+  .error-icon {
+    font-size: 1.5rem;
+  }
+
+  .error-content {
+    flex: 1;
+
+    h4 {
+      margin: 0 0 2px 0;
+      font-size: 0.9375rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  .btn-retry {
+    padding: 6px 14px;
+    background-color: #B42318;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+// -------------------------------------------------------------
+// 1. KPI Summary Cards Grid
+// -------------------------------------------------------------
+.kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+
+  .kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: $bg-card;
+    border: 1px solid $border;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+    }
+
+    &--alert {
+      border-color: #FECDCA;
+      background-color: #FFFBFB;
+    }
+
+    .kpi-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.375rem;
+      flex-shrink: 0;
+
+      &.icon-blue { background-color: #EEF4FF; }
+      &.icon-purple { background-color: #F4F3FF; }
+      &.icon-teal { background-color: #F6FCFE; }
+      &.icon-red { background-color: #FEF3F2; }
+      &.icon-green { background-color: #E9FEF1; }
+      &.icon-indigo { background-color: #F5F3FF; }
+    }
+
+    .kpi-content {
+      flex: 1;
+      min-width: 0;
+
+      .kpi-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: $text-muted;
+        margin-bottom: 4px;
+      }
+
+      .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: $emphasis;
+        line-height: 1.1;
+        margin-bottom: 4px;
+
+        &.text-alert {
+          color: #D92D20;
+        }
+      }
+
+      .kpi-sub {
+        font-size: 0.75rem;
+        color: $text-muted;
+
+        &.text-alert {
+          color: #B42318;
+          font-weight: 500;
+        }
+      }
+
+      .kpi-progress {
+        width: 100%;
+        height: 6px;
+        background-color: #EAECF0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 6px;
+
+        .kpi-progress-bar {
+          height: 100%;
+          background-color: #12B76A;
+          border-radius: 3px;
+
+          &.bar-indigo {
+            background-color: $emphasis;
+          }
+        }
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// 2. Risk Semaphore Section
+// -------------------------------------------------------------
+.risk-section {
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  .section-heading {
+    margin-bottom: 20px;
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: $emphasis;
+      margin: 0 0 4px 0;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: $text-muted;
+      margin: 0;
+    }
+  }
+
+  .semaphore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+
+    .semaphore-card {
+      border-radius: 10px;
+      padding: 20px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      user-select: none;
+
+      &:hover {
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        box-shadow: 0 0 0 3px rgba(99, 101, 239, 0.35);
+      }
+
+      &.card-critica {
+        background-color: #F8F1FF;
+        border-color: #E9D7FE;
+
+        .badge-critica {
+          background-color: #F8F1FF;
+          color: #A14D98;
+          border: 1px solid #A14D98;
+        }
+
+        .semaphore-count {
+          color: #A14D98;
+        }
+
+        &.active {
+          border-color: #A14D98;
+        }
+      }
+
+      &.card-preventiva {
+        background-color: #FEF8F3;
+        border-color: #F9DBAF;
+
+        .badge-preventiva {
+          background-color: #FEF8F3;
+          color: #B57136;
+          border: 1px solid #B57136;
+        }
+
+        .semaphore-count {
+          color: #B57136;
+        }
+
+        &.active {
+          border-color: #B57136;
+        }
+      }
+
+      &.card-al-dia {
+        background-color: #E9FEF1;
+        border-color: #A6F4C5;
+
+        .badge-al-dia {
+          background-color: #E9FEF1;
+          color: #437E5C;
+          border: 1px solid #437E5C;
+        }
+
+        .semaphore-count {
+          color: #437E5C;
+        }
+
+        &.active {
+          border-color: #437E5C;
+        }
+      }
+
+      .semaphore-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+
+        .semaphore-badge {
+          font-size: 0.6875rem;
+          font-weight: 700;
+          letter-spacing: 0.6px;
+          padding: 2px 8px;
+          border-radius: 12px;
+        }
+
+        .semaphore-count {
+          font-size: 1.75rem;
+          font-weight: 800;
+        }
+      }
+
+      .semaphore-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: $text-main;
+        margin: 0 0 6px 0;
+      }
+
+      .semaphore-desc {
+        font-size: 0.8125rem;
+        color: #475467;
+        margin: 0 0 14px 0;
+        line-height: 1.4;
+      }
+
+      .semaphore-footer {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $text-muted;
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// 3. Cohort Distribution Section
+// -------------------------------------------------------------
+.cohort-section {
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  .section-heading {
+    margin-bottom: 18px;
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: $emphasis;
+      margin: 0 0 4px 0;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: $text-muted;
+      margin: 0;
+    }
+  }
+
+  .cohort-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+
+    .cohort-card {
+      border: 1px solid $border;
+      border-radius: 8px;
+      padding: 14px 16px;
+      background-color: $bg-app;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #EEF4FF;
+        border-color: #C7D7FE;
+      }
+
+      &.active {
+        background-color: #EEF4FF;
+        border-color: $primary;
+        box-shadow: 0 0 0 2px rgba(99, 101, 239, 0.2);
+      }
+
+      .cohort-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+
+        .cohort-name {
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: $text-main;
+        }
+
+        .cohort-count {
+          font-size: 0.75rem;
+          color: $text-muted;
+        }
+      }
+
+      .cohort-progress-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .cohort-progress-track {
+          flex: 1;
+          height: 8px;
+          background-color: #EAECF0;
+          border-radius: 4px;
+          overflow: hidden;
+
+          .cohort-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6365EF 0%, #2C1867 100%);
+            border-radius: 4px;
+          }
+        }
+
+        .cohort-pct {
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: $emphasis;
+          min-width: 38px;
+          text-align: right;
+        }
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// 4. Prioritized Students Table
+// -------------------------------------------------------------
+.prioritized-table-section {
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  .table-header-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: $emphasis;
+      margin: 0 0 4px 0;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: $text-muted;
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+
+      .search-box {
+        position: relative;
+        flex: 1;
+        min-width: 240px;
+
+        .search-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: $text-muted;
+        }
+
+        input {
+          width: 100%;
+          padding: 8px 32px 8px 36px;
+          border-radius: 8px;
+          border: 1px solid $border;
+          font-size: 0.875rem;
+          color: $text-main;
+          background-color: #FFFFFF;
+          outline: none;
+          box-sizing: border-box;
+
+          &:focus {
+            border-color: $primary;
+            box-shadow: 0 0 0 3px rgba(99, 101, 239, 0.15);
+          }
+        }
+
+        .btn-clear {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: $text-muted;
+          font-size: 1.125rem;
+          cursor: pointer;
+        }
+      }
+
+      .select-box select {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid $border;
+        background-color: #FFFFFF;
+        font-size: 0.875rem;
+        color: $text-main;
+        outline: none;
+        cursor: pointer;
+
+        &:focus {
+          border-color: $primary;
+        }
+      }
+
+      .risk-pills {
+        display: flex;
+        gap: 6px;
+
+        .risk-chip {
+          padding: 6px 12px;
+          border-radius: 16px;
+          border: 1px solid $border;
+          background-color: $bg-app;
+          color: $text-muted;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background-color: #EAECF0;
+          }
+
+          &.active {
+            background-color: $primary;
+            color: #FFFFFF;
+            border-color: $primary;
+          }
+
+          &.chip-critico.active {
+            background-color: #A14D98;
+            border-color: #A14D98;
+          }
+
+          &.chip-preventivo.active {
+            background-color: #B57136;
+            border-color: #B57136;
+          }
+
+          &.chip-al-dia.active {
+            background-color: #437E5C;
+            border-color: #437E5C;
+          }
+        }
+      }
+
+      .btn-clear-all {
+        padding: 6px 12px;
+        border: none;
+        background: none;
+        color: $primary;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+
+    .nexus-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+
+      thead {
+        background-color: $bg-app;
+        border-top: 1px solid $border;
+        border-bottom: 1px solid $border;
+
+        th {
+          text-align: left;
+          padding: 12px 14px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: $text-muted;
+
+          &.text-right {
+            text-align: right;
+          }
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #F2F4F7;
+          transition: background-color 0.15s ease;
+
+          &:hover {
+            background-color: #F8F9FC;
+          }
+
+          &.table-row-risk-critico {
+            border-left: 3px solid #A14D98;
+          }
+
+          &.table-row-risk-preventivo {
+            border-left: 3px solid #B57136;
+          }
+
+          &.table-row-risk-al_dia {
+            border-left: 3px solid #437E5C;
+          }
+
+          td {
+            padding: 14px;
+            color: $text-main;
+            vertical-align: middle;
+
+            &.text-right {
+              text-align: right;
+            }
+          }
+        }
+      }
+
+      .student-col {
+        .student-info {
+          display: flex;
+          flex-direction: column;
+
+          .student-name {
+            font-size: 0.9375rem;
+            color: $text-main;
+          }
+
+          .student-matricula {
+            font-size: 0.75rem;
+            color: $text-muted;
+          }
+        }
+      }
+
+      .cohort-tag {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background-color: $bg-app;
+        border: 1px solid $border;
+        color: $emphasis;
+      }
+
+      .advisor-name {
+        font-size: 0.8125rem;
+        color: #344054;
+      }
+
+      .days-badge {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #344054;
+
+        &.days-warning {
+          color: #B57136;
+        }
+
+        &.days-danger {
+          color: #A14D98;
+        }
+      }
+
+      .overdue-tag {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #A14D98;
+        background-color: #F8F1FF;
+        padding: 3px 8px;
+        border-radius: 12px;
+      }
+
+      .no-overdue {
+        color: $text-muted;
+      }
+
+      .thesis-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .progress-track-sm {
+          width: 60px;
+          height: 6px;
+          background-color: #EAECF0;
+          border-radius: 3px;
+          overflow: hidden;
+
+          .progress-fill-sm {
+            height: 100%;
+            background-color: $emphasis;
+            border-radius: 3px;
+          }
+        }
+
+        .progress-text-sm {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: $emphasis;
+        }
+      }
+
+      .btn-icon-export {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 8px;
+        border-radius: 6px;
+        border: 1px solid $border;
+        background-color: #FFFFFF;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(:disabled) {
+          background-color: #EEF4FF;
+          border-color: $primary;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      .btn-view-expediente {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid $border;
+        background-color: #FFFFFF;
+        color: $primary;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background-color: $primary;
+          color: #FFFFFF;
+          border-color: $primary;
+        }
+      }
+    }
+
+    .table-footer-info {
+      padding: 12px 14px;
+      font-size: 0.8125rem;
+      color: $text-muted;
+      border-top: 1px solid $border;
+      text-align: right;
+    }
+
+    .empty-table {
+      text-align: center;
+      padding: 48px 16px;
+      color: $text-muted;
+
+      .empty-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+
+      h4 {
+        font-size: 1rem;
+        color: $text-main;
+        margin: 0 0 4px 0;
+      }
+
+      p {
+        margin: 0 0 16px 0;
+        font-size: 0.875rem;
+      }
+
+      .btn-reset-filters {
+        padding: 8px 16px;
+        background-color: $primary;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// Active Supervision Rules Section (HU-26)
+// -------------------------------------------------------------
+.supervision-section {
+  background-color: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  .section-heading-with-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .supervision-pill {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #6365EF;
+      background-color: #EEF4FF;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: $emphasis;
+      margin: 0 0 4px 0;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: $text-muted;
+      margin: 0;
+      max-width: 650px;
+    }
+  }
+
+  .supervision-summary-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background-color: $bg-app;
+      border: 1px solid $border;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: $text-main;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      .chip-icon {
+        font-size: 0.9375rem;
+      }
+
+      .chip-count {
+        background-color: #E0EAFF;
+        color: $primary;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      &:hover {
+        border-color: $primary;
+      }
+
+      &.active {
+        background-color: #EEF4FF;
+        border-color: $primary;
+        color: $primary;
+
+        .chip-count {
+          background-color: $primary;
+          color: #FFFFFF;
+        }
+      }
+    }
+  }
+
+  .supervision-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+    border-top: 1px solid $border;
+
+    .toolbar-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: $text-muted;
+    }
+
+    .sev-pills {
+      display: flex;
+      gap: 6px;
+
+      .sev-chip {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid $border;
+        background-color: #FFFFFF;
+        color: $text-muted;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background-color: $bg-app;
+        }
+
+        &.active {
+          background-color: $emphasis;
+          border-color: $emphasis;
+          color: #FFFFFF;
+        }
+
+        &.chip-alta.active {
+          background-color: #F8F1FF;
+          border-color: #A14D98;
+          color: #A14D98;
+        }
+
+        &.chip-media.active {
+          background-color: #FEF8F3;
+          border-color: #B57136;
+          color: #B57136;
+        }
+
+        &.chip-informativa.active {
+          background-color: #F6FCFE;
+          border-color: #57949D;
+          color: #57949D;
+        }
+      }
+    }
+  }
+
+  .supervision-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    color: $text-muted;
+    font-size: 0.875rem;
+
+    .spinner-sm {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #E0EAFF;
+      border-top-color: $primary;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  }
+
+  .supervision-empty {
+    text-align: center;
+    padding: 32px 16px;
+    background-color: #FBFDFB;
+    border-radius: 8px;
+    border: 1px dashed #D0D5DD;
+
+    .empty-emoji {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    h4 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: $text-main;
+      margin: 0 0 4px 0;
+    }
+
+    p {
+      font-size: 0.8125rem;
+      color: $text-muted;
+      margin: 0;
+    }
+  }
+
+  .supervision-alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+
+    .supervision-card {
+      background-color: #FFFFFF;
+      border-radius: 8px;
+      border: 1px solid $border;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(16, 24, 40, 0.08);
+      }
+
+      &.alert-sev-alta {
+        border-left: 4px solid #A14D98;
+        background-color: #FDFAFF;
+      }
+
+      &.alert-sev-media {
+        border-left: 4px solid #B57136;
+        background-color: #FFFCF9;
+      }
+
+      &.alert-sev-informativa {
+        border-left: 4px solid #57949D;
+        background-color: #FBFEFF;
+      }
+
+      .supervision-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .alert-type-indicator {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .rule-icon {
+            font-size: 1.125rem;
+          }
+
+          .rule-id {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: $text-muted;
+            background-color: $bg-app;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+        }
+      }
+
+      .supervision-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .alert-title {
+          font-size: 0.9375rem;
+          font-weight: 700;
+          color: $text-main;
+          margin: 0;
+        }
+
+        .alert-message {
+          font-size: 0.8125rem;
+          color: $text-muted;
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        .alert-student-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 4px;
+          padding: 4px 8px;
+          background-color: rgba(99, 101, 239, 0.06);
+          border-radius: 6px;
+          font-size: 0.8125rem;
+
+          .student-name-tag {
+            font-weight: 600;
+            color: $emphasis;
+          }
+
+          .student-mat-tag {
+            color: $text-muted;
+          }
+        }
+
+        .alert-meta-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.75rem;
+          padding-top: 4px;
+          border-top: 1px dashed $border;
+
+          .meta-label {
+            color: $text-muted;
+          }
+
+          .meta-val {
+            color: $text-main;
+
+            &.meta-danger {
+              color: #A14D98;
+            }
+          }
+        }
+      }
+
+      .supervision-card-footer {
+        padding-top: 8px;
+        border-top: 1px solid $border;
+        display: flex;
+        justify-content: flex-end;
+
+        .btn-alert-action {
+          background-color: transparent;
+          color: $primary;
+          border: 1px solid rgba(99, 101, 239, 0.25);
+          border-radius: 6px;
+          padding: 5px 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background-color: $primary;
+            color: #FFFFFF;
+          }
+        }
+      }
+    }
+  }
+}

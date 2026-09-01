@@ -1,0 +1,325 @@
+<div class="nexus-layout" [class.nexus-layout--collapsed]="isSidebarCollapsed()" [class.nexus-layout--mobile-open]="isMobileMenuOpen()">
+  
+  <!-- Backdrop for mobile drawer -->
+  @if (isMobileMenuOpen()) {
+    <div class="nexus-layout__backdrop" (click)="toggleMobileMenu()"></div>
+  }
+
+  <!-- ================= SIDEBAR (260px) ================= -->
+  <aside class="nexus-sidebar">
+    <!-- Brand / Header -->
+    <div class="nexus-sidebar__brand">
+      <div class="nexus-logo">
+        <div class="nexus-logo__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#6365EF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="#2C1867" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="#6365EF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        @if (!isSidebarCollapsed()) {
+          <div class="nexus-logo__text">
+            <span class="nexus-logo__title">N.E.X.U.S.</span>
+            <span class="nexus-logo__sub">Posgrado Universitario</span>
+          </div>
+        }
+      </div>
+
+      <button 
+        type="button" 
+        class="nexus-sidebar__collapse-btn" 
+        (click)="toggleSidebar()"
+        [attr.aria-label]="isSidebarCollapsed() ? 'Expandir menú lateral' : 'Colapsar menú lateral'"
+        [title]="isSidebarCollapsed() ? 'Expandir' : 'Colapsar'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          @if (isSidebarCollapsed()) {
+            <polyline points="9 18 15 12 9 6"></polyline>
+          } @else {
+            <polyline points="15 18 9 12 15 6"></polyline>
+          }
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="nexus-sidebar__nav">
+      @if (!isSidebarCollapsed()) {
+        <div class="nexus-sidebar__section-title">MENÚ PRINCIPAL</div>
+      }
+      <ul class="nexus-sidebar__menu">
+        @for (item of filteredNavItems(); track item.label) {
+          <li class="nexus-sidebar__item">
+            <a 
+              [routerLink]="item.route" 
+              routerLinkActive="active" 
+              [routerLinkActiveOptions]="{ exact: item.exact || false }"
+              class="nexus-sidebar__link"
+              [title]="item.label">
+              
+              <!-- SVG Icons according to item.icon -->
+              <span class="nexus-sidebar__icon">
+                @switch (item.icon) {
+                  @case ('dashboard') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="9"></rect>
+                      <rect x="14" y="3" width="7" height="5"></rect>
+                      <rect x="14" y="12" width="7" height="9"></rect>
+                      <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                  }
+                  @case ('users') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  }
+                  @case ('folder') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  }
+                  @case ('book') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                  }
+                  @case ('check-square') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 11 12 14 22 4"></polyline>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                  }
+                  @case ('award') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="8" r="7"></circle>
+                      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                    </svg>
+                  }
+                  @case ('file-text') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                  }
+                  @default {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                  }
+                }
+              </span>
+
+              @if (!isSidebarCollapsed()) {
+                <span class="nexus-sidebar__label">{{ item.label }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <!-- Sidebar Footer / System Badge -->
+    <div class="nexus-sidebar__footer">
+      @if (!isSidebarCollapsed()) {
+        <div class="nexus-version-box">
+          <span class="nexus-version-box__title">N.E.X.U.S. Core</span>
+          <span class="nexus-version-box__version">v1.0</span>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <div class="nexus-main-wrapper">
+    
+    <!-- ================= TOP NAVBAR (64px) ================= -->
+    <header class="nexus-navbar">
+      <div class="nexus-navbar__left">
+        <button 
+          type="button" 
+          class="nexus-navbar__mobile-toggle"
+          (click)="toggleMobileMenu()"
+          aria-label="Abrir navegación móvil">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Dynamic Breadcrumbs -->
+        <nav class="nexus-breadcrumbs" aria-label="Ruta de navegación">
+          <ol class="nexus-breadcrumbs__list">
+            @for (crumb of breadcrumbs(); track (crumb.label + '_' + $index); let last = $last) {
+              <li class="nexus-breadcrumbs__item" [class.nexus-breadcrumbs__item--active]="last">
+                @if (!last) {
+                  <a [routerLink]="crumb.url" class="nexus-breadcrumbs__link">{{ crumb.label }}</a>
+                  <span class="nexus-breadcrumbs__separator">/</span>
+                } @else {
+                  <span class="nexus-breadcrumbs__current" aria-current="page">{{ crumb.label }}</span>
+                }
+              </li>
+            }
+          </ol>
+        </nav>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="nexus-navbar__right">
+        <!-- Period Selector -->
+        <div class="nexus-period-selector">
+          <label for="periodSelect" class="nexus-period-selector__label">Ciclo:</label>
+          <select 
+            id="periodSelect" 
+            class="nexus-period-selector__select"
+            [value]="selectedPeriod()"
+            (change)="onPeriodChange($event)">
+            @for (p of periodService.periods(); track p.id) {
+              <option [value]="p.id">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Internal Notifications Badge (Reactive Alerts HU-25) -->
+        <div class="nexus-notifications-box">
+          <button 
+            type="button" 
+            class="nexus-notifications-btn"
+            title="Alertas y Notificaciones Reactivas"
+            aria-label="Alertas reactivas del sistema"
+            (click)="toggleNotificationsMenu()"
+            [attr.aria-expanded]="isNotificationsMenuOpen()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            @if (monitoringService.totalAlertas() > 0) {
+              <span class="nexus-notifications-badge">{{ monitoringService.totalAlertas() }}</span>
+            }
+          </button>
+
+          <!-- Notifications Dropdown -->
+          @if (isNotificationsMenuOpen()) {
+            <div class="nexus-notifications-dropdown" role="region" aria-label="Panel de alertas reactivas">
+              <div class="dropdown-header">
+                <div class="header-left">
+                  <h4 class="dropdown-title">Alertas del Sistema</h4>
+                  <span class="alerts-count-badge">{{ monitoringService.totalAlertas() }} activas</span>
+                </div>
+                <button type="button" class="refresh-alerts-btn" (click)="monitoringService.refreshAlerts()" title="Actualizar alertas">
+                  🔄
+                </button>
+              </div>
+
+              <div class="dropdown-body">
+                @if (monitoringService.loadingAlerts()) {
+                  <div class="dropdown-loading">
+                    <span>Verificando alertas...</span>
+                  </div>
+                } @else if (monitoringService.alerts().length === 0) {
+                  <div class="dropdown-empty">
+                    <span class="empty-icon">✅</span>
+                    <p>No hay alertas pendientes en este momento.</p>
+                  </div>
+                } @else {
+                  <div class="alerts-list">
+                    @for (alert of monitoringService.alerts(); track alert.id) {
+                      <div class="alert-item severity-{{ alert.severidad.toLowerCase() }} type-{{ alert.tipo.toLowerCase() }}">
+                        <div class="alert-icon-col">
+                          @if (alert.tipo === 'VENCIDO') {
+                            <span class="alert-icon">⚠️</span>
+                          } @else if (alert.tipo === 'POR_VENCER') {
+                            <span class="alert-icon">⏳</span>
+                          } @else {
+                            <span class="alert-icon">📋</span>
+                          }
+                        </div>
+                        <div class="alert-content-col">
+                          <div class="alert-top">
+                            <span class="alert-title">{{ alert.titulo }}</span>
+                            <span class="alert-severity-badge severity-{{ alert.severidad.toLowerCase() }}">{{ alert.severidad }}</span>
+                          </div>
+                          <p class="alert-message">{{ alert.mensaje }}</p>
+                          <div class="alert-bottom">
+                            <span class="alert-date">{{ alert.fecha | date:'dd/MM/yyyy' }}</span>
+                            @if (alert.student_id) {
+                              <a [routerLink]="['/students', alert.student_id]" class="alert-action-link" (click)="closeMenus()">
+                                Ver Expediente &rarr;
+                              </a>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="nexus-navbar__divider"></div>
+
+        <!-- User Profile Menu -->
+        <div class="user-profile-menu">
+          <button 
+            type="button" 
+            class="user-profile-menu__trigger"
+            (click)="toggleProfileMenu()"
+            [attr.aria-expanded]="isProfileMenuOpen()">
+            
+            <div class="user-profile-avatar">
+              {{ authService.userInitials() }}
+            </div>
+
+            <div class="user-profile-info">
+              <span class="user-profile-name">{{ authService.userFullName() }}</span>
+              <app-pill-badge [type]="userRolePillType()" size="sm">
+                {{ authService.currentUser()?.role || 'COORDINADOR' }}
+              </app-pill-badge>
+            </div>
+
+            <svg class="user-profile-arrow" [class.user-profile-arrow--open]="isProfileMenuOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Dropdown -->
+          @if (isProfileMenuOpen()) {
+            <div class="user-profile-dropdown" role="menu">
+              <div class="user-profile-dropdown__header">
+                <span class="user-profile-dropdown__email">{{ authService.currentUser()?.email || 'usuario@posgrado.edu' }}</span>
+                <span class="user-profile-dropdown__dept">{{ authService.currentUser()?.institution || 'Posgrado Universitario' }}</span>
+              </div>
+              <div class="user-profile-dropdown__divider"></div>
+              <button 
+                type="button" 
+                class="user-profile-dropdown__item logout-btn" 
+                (click)="logout()"
+                role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main class="nexus-main-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

@@ -1,0 +1,778 @@
+// ==========================================
+// FULL DOSSIER REPORT COMPONENT STYLES
+// ==========================================
+
+$primary: #6365EF;
+$primary-hover: #4E50DC;
+$primary-light: #EEF0FF;
+$emphasis: #2C1867;
+$bg-app: #F5F7FB;
+$bg-card: #FFFFFF;
+$border-color: #E4E7EC;
+$text-main: #1D2939;
+$text-muted: #667085;
+$danger: #D92D20;
+$success: #039855;
+$warning: #F79009;
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: $bg-app;
+  color: $text-main;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+// ------------------------------------------
+// Action Toolbar (On Screen Only)
+// ------------------------------------------
+.action-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #FFFFFF;
+  border-bottom: 1px solid $border-color;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toolbar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $emphasis;
+  }
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+
+  &--primary, &-primary {
+    background-color: $primary;
+    color: #FFFFFF;
+    border-color: $primary;
+
+    &:hover {
+      background-color: $primary-hover;
+      box-shadow: 0 4px 8px rgba(99, 101, 239, 0.25);
+    }
+  }
+
+  &--outline, &-outline {
+    background-color: #FFFFFF;
+    color: $text-main;
+    border-color: $border-color;
+
+    &:hover {
+      background-color: $bg-app;
+      border-color: #D0D5DD;
+    }
+  }
+
+  &--ghost, &-ghost {
+    background-color: transparent;
+    color: $text-muted;
+
+    &:hover {
+      background-color: $bg-app;
+      color: $text-main;
+    }
+  }
+}
+
+// ------------------------------------------
+// States (Loading / Error)
+// ------------------------------------------
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $border-color;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+
+  .alert-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: $text-main;
+  }
+
+  p {
+    margin: 0 0 16px;
+    color: $text-muted;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ------------------------------------------
+// Document Container (Print & Screen View)
+// ------------------------------------------
+.dossier-document-container {
+  position: relative;
+  max-width: 1000px;
+  margin: 24px auto;
+  padding: 36px 40px;
+  background-color: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+// Watermark
+.dossier-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 72px;
+  font-weight: 900;
+  color: rgba(44, 24, 103, 0.03);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  white-space: nowrap;
+}
+
+// Header
+.dossier-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid $emphasis;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__titles {
+    .dossier-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: $emphasis;
+      margin: 0 0 2px;
+      letter-spacing: 0.5px;
+    }
+    .dossier-subtitle {
+      font-size: 12px;
+      font-weight: 600;
+      color: $primary;
+      margin: 0 0 4px;
+    }
+    .dossier-tagline {
+      font-size: 13px;
+      font-weight: 500;
+      color: $text-muted;
+    }
+  }
+
+  &__meta {
+    text-align: right;
+    font-size: 12px;
+
+    .meta-item {
+      margin-bottom: 4px;
+    }
+    .meta-label {
+      color: $text-muted;
+      margin-right: 6px;
+    }
+    .meta-value {
+      font-weight: 600;
+      color: $text-main;
+
+      &--highlight {
+        color: $emphasis;
+        font-family: monospace;
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+// ------------------------------------------
+// Sections & Cards
+// ------------------------------------------
+.dossier-section {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+
+    &__title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .section-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        background-color: $emphasis;
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 6px;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: $emphasis;
+      }
+    }
+
+    .section-toggle {
+      background: none;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: $text-muted;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $bg-app;
+        color: $text-main;
+      }
+    }
+  }
+
+  .collapsible-content {
+    transition: max-height 0.3s ease;
+
+    &.is-collapsed {
+      display: none;
+    }
+  }
+}
+
+// Info Grid (Student Data)
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  background-color: $bg-app;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid $border-color;
+
+  .info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .info-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: $text-main;
+
+      &--strong {
+        font-weight: 700;
+        font-size: 15px;
+        color: $emphasis;
+      }
+
+      &--code {
+        font-family: monospace;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// ------------------------------------------
+// KPI Grid
+// ------------------------------------------
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+
+  .kpi-card {
+    background-color: $bg-app;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: $text-muted;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: $text-main;
+      line-height: 1.1;
+
+      &--primary {
+        color: $primary;
+      }
+      &--accent {
+        color: $emphasis;
+      }
+      &--danger {
+        color: $danger;
+      }
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: $text-muted;
+      margin-top: 4px;
+    }
+  }
+}
+
+// ------------------------------------------
+// Dossier Table
+// ------------------------------------------
+.dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+  }
+
+  th {
+    background-color: $bg-app;
+    color: $text-muted;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  tbody tr:hover {
+    background-color: #FAFBFD;
+  }
+
+  .empty-cell {
+    color: $text-muted;
+  }
+
+  .doi-text {
+    font-family: monospace;
+    font-size: 11px;
+    color: $primary;
+    word-break: break-all;
+  }
+
+  .evidence-count {
+    font-size: 12px;
+    font-weight: 500;
+    color: $emphasis;
+  }
+}
+
+.empty-text {
+  font-size: 13px;
+  color: $text-muted;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+// ------------------------------------------
+// Tutoring List
+// ------------------------------------------
+.tutoring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .tutoring-item {
+    background-color: $bg-app;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 14px 16px;
+
+    &__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+
+      .tutoring-date {
+        font-weight: 700;
+        color: $emphasis;
+        margin-right: 12px;
+      }
+      .tutoring-sem {
+        background: #E0EAFF;
+        color: #3538CD;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-right: 12px;
+      }
+      .tutoring-mod {
+        color: $text-muted;
+      }
+
+      .next-meeting-badge {
+        font-size: 12px;
+        font-weight: 600;
+        color: $primary;
+        background: $primary-light;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+    }
+
+    .tutoring-summary {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+
+      p {
+        margin: 4px 0 0;
+        color: $text-main;
+      }
+    }
+
+    .sub-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: $text-muted;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .participant-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+
+      .participant-tag {
+        font-size: 11px;
+        padding: 3px 8px;
+        background: #FFFFFF;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        color: $text-main;
+
+        &--absent {
+          color: $danger;
+          border-color: #FDA29B;
+          background: #FEF3F2;
+        }
+      }
+    }
+
+    .tutoring-observations {
+      font-size: 12px;
+      margin-top: 8px;
+
+      ul {
+        margin: 4px 0 0 16px;
+        padding: 0;
+        color: $text-main;
+      }
+      li {
+        margin-bottom: 3px;
+      }
+    }
+  }
+}
+
+// ------------------------------------------
+// Thesis Progress Cell & Components Breakdown
+// ------------------------------------------
+.progress-bar-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+
+  .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background-color: #EAECF0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background-color: $primary;
+    border-radius: 4px;
+  }
+}
+
+.components-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .component-item {
+    font-size: 11px;
+    background: $bg-app;
+    border: 1px solid $border-color;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: $text-main;
+  }
+}
+
+// ------------------------------------------
+// Sub-blocks in Academic Output
+// ------------------------------------------
+.sub-block {
+  margin-bottom: 18px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: $emphasis;
+    margin: 0 0 8px;
+  }
+
+  .empty-subtext {
+    font-size: 12px;
+    color: $text-muted;
+    font-style: italic;
+    margin: 4px 0 12px;
+  }
+}
+
+// ------------------------------------------
+// Signatures Section
+// ------------------------------------------
+.signatures-section {
+  margin-top: 32px;
+  padding-top: 16px;
+
+  .signatures-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 48px;
+    margin-bottom: 24px;
+  }
+
+  .signature-box {
+    text-align: center;
+
+    .signature-line {
+      width: 100%;
+      height: 1px;
+      background-color: #1D2939;
+      margin-bottom: 8px;
+    }
+
+    .signature-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: $text-main;
+    }
+
+    .signature-role {
+      font-size: 11px;
+      font-weight: 600;
+      color: $text-muted;
+    }
+
+    .signature-sub {
+      font-size: 10px;
+      color: #98A2B3;
+      margin-top: 2px;
+    }
+  }
+
+  .dossier-footer-note {
+    font-size: 10px;
+    color: $text-muted;
+    text-align: justify;
+    line-height: 1.4;
+    border-top: 1px solid $border-color;
+    padding-top: 12px;
+    margin-top: 20px;
+  }
+}
+
+// ==========================================
+// STRICT CSS @media print DIRECTIVES
+// ==========================================
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  // 1. Hide interactive elements and shell
+  .no-print,
+  .action-toolbar,
+  app-shell header,
+  app-shell aside,
+  app-shell .sidebar,
+  app-shell .app-header,
+  .btn,
+  .section-toggle {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  // 2. Force clean white background and full page display
+  html, body, :host, .dossier-document-container {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  // 3. Force all collapsed sections open in print
+  .collapsible-content {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  // 4. Page break controls
+  .dossier-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+
+  .dossier-table,
+  .tutoring-item,
+  .info-grid,
+  .kpi-grid,
+  .sub-block,
+  .signatures-container {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .dossier-header {
+    border-bottom: 2px solid #000000 !important;
+  }
+
+  .dossier-title {
+    color: #000000 !important;
+  }
+
+  .dossier-watermark {
+    opacity: 0.05 !important;
+  }
+
+  .dossier-table th {
+    background-color: #F2F4F7 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .info-grid,
+  .kpi-card,
+  .tutoring-item {
+    background-color: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .progress-bar-fill {
+    background-color: #2C1867 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
