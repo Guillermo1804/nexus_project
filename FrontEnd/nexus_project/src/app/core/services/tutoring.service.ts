@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import {
   TutoringSession,
   TutoringSessionCreateRequest,
@@ -57,7 +57,7 @@ export class TutoringService {
       }),
       catchError(err => {
         this.loading.set(false);
-        throw err;
+        return throwError(() => err);
       })
     );
   }
@@ -73,7 +73,7 @@ export class TutoringService {
       }),
       catchError(err => {
         this.loading.set(false);
-        throw err;
+        return throwError(() => err);
       })
     );
   }
@@ -87,7 +87,7 @@ export class TutoringService {
       }),
       catchError(err => {
         this.loading.set(false);
-        throw err;
+        return throwError(() => err);
       })
     );
   }

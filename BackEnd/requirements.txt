@@ -1,5 +1,5 @@
 # Core Django & API REST
-Django>=5.0,<6.0
+Django>=5.0,<6.2
 djangorestframework>=3.14.0
 
 # Autenticación y Seguridad (JWT / CORS)

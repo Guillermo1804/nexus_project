@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { FullDossier } from '../models/dossier.model';
 
 @Injectable({
@@ -27,7 +27,7 @@ export class ReportingService {
       catchError(err => {
         this.loading.set(false);
         this.error.set(err.message || 'Error al obtener la cédula del expediente.');
-        throw err;
+        return throwError(() => err);
       })
     );
   }

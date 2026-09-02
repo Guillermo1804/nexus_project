@@ -105,9 +105,10 @@ class ThesisProgressViewSet(viewsets.ModelViewSet):
             try:
                 student = Student.objects.get(pk=student_id)
             except (Student.DoesNotExist, ValueError):
-                student = Student.objects.first()
-                if not student:
-                    return Response({'detail': 'Estudiante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {'detail': 'Estudiante no encontrado'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             if getattr(user, 'role', None) == 'ASESOR' and not user.is_superuser:
                 is_assigned = student.committee_members.filter(user=user, is_active=True).exists()
