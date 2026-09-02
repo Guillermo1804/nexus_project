@@ -1,0 +1,286 @@
+<!-- Drawer Backdrop -->
+@if (isOpen()) {
+  <div class="drawer-backdrop" (click)="onClose()" aria-hidden="true"></div>
+}
+
+<!-- Lateral Drawer 400px -->
+<aside 
+  class="nexus-drawer" 
+  [class.nexus-drawer--open]="isOpen()" 
+  role="dialog" 
+  aria-modal="true"
+  [attr.aria-label]="mode() === 'CREATE' ? 'Crear Nuevo Acuerdo' : 'Actualizar Estado del Acuerdo'">
+  
+  <!-- Header -->
+  <header class="drawer-header">
+    <div class="drawer-header__title-box">
+      <span class="drawer-header__tag">
+        {{ mode() === 'CREATE' ? 'Formalización de Compromiso' : 'Gestión de Ciclo de Vida' }}
+      </span>
+      <h2 class="drawer-header__title">
+        {{ mode() === 'CREATE' ? 'Nuevo Acuerdo' : 'Actualizar Estado' }}
+      </h2>
+    </div>
+    <button 
+      type="button" 
+      class="drawer-header__close-btn" 
+      (click)="onClose()" 
+      aria-label="Cerrar panel lateral"
+      title="Cerrar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Body -->
+  <div class="drawer-body">
+
+    <!-- ================= MODE: CREATE ================= -->
+    @if (mode() === 'CREATE') {
+      <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="drawer-form">
+        
+        <div class="form-group">
+          <label for="agrTitle" class="form-label">Título del Acuerdo <span class="required">*</span></label>
+          <input 
+            id="agrTitle"
+            type="text" 
+            class="form-control" 
+            placeholder="Ej. Finalizar benchmark de modelos BERT" 
+            formControlName="title"
+            [class.is-invalid]="createForm.get('title')?.touched && createForm.get('title')?.invalid">
+          @if (createForm.get('title')?.touched && createForm.get('title')?.invalid) {
+            <span class="field-error">El título es requerido (mínimo 5 caracteres).</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="agrDescription" class="form-label">Descripción Detallada <span class="required">*</span></label>
+          <textarea 
+            id="agrDescription"
+            rows="4" 
+            class="form-control" 
+            placeholder="Describa los entregables específicos y criterios de cumplimiento..."
+            formControlName="description"
+            [class.is-invalid]="createForm.get('description')?.touched && createForm.get('description')?.invalid">
+          </textarea>
+          @if (createForm.get('description')?.touched && createForm.get('description')?.invalid) {
+            <span class="field-error">La descripción es requerida (mínimo 10 caracteres).</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="agrResponsible" class="form-label">Responsable del Compromiso <span class="required">*</span></label>
+          <select 
+            id="agrResponsible"
+            class="form-control"
+            formControlName="responsibleName">
+            <option value="María González López">María González López (Doctorando)</option>
+            <option value="Dr. Roberto Mendoza">Dr. Roberto Mendoza (Asesor Principal)</option>
+            <option value="Dra. Carmen Silva">Dra. Carmen Silva (Coasesor)</option>
+            <option value="Dr. Juan Morales">Dr. Juan Morales (Comité Tutorial)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="agrDueDate" class="form-label">Fecha Límite <span class="required">*</span></label>
+            <input 
+              id="agrDueDate"
+              type="date" 
+              class="form-control" 
+              formControlName="dueDate"
+              [class.is-invalid]="createForm.get('dueDate')?.touched && createForm.get('dueDate')?.invalid">
+            @if (createForm.get('dueDate')?.touched && createForm.get('dueDate')?.invalid) {
+              <span class="field-error">Fecha requerida.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="agrSemester" class="form-label">Semestre</label>
+            <select id="agrSemester" class="form-control" formControlName="semesterNumber">
+              <option [value]="1">Semestre 1</option>
+              <option [value]="2">Semestre 2</option>
+              <option [value]="3">Semestre 3</option>
+              <option [value]="4">Semestre 4</option>
+              <option [value]="5">Semestre 5</option>
+              <option [value]="6">Semestre 6</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-info-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6365EF" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <p>El acuerdo iniciará con estado <strong>PENDIENTE</strong> para su seguimiento en el sistema.</p>
+        </div>
+
+      </form>
+    }
+
+    <!-- ================= MODE: STATUS_UPDATE ================= -->
+    @if (mode() === 'STATUS_UPDATE' && agreement()) {
+      <div class="drawer-update-flow">
+        
+        <!-- Summary of Selected Agreement -->
+        <div class="agreement-preview-card">
+          <div class="agreement-preview-card__badge-row">
+            <span class="agreement-id">ACU-#{{ agreement()?.id }}</span>
+            <app-pill-badge [type]="agreement()?.estado || agreement()?.status || 'PENDIENTE'" size="sm">
+              {{ agreement()?.estado_display || agreement()?.estado || agreement()?.status }}
+            </app-pill-badge>
+          </div>
+          <h3 class="agreement-preview-card__title">{{ agreement()?.descripcion || agreement()?.title }}</h3>
+          <p class="agreement-preview-card__desc">{{ agreement()?.descripcion || agreement()?.description }}</p>
+          
+          <div class="agreement-preview-card__meta-grid">
+            <div>
+              <span class="meta-label">Responsable:</span>
+              <span class="meta-value">{{ agreement()?.responsable_nombre || agreement()?.responsibleName }}</span>
+            </div>
+            <div>
+              <span class="meta-label">Fecha Límite:</span>
+              <span class="meta-value" [class.text-danger]="agreement()?.is_vencido || agreement()?.estado === 'VENCIDO' || agreement()?.status === 'VENCIDO'">
+                {{ (agreement()?.fecha_limite || agreement()?.dueDate) | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-selection-section">
+          <label class="form-label">Seleccionar Nuevo Estado <span class="required">*</span></label>
+          <div class="status-options-grid">
+            
+            <button 
+              type="button" 
+              class="status-btn status-btn--pendiente"
+              [class.status-btn--active]="selectedNewStatus() === 'PENDIENTE'"
+              (click)="onSelectStatus('PENDIENTE')">
+              <span class="status-btn__dot"></span>
+              <div class="status-btn__info">
+                <span class="status-btn__name">PENDIENTE</span>
+                <span class="status-btn__hint">Compromiso por iniciar</span>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              class="status-btn status-btn--en-proceso"
+              [class.status-btn--active]="selectedNewStatus() === 'EN_PROCESO'"
+              (click)="onSelectStatus('EN_PROCESO')">
+              <span class="status-btn__dot"></span>
+              <div class="status-btn__info">
+                <span class="status-btn__name">EN PROCESO</span>
+                <span class="status-btn__hint">Actividad en desarrollo</span>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              class="status-btn status-btn--concluido"
+              [class.status-btn--active]="selectedNewStatus() === 'CONCLUIDO'"
+              (click)="onSelectStatus('CONCLUIDO')">
+              <span class="status-btn__dot"></span>
+              <div class="status-btn__info">
+                <span class="status-btn__name">CONCLUIDO</span>
+                <span class="status-btn__hint">Entregable validado</span>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              class="status-btn status-btn--vencido"
+              [class.status-btn--active]="selectedNewStatus() === 'VENCIDO'"
+              (click)="onSelectStatus('VENCIDO')">
+              <span class="status-btn__dot"></span>
+              <div class="status-btn__info">
+                <span class="status-btn__name">VENCIDO</span>
+                <span class="status-btn__hint">Fecha límite rebasada</span>
+              </div>
+            </button>
+
+          </div>
+        </div>
+
+        <form [formGroup]="updateForm" class="drawer-form">
+          <div class="form-group">
+            <label for="resNotes" class="form-label">Notas de Resolución / Justificación de Cambio</label>
+            <textarea 
+              id="resNotes"
+              rows="3" 
+              class="form-control" 
+              placeholder="Describa los motivos del cambio de estado o evidencias de cumplimiento..."
+              formControlName="resolutionNotes">
+            </textarea>
+          </div>
+        </form>
+
+        <!-- Audit Log Timeline -->
+        <div class="audit-history-box">
+          <h4 class="audit-history-title">📜 Historial de Auditoría y Transiciones</h4>
+          
+          @if (auditLogs().length === 0) {
+            <p class="audit-empty">Sin modificaciones previas registradas.</p>
+          } @else {
+            <div class="audit-timeline">
+              @for (log of auditLogs(); track log.id) {
+                <div class="audit-item">
+                  <div class="audit-item__header">
+                    <span class="audit-item__trans">
+                      {{ log.estado_anterior || log.previousStatus }} ➔ <strong>{{ log.estado_nuevo || log.newStatus }}</strong>
+                    </span>
+                    <span class="audit-item__date">{{ (log.fecha_cambio || log.timestamp) | date:'short' }}</span>
+                  </div>
+                  @if (log.comentario || log.notes) {
+                    <p class="audit-item__notes">"{{ log.comentario || log.notes }}"</p>
+                  }
+                  <span class="audit-item__by">Por: {{ log.user_nombre || log.changedByName || 'Usuario' }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+    }
+
+  </div>
+
+  <!-- Footer Actions -->
+  <footer class="drawer-footer">
+    <button type="button" class="btn-cancel" (click)="onClose()">
+      Cancelar
+    </button>
+    
+    @if (mode() === 'CREATE') {
+      <button 
+        type="button" 
+        class="btn-primary" 
+        [disabled]="isSubmitting() || createForm.invalid"
+        (click)="submitCreate()">
+        @if (isSubmitting()) {
+          <span class="spinner-small"></span> Guardando...
+        } @else {
+          + Formalizar Acuerdo
+        }
+      </button>
+    } @else {
+      <button 
+        type="button" 
+        class="btn-primary" 
+        [disabled]="isSubmitting()"
+        (click)="submitUpdate()">
+        @if (isSubmitting()) {
+          <span class="spinner-small"></span> Actualizando...
+        } @else {
+          Guardar Cambios
+        }
+      </button>
+    }
+  </footer>
+
+</aside>

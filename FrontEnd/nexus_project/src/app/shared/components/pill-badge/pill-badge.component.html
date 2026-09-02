@@ -1,0 +1,8 @@
+<span [class]="badgeClasses()">
+  @if (showDot()) {
+    <span class="pill-badge__dot" aria-hidden="true"></span>
+  }
+  <span class="pill-badge__text">
+    <ng-content>{{ displayLabel() }}</ng-content>
+  </span>
+</span>

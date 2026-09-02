@@ -1,0 +1,236 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="nexus-modal">
+    <header class="modal-header">
+      <div class="modal-header__info">
+        <span class="modal-header__tag">Doctorado en Ciencias</span>
+        <h2 class="modal-header__title">Registro de Avance de Tesis</h2>
+      </div>
+      <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      @if (errorMessage()) {
+        <div class="alert alert--danger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="alert alert--success">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>{{ successMessage() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-grid">
+        <!-- Global Progress Slider Card -->
+        <section class="card-progress">
+          <div class="card-progress__header">
+            <div class="card-progress__label">Porcentaje Global de Avance</div>
+            <div class="card-progress__value">{{ form.get('porcentaje_avance')?.value || 0 }}%</div>
+          </div>
+
+          <div class="slider-container">
+            <input 
+              type="range" 
+              class="nexus-slider"
+              min="0" 
+              max="100" 
+              step="1"
+              formControlName="porcentaje_avance"
+              (input)="onGlobalSliderChange($event)"
+            />
+            <div class="slider-track-fill" [style.width.%]="form.get('porcentaje_avance')?.value || 0"></div>
+          </div>
+
+          <div class="slider-footer">
+            <span class="text-muted">0% (Inicio)</span>
+            <button type="button" class="btn-link" (click)="applyCalculatedAverage()">
+              Calcular desde componentes ({{ calculatedAverage() }}%)
+            </button>
+            <span class="text-muted">100% (Conclusión)</span>
+          </div>
+        </section>
+
+        <!-- Components Breakdown Accordion -->
+        <section class="card-components">
+          <h3 class="section-title">Desglose por Componentes de Investigación</h3>
+          <p class="section-subtitle">Ajuste el porcentaje correspondiente a cada etapa de la investigación doctoral.</p>
+
+          <div class="accordion-list">
+            <!-- 1. Protocolo -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'protocolo'">
+              <div class="accordion-item__header" (click)="toggleAccordion('protocolo')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">1</span>
+                  <span class="component-name">Protocolo de Investigación</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('protocolo')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'protocolo') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="protocolo" (input)="onComponentSliderChange('protocolo', $event)" />
+                  <div class="component-tips">Definición de hipótesis, objetivos, justificación y alcance.</div>
+                </div>
+              }
+            </div>
+
+            <!-- 2. Estado del Arte -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'estadoArte'">
+              <div class="accordion-item__header" (click)="toggleAccordion('estadoArte')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">2</span>
+                  <span class="component-name">Estado del Arte y Antecedentes</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('estadoArte')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'estadoArte') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="estadoArte" (input)="onComponentSliderChange('estadoArte', $event)" />
+                  <div class="component-tips">Revisión sistemática de literatura y benchmarking de trabajos previos.</div>
+                </div>
+              }
+            </div>
+
+            <!-- 3. Marco Teórico -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'marcoTeorico'">
+              <div class="accordion-item__header" (click)="toggleAccordion('marcoTeorico')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">3</span>
+                  <span class="component-name">Marco Teórico y Conceptual</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('marcoTeorico')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'marcoTeorico') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="marcoTeorico" (input)="onComponentSliderChange('marcoTeorico', $event)" />
+                  <div class="component-tips">Fundamentación matemática, computacional o conceptual del modelo.</div>
+                </div>
+              }
+            </div>
+
+            <!-- 4. Metodología -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'metodologia'">
+              <div class="accordion-item__header" (click)="toggleAccordion('metodologia')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">4</span>
+                  <span class="component-name">Metodología y Diseño Experimental</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('metodologia')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'metodologia') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="metodologia" (input)="onComponentSliderChange('metodologia', $event)" />
+                  <div class="component-tips">Desarrollo de algoritmos, pruebas empíricas y recolección de datos.</div>
+                </div>
+              }
+            </div>
+
+            <!-- 5. Análisis -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'analisis'">
+              <div class="accordion-item__header" (click)="toggleAccordion('analisis')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">5</span>
+                  <span class="component-name">Análisis e Interpretación de Resultados</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('analisis')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'analisis') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="analisis" (input)="onComponentSliderChange('analisis', $event)" />
+                  <div class="component-tips">Discusión de resultados, validación cruzada y comparación cuantitativa.</div>
+                </div>
+              }
+            </div>
+
+            <!-- 6. Redacción -->
+            <div class="accordion-item" [class.accordion-item--active]="activeAccordion() === 'redaccion'">
+              <div class="accordion-item__header" (click)="toggleAccordion('redaccion')">
+                <div class="accordion-item__title-group">
+                  <span class="component-badge">6</span>
+                  <span class="component-name">Redacción del Documento de Tesis</span>
+                </div>
+                <div class="accordion-item__meta">
+                  <span class="component-val">{{ form.get('redaccion')?.value || 0 }}%</span>
+                  <span class="chevron">▼</span>
+                </div>
+              </div>
+              @if (activeAccordion() === 'redaccion') {
+                <div class="accordion-item__content">
+                  <input type="range" class="nexus-slider" min="0" max="100" formControlName="redaccion" (input)="onComponentSliderChange('redaccion', $event)" />
+                  <div class="component-tips">Estructuración de capítulos, correcciones de estilo y formato final.</div>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <!-- Observaciones y Fecha -->
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="observaciones" class="form-label">Observaciones y Acuerdos de Avance</label>
+            <textarea
+              id="observaciones"
+              class="form-control form-textarea"
+              rows="3"
+              formControlName="observaciones"
+              placeholder="Describa los logros alcanzados, compromisos acordados o justificación del porcentaje asignado..."
+            ></textarea>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="fecha_registro" class="form-label">Fecha de Registro *</label>
+            <input 
+              type="date" 
+              id="fecha_registro" 
+              class="form-control" 
+              formControlName="fecha_registro"
+            />
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn--secondary" (click)="closeModal()" [disabled]="isSubmitting()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn--primary" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner"></span> Guardando...
+            } @else {
+              Registrar Avance
+            }
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}

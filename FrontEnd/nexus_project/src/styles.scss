@@ -1,1 +1,204 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   N.E.X.U.S. Institutional Design System Global Styles
+   v1.0
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Institutional Palette */
+  --nexus-primary: #6365EF;
+  --nexus-primary-hover: #4E50DC;
+  --nexus-primary-light: #EEEEFF;
+  --nexus-primary-subtle: #F5F6FF;
+  --nexus-emphasis: #2C1867;
+  --nexus-emphasis-dark: #1F1048;
+  
+  /* Neutral / Backgrounds / Borders */
+  --nexus-bg-app: #F5F7FB;
+  --nexus-bg-card: #FFFFFF;
+  --nexus-bg-sidebar: #FFFFFF;
+  --nexus-bg-navbar: #FFFFFF;
+  --nexus-border: #E4E7EC;
+  --nexus-border-light: #F2F4F7;
+  
+  /* Text Colors */
+  --nexus-text-primary: #101828;
+  --nexus-text-secondary: #475467;
+  --nexus-text-muted: #667085;
+  --nexus-text-subtle: #98A2B3;
+  --nexus-text-inverse: #FFFFFF;
+
+  /* Semáforo de Acuerdos */
+  --badge-pending-bg: #F6FCFE;
+  --badge-pending-text: #57949D;
+  --badge-pending-border: #57949D;
+
+  --badge-in-progress-bg: #FEF8F3;
+  --badge-in-progress-text: #B57136;
+  --badge-in-progress-border: #B57136;
+
+  --badge-concluded-bg: #E9FEF1;
+  --badge-concluded-text: #437E5C;
+  --badge-concluded-border: #437E5C;
+
+  --badge-overdue-bg: #F8F1FF;
+  --badge-overdue-text: #A14D98;
+  --badge-overdue-border: #A14D98;
+
+  /* State badges */
+  --badge-active-bg: #E9FEF1;
+  --badge-active-text: #437E5C;
+  --badge-inactive-bg: #F3F4F6;
+  --badge-inactive-text: #6B7280;
+  --badge-info-bg: #F0F5FF;
+  --badge-info-text: #3B82F6;
+
+  /* Shadows */
+  --nexus-shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --nexus-shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --nexus-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --nexus-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+
+  /* Radius */
+  --nexus-radius-sm: 6px;
+  --nexus-radius-md: 8px;
+  --nexus-radius-lg: 12px;
+  --nexus-radius-xl: 16px;
+  --nexus-radius-pill: 9999px;
+  
+  /* Layout Constants */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 76px;
+  --navbar-height: 64px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--nexus-bg-app);
+  color: var(--nexus-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a {
+  color: var(--nexus-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+  
+  &:hover {
+    color: var(--nexus-primary-hover);
+  }
+}
+
+/* Base Card Style */
+.nexus-card {
+  background: var(--nexus-bg-card);
+  border: 1px solid var(--nexus-border);
+  border-radius: var(--nexus-radius-lg);
+  box-shadow: var(--nexus-shadow-sm);
+  padding: 20px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--nexus-shadow-md);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--nexus-border-light);
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--nexus-emphasis);
+    }
+  }
+}
+
+/* Button Utilities */
+.btn-nexus-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--nexus-primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+  padding: 9px 18px;
+  border-radius: var(--nexus-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+
+  &:hover {
+    background-color: var(--nexus-primary-hover);
+    color: #ffffff;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-nexus-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--nexus-text-secondary);
+  border: 1px solid var(--nexus-border);
+  padding: 8px 16px;
+  border-radius: var(--nexus-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: var(--nexus-primary-subtle);
+    border-color: var(--nexus-primary);
+    color: var(--nexus-primary);
+  }
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

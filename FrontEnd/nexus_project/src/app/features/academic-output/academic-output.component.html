@@ -1,0 +1,536 @@
+<div class="academic-output-page">
+  <!-- Header with Student Selector & Actions -->
+  <header class="academic-header">
+    <div class="academic-header__info">
+      <div class="academic-header__title-row">
+        <h1 class="academic-title">Producción Científica y Trayectoria Académica</h1>
+        <app-pill-badge type="INFO" size="md">Ciclo {{ periodService.activePeriod() }}</app-pill-badge>
+      </div>
+      <p class="academic-subtitle">
+        Registro centralizado de publicaciones, congresos, estancias doctorales y desarrollo tecnológico.
+      </p>
+
+      <!-- Student Selector Dropdown -->
+      <div class="student-select-bar">
+        <label for="studentSelect" class="student-select-label">Doctorando Seleccionado:</label>
+        <select 
+          id="studentSelect" 
+          class="form-select nexus-select" 
+          [value]="selectedStudentId()" 
+          (change)="onStudentChange($event)">
+          @for (s of studentsList(); track s.id) {
+            <option [value]="s.id">
+              {{ s.matricula }} — {{ s.nombre_completo || (s.user?.firstName + ' ' + s.user?.lastName) }} ({{ s.cohorte || s.cohort }})
+            </option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="academic-header__actions">
+      <button type="button" class="btn-nexus-primary" (click)="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>
+          @if (activeTab() === 'PUBLICACIONES') { + Nueva Publicación }
+          @else if (activeTab() === 'CONGRESOS') { + Nuevo Congreso }
+          @else if (activeTab() === 'ESTANCIAS') { + Nueva Estancia }
+          @else { + Nuevo Producto }
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Summary KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card" [class.kpi-card--active]="activeTab() === 'PUBLICACIONES'" (click)="selectTab('PUBLICACIONES')">
+      <div class="kpi-card__icon kpi-card__icon--pub">📚</div>
+      <div class="kpi-card__content">
+        <span class="kpi-card__count">{{ publications().length }}</span>
+        <span class="kpi-card__label">Publicaciones</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" [class.kpi-card--active]="activeTab() === 'CONGRESOS'" (click)="selectTab('CONGRESOS')">
+      <div class="kpi-card__icon kpi-card__icon--event">🏛️</div>
+      <div class="kpi-card__content">
+        <span class="kpi-card__count">{{ academicEvents().length }}</span>
+        <span class="kpi-card__label">Congresos & Coloquios</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" [class.kpi-card--active]="activeTab() === 'ESTANCIAS'" (click)="selectTab('ESTANCIAS')">
+      <div class="kpi-card__icon kpi-card__icon--stay">🌍</div>
+      <div class="kpi-card__content">
+        <span class="kpi-card__count">{{ researchStays().length }}</span>
+        <span class="kpi-card__label">Estancias Doctorales</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" [class.kpi-card--active]="activeTab() === 'PRODUCTOS'" (click)="selectTab('PRODUCTOS')">
+      <div class="kpi-card__icon kpi-card__icon--prod">💡</div>
+      <div class="kpi-card__content">
+        <span class="kpi-card__count">{{ otherProducts().length }}</span>
+        <span class="kpi-card__label">Otros Productos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation Tabs & Search Toolbar -->
+  <div class="tab-toolbar">
+    <nav class="sub-tabs-nav" aria-label="Pestañas de producción académica">
+      <button 
+        type="button" 
+        class="sub-tab-btn" 
+        [class.sub-tab-btn--active]="activeTab() === 'PUBLICACIONES'"
+        (click)="selectTab('PUBLICACIONES')">
+        <span>📄 Publicaciones Científicas</span>
+        <span class="sub-tab-badge">{{ publications().length }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="sub-tab-btn" 
+        [class.sub-tab-btn--active]="activeTab() === 'CONGRESOS'"
+        (click)="selectTab('CONGRESOS')">
+        <span>🎤 Congresos y Ponencias</span>
+        <span class="sub-tab-badge">{{ academicEvents().length }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="sub-tab-btn" 
+        [class.sub-tab-btn--active]="activeTab() === 'ESTANCIAS'"
+        (click)="selectTab('ESTANCIAS')">
+        <span>✈️ Estancias Doctorales</span>
+        <span class="sub-tab-badge">{{ researchStays().length }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="sub-tab-btn" 
+        [class.sub-tab-btn--active]="activeTab() === 'PRODUCTOS'"
+        (click)="selectTab('PRODUCTOS')">
+        <span>💻 Software y Patentes</span>
+        <span class="sub-tab-badge">{{ otherProducts().length }}</span>
+      </button>
+    </nav>
+
+    <div class="search-box">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Buscar por título, autor o sede..." 
+        [value]="searchTerm()" 
+        (input)="searchTerm.set($any($event.target).value)" />
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando producción académica...</p>
+    </div>
+  } @else {
+
+    <!-- ================= SUB-TAB 1: PUBLICACIONES ================= -->
+    @if (activeTab() === 'PUBLICACIONES') {
+      <section class="tab-content-pane">
+        @if (filteredPublications().length === 0) {
+          <div class="empty-state">
+            <div class="empty-state__icon">📄</div>
+            <h3>No se encontraron publicaciones</h3>
+            <p>Aún no se registran artículos o capítulos para este estudiante.</p>
+            <button type="button" class="btn-nexus-primary" (click)="openCreateModal('PUBLICACIONES')">
+              + Registrar Primera Publicación
+            </button>
+          </div>
+        } @else {
+          <div class="cards-grid">
+            @for (pub of filteredPublications(); track pub.id) {
+              <article class="academic-card">
+                <div class="academic-card__header">
+                  <div class="type-tag type-tag--pub">{{ pub.tipo_display || pub.tipo }}</div>
+                  <app-pill-badge 
+                    [type]="pub.estado === 'PUBLICADO' ? 'CONCLUIDO' : pub.estado === 'ACEPTADO' ? 'EN_PROCESO' : 'PENDIENTE'" 
+                    size="sm">
+                    {{ pub.estado_display || pub.estado }}
+                  </app-pill-badge>
+                </div>
+
+                <h3 class="academic-card__title">{{ pub.titulo }}</h3>
+                <p class="academic-card__authors"><strong>Autores:</strong> {{ pub.autores_texto }}</p>
+                <p class="academic-card__journal"><strong>Revista / Editorial:</strong> {{ pub.revista_editorial }}</p>
+
+                <div class="academic-card__footer">
+                  <div class="meta-links">
+                    @if (pub.doi_url) {
+                      <a [href]="pub.doi_url" target="_blank" rel="noopener" class="doi-link">
+                        🔗 DOI / Enlace
+                      </a>
+                    }
+                    @if (pub.fecha_publicacion) {
+                      <span class="pub-date">📅 {{ pub.fecha_publicacion | date:'mediumDate' }}</span>
+                    }
+                  </div>
+                  <button type="button" class="btn-icon-delete" (click)="deleteItem('PUBLICACIONES', pub.id)" title="Eliminar registro">
+                    🗑️
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ================= SUB-TAB 2: CONGRESOS ================= -->
+    @if (activeTab() === 'CONGRESOS') {
+      <section class="tab-content-pane">
+        @if (filteredEvents().length === 0) {
+          <div class="empty-state">
+            <div class="empty-state__icon">🎤</div>
+            <h3>No se encontraron congresos ni ponencias</h3>
+            <p>Registra participaciones en congresos nacionales e internacionales.</p>
+            <button type="button" class="btn-nexus-primary" (click)="openCreateModal('CONGRESOS')">
+              + Registrar Congreso
+            </button>
+          </div>
+        } @else {
+          <div class="cards-grid">
+            @for (event of filteredEvents(); track event.id) {
+              <article class="academic-card">
+                <div class="academic-card__header">
+                  <div class="type-tag type-tag--event">{{ event.tipo_evento_display || event.tipo_evento }}</div>
+                  <app-pill-badge type="INFO" size="sm">
+                    {{ event.modalidad_display || event.modalidad }}
+                  </app-pill-badge>
+                </div>
+
+                <h3 class="academic-card__title">{{ event.nombre_evento }}</h3>
+                <p class="academic-card__paper"><strong>Ponencia:</strong> «{{ event.titulo_ponencia }}»</p>
+                <p class="academic-card__venue"><strong>Sede:</strong> 📍 {{ event.sede_lugar }}</p>
+
+                <div class="academic-card__footer">
+                  <span class="pub-date">📅 {{ event.fecha_presentacion | date:'mediumDate' }}</span>
+                  <button type="button" class="btn-icon-delete" (click)="deleteItem('CONGRESOS', event.id)" title="Eliminar registro">
+                    🗑️
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ================= SUB-TAB 3: ESTANCIAS ================= -->
+    @if (activeTab() === 'ESTANCIAS') {
+      <section class="tab-content-pane">
+        @if (filteredStays().length === 0) {
+          <div class="empty-state">
+            <div class="empty-state__icon">✈️</div>
+            <h3>No se registran estancias doctorales</h3>
+            <p>Acredita movilidad académica y colaboración interinstitucional.</p>
+            <button type="button" class="btn-nexus-primary" (click)="openCreateModal('ESTANCIAS')">
+              + Registrar Estancia
+            </button>
+          </div>
+        } @else {
+          <div class="cards-grid">
+            @for (stay of filteredStays(); track stay.id) {
+              <article class="academic-card">
+                <div class="academic-card__header">
+                  <div class="type-tag type-tag--stay">🌍 {{ stay.pais }}</div>
+                  <span class="stay-duration">
+                    {{ stay.fecha_inicio | date:'MMM yyyy' }} — {{ stay.fecha_fin | date:'MMM yyyy' }}
+                  </span>
+                </div>
+
+                <h3 class="academic-card__title">{{ stay.institucion_receptora }}</h3>
+                <p class="academic-card__host"><strong>Investigador Anfitrión:</strong> {{ stay.responsable_estancia }}</p>
+                @if (stay.objetivos) {
+                  <p class="academic-card__desc"><strong>Objetivos:</strong> {{ stay.objetivos }}</p>
+                }
+
+                <div class="academic-card__footer">
+                  <span class="pub-date">Periodo: {{ stay.fecha_inicio | date:'shortDate' }} - {{ stay.fecha_fin | date:'shortDate' }}</span>
+                  <button type="button" class="btn-icon-delete" (click)="deleteItem('ESTANCIAS', stay.id)" title="Eliminar registro">
+                    🗑️
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ================= SUB-TAB 4: OTROS PRODUCTOS ================= -->
+    @if (activeTab() === 'PRODUCTOS') {
+      <section class="tab-content-pane">
+        @if (filteredProducts().length === 0) {
+          <div class="empty-state">
+            <div class="empty-state__icon">💻</div>
+            <h3>No se registran productos tecnológicos</h3>
+            <p>Registra desarrollos de software, prototipos, bases de datos o patentes.</p>
+            <button type="button" class="btn-nexus-primary" (click)="openCreateModal('PRODUCTOS')">
+              + Registrar Producto
+            </button>
+          </div>
+        } @else {
+          <div class="cards-grid">
+            @for (prod of filteredProducts(); track prod.id) {
+              <article class="academic-card">
+                <div class="academic-card__header">
+                  <div class="type-tag type-tag--prod">{{ prod.tipo_producto_display || prod.tipo_producto }}</div>
+                  <span class="pub-date">📅 {{ prod.fecha_registro | date:'mediumDate' }}</span>
+                </div>
+
+                <h3 class="academic-card__title">{{ prod.titulo }}</h3>
+                <p class="academic-card__desc">{{ prod.descripcion }}</p>
+
+                <div class="academic-card__footer">
+                  <app-pill-badge type="INFO" size="sm">Registrado</app-pill-badge>
+                  <button type="button" class="btn-icon-delete" (click)="deleteItem('PRODUCTOS', prod.id)" title="Eliminar registro">
+                    🗑️
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+  }
+
+  <!-- ================= MODAL DE REGISTRO REACTIVO ================= -->
+  @if (isModalOpen()) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h2 class="modal-title">
+            @if (modalType() === 'PUBLICACIONES') { Registrar Publicación Científica }
+            @else if (modalType() === 'CONGRESOS') { Registrar Congreso / Coloquio }
+            @else if (modalType() === 'ESTANCIAS') { Registrar Estancia Doctoral }
+            @else { Registrar Producto Tecnológico }
+          </h2>
+          <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+        </header>
+
+        <div class="modal-body">
+          @if (errorMessage()) {
+            <div class="alert alert-danger">{{ errorMessage() }}</div>
+          }
+          @if (successMessage()) {
+            <div class="alert alert-success">{{ successMessage() }}</div>
+          }
+
+          <!-- FORM: PUBLICACION -->
+          @if (modalType() === 'PUBLICACIONES') {
+            <form [formGroup]="publicationForm" (ngSubmit)="submitPublication()">
+              <div class="form-group">
+                <label class="form-label">Título del Artículo / Capítulo *</label>
+                <input type="text" class="form-control" formControlName="titulo" placeholder="Ej. Deep Learning for Medical Diagnostics" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Autores (formato APA/IEEE) *</label>
+                <textarea class="form-control" rows="2" formControlName="autores_texto" placeholder="Ej. Pérez, J., Ramos, E., López, M."></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Tipo de Publicación *</label>
+                  <select class="form-select" formControlName="tipo">
+                    <option value="ARTICULO_JCR">Artículo JCR / Scopus</option>
+                    <option value="ARTICULO_CONACYT">Artículo Conacyt / Índice Nal</option>
+                    <option value="CAPITULO_LIBRO">Capítulo de Libro</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">Estado *</label>
+                  <select class="form-select" formControlName="estado">
+                    <option value="PREPARACION">En Preparación</option>
+                    <option value="ENVIADO">Enviado</option>
+                    <option value="EN_REVISION">En Revisión</option>
+                    <option value="ACEPTADO">Aceptado</option>
+                    <option value="PUBLICADO">Publicado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Revista o Editorial *</label>
+                <input type="text" class="form-control" formControlName="revista_editorial" placeholder="Ej. IEEE Transactions on Neural Networks" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Fecha de Publicación</label>
+                  <input type="date" class="form-control" formControlName="fecha_publicacion" />
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">DOI o Enlace URL</label>
+                  <input type="text" class="form-control" formControlName="doi_url" placeholder="https://doi.org/10.1109/..." />
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-nexus-outline" (click)="closeModal()">Cancelar</button>
+                <button type="submit" class="btn-nexus-primary" [disabled]="isSubmitting()">
+                  {{ isSubmitting() ? 'Guardando...' : 'Guardar Publicación' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- FORM: CONGRESO -->
+          @if (modalType() === 'CONGRESOS') {
+            <form [formGroup]="eventForm" (ngSubmit)="submitEvent()">
+              <div class="form-group">
+                <label class="form-label">Nombre del Evento *</label>
+                <input type="text" class="form-control" formControlName="nombre_evento" placeholder="Ej. Congreso Internacional de Inteligencia Artificial" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Título de la Ponencia *</label>
+                <input type="text" class="form-control" formControlName="titulo_ponencia" placeholder="Ej. Segmentación de imágenes celulares" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Tipo de Evento *</label>
+                  <select class="form-select" formControlName="tipo_evento">
+                    <option value="CONGRESO_INTERNACIONAL">Congreso Internacional</option>
+                    <option value="CONGRESO_NACIONAL">Congreso Nacional</option>
+                    <option value="COLOQUIO">Coloquio / Simposio</option>
+                  </select>
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">Modalidad *</label>
+                  <select class="form-select" formControlName="modalidad">
+                    <option value="PRESENCIAL">Presencial</option>
+                    <option value="VIRTUAL">Virtual</option>
+                    <option value="HIBRIDA">Híbrida</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Fecha de Presentación *</label>
+                  <input type="date" class="form-control" formControlName="fecha_presentacion" />
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">Sede / Lugar *</label>
+                  <input type="text" class="form-control" formControlName="sede_lugar" placeholder="Ej. Ciudad de México / Madrid" />
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-nexus-outline" (click)="closeModal()">Cancelar</button>
+                <button type="submit" class="btn-nexus-primary" [disabled]="isSubmitting()">
+                  {{ isSubmitting() ? 'Guardando...' : 'Guardar Evento' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- FORM: ESTANCIA -->
+          @if (modalType() === 'ESTANCIAS') {
+            <form [formGroup]="stayForm" (ngSubmit)="submitStay()">
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Institución Receptora *</label>
+                  <input type="text" class="form-control" formControlName="institucion_receptora" placeholder="Ej. University of Toronto" />
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">País *</label>
+                  <input type="text" class="form-control" formControlName="pais" placeholder="Ej. Canadá" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label class="form-label">Fecha Inicio *</label>
+                  <input type="date" class="form-control" formControlName="fecha_inicio" />
+                </div>
+                <div class="form-group col">
+                  <label class="form-label">Fecha Fin *</label>
+                  <input type="date" class="form-control" formControlName="fecha_fin" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Investigador Anfitrión / Responsable *</label>
+                <input type="text" class="form-control" formControlName="responsable_estancia" placeholder="Ej. Dr. Geoffrey Hinton" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Objetivos de la Estancia</label>
+                <textarea class="form-control" rows="2" formControlName="objetivos" placeholder="Metas científicas a desarrollar..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Resultados Obtenidos</label>
+                <textarea class="form-control" rows="2" formControlName="resultados" placeholder="Entregables y avances generados..."></textarea>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-nexus-outline" (click)="closeModal()">Cancelar</button>
+                <button type="submit" class="btn-nexus-primary" [disabled]="isSubmitting()">
+                  {{ isSubmitting() ? 'Guardando...' : 'Guardar Estancia' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- FORM: OTROS PRODUCTOS -->
+          @if (modalType() === 'PRODUCTOS') {
+            <form [formGroup]="productForm" (ngSubmit)="submitProduct()">
+              <div class="form-group">
+                <label class="form-label">Tipo de Producto *</label>
+                <select class="form-select" formControlName="tipo_producto">
+                  <option value="SOFTWARE">Desarrollo de Software</option>
+                  <option value="PROTOTIPO">Prototipo Físico / Industrial</option>
+                  <option value="PATENTE">Propiedad Intelectual / Patente</option>
+                  <option value="BASE_DATOS">Base de Datos de Investigación</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Título del Producto *</label>
+                <input type="text" class="form-control" formControlName="titulo" placeholder="Ej. Sistema ML para Detección de Anomalías v1.0" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Descripción Técnica *</label>
+                <textarea class="form-control" rows="3" formControlName="descripcion" placeholder="Detalle de la solución, arquitectura y características..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Fecha de Registro *</label>
+                <input type="date" class="form-control" formControlName="fecha_registro" />
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-nexus-outline" (click)="closeModal()">Cancelar</button>
+                <button type="submit" class="btn-nexus-primary" [disabled]="isSubmitting()">
+                  {{ isSubmitting() ? 'Guardando...' : 'Guardar Producto' }}
+                </button>
+              </div>
+            </form>
+          }
+
+        </div>
+      </div>
+    </div>
+  }
+</div>
