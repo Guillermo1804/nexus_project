@@ -146,3 +146,13 @@ Thumbs.db
 nexus/
 temp/
 tmp/
+
+# ------------------------------------------
+# 6. Gobernanza multi-agente (repo privado aparte) y material de referencia
+# ------------------------------------------
+# El sistema de auditoría/orquestación vive en su propio repositorio privado,
+# montado como workspace/ y gitignoreado por el repo de producto.
+workspace/
+
+# Copia de referencia del sistema fuente (Syncify) usada para la adaptación
+referencia-syncify-workspace/
