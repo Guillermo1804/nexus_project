@@ -1,8 +1,8 @@
-# Implementacion HU-01 - Fase 1
+# Implementacion HU-01 - Fases 1 y 2
 
 ## Estado
 
-Fase 1 completada: preparacion del esqueleto backend para autenticacion por tokens de Django REST Framework usando SQLite.
+Fase 2 de autenticacion backend iniciada: login y logout implementados en `nexus/views/auth.py` usando tokens de Django REST Framework y SQLite.
 
 ## Cambios realizados
 
@@ -17,11 +17,12 @@ Fase 1 completada: preparacion del esqueleto backend para autenticacion por toke
 
 ### Estructura de autenticacion
 
-- Se creo la app `Backend/nexus/auth_api/`.
-- Se agrego `AuthApiConfig` para registrar la app de autenticacion.
-- Se agrego `auth_api/urls.py` con el espacio de rutas bajo `/api/auth/`.
-- Se agrego un modulo de vistas base para implementar login y logout en la siguiente fase.
-- La referencia existente de `nexus/urls.py` a `auth_api.urls` ahora puede resolverse correctamente.
+- Se elimino la app contenedora `Backend/nexus/auth_api/`.
+- Se implementaron las vistas `CustomAuthToken` y `Logout` directamente en `Backend/nexus/nexus/views/auth.py`.
+- Se registraron directamente las rutas `/api/auth/login/` y `/api/auth/logout/` en `nexus/nexus/urls.py`.
+- `CustomAuthToken` recibe correo y contrasena, valida que el usuario este activo y devuelve el token DRF junto con datos basicos y el primer grupo del usuario como rol.
+- `Logout` requiere autenticacion y elimina el token del usuario mediante `POST`.
+- Las credenciales invalidas responden con un mensaje generico y estado `401`.
 
 ### Base de datos
 
@@ -49,12 +50,16 @@ Resultado:
 - El chequeo del sistema finalizo sin problemas.
 - Las migraciones de `admin`, `auth`, `authtoken`, `contenttypes` y `sessions` finalizaron correctamente.
 
-## Pendientes de la Fase 2
+## Pendientes posteriores
 
-- Definir el modelo de usuario y garantizar el uso de correo electronico como identificador unico.
-- Implementar `CustomAuthToken` para login.
-- Resolver los roles mediante grupos de Django.
-- Definir y crear las respuestas del endpoint de login.
-- Implementar logout mediante `POST` y eliminar el token para revocarlo.
-- Proteger endpoints privados con `TokenAuthentication` y permisos.
-- Agregar pruebas para credenciales invalidas, usuarios inactivos, roles, logout y acceso sin token.
+- Definir o validar una restriccion de unicidad para el correo del usuario.
+- Definir respuestas especificas para perfiles de dominio cuando existan modelos de `alumnos`, `asesor` y `comite`.
+- Proteger los endpoints privados de cada modulo con `TokenAuthentication` y permisos.
+- Agregar pruebas automatizadas para credenciales invalidas, usuarios inactivos, usuarios sin grupo, roles, logout y acceso sin token.
+- Definir la politica de expiracion o rotacion de tokens.
+
+## Validacion de la implementacion
+
+- `python nexus/manage.py check`: correcto, sin errores.
+- `python nexus/manage.py migrate --noinput`: correcto, incluyendo `authtoken`.
+- La prueba funcional temporal de login/logout se ejecuto correctamente con Django REST Framework y SQLite: credenciales invalidas `401`, login valido `200`, rol devuelto, logout `200` y token eliminado.

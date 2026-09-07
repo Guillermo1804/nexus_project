@@ -38,8 +38,8 @@ Situacion actual:
 - `django.contrib.auth` y `django.contrib.sessions` estan instalados como parte de la configuracion base de Django.
 - El middleware de sesiones y autenticacion esta habilitado como parte de la configuracion base de Django.
 - Para esta historia se propone autenticacion por token de Django REST Framework (`TokenAuthentication`), siguiendo el patron probado en el proyecto similar; no es JWT.
-- `Backend/nexus/nexus/views/auth.py` esta vacio; no existe aun la logica de login o logout.
-- `nexus/urls.py` intenta incluir `auth_api.urls` bajo `/api/auth/`, pero la app `auth_api` y ese modulo no existen en el esqueleto actual. La configuracion de URLs debe corregirse como parte de la implementacion.
+- `Backend/nexus/nexus/views/auth.py` contiene las vistas `CustomAuthToken` y `Logout` para login y cierre de sesion.
+- La autenticacion se registra directamente en `nexus/urls.py` bajo `/api/auth/login/` y `/api/auth/logout/`; no se utiliza una app `auth_api` separada.
 - `docker-compose.yml` ejecuta unicamente el servicio web; SQLite se almacena en el archivo local configurado por Django.
 - No hay modelos, serializadores, endpoints protegidos ni pruebas propias de autenticacion.
 
@@ -194,7 +194,7 @@ Esta historia describe el comportamiento objetivo; no debe interpretarse que los
 ## Definicion de terminado
 
 - Los tres criterios de aceptacion pasan en pruebas automatizadas y manuales.
-- La referencia a `auth_api.urls` esta resuelta y el backend arranca correctamente con el esqueleto existente.
+- Las rutas de autenticacion estan registradas directamente desde `nexus/views/auth.py` y el backend arranca correctamente con el esqueleto existente.
 - El contrato de autenticacion esta documentado con rutas, metodos, campos, respuestas y estrategia `TokenAuthentication`.
 - El login acepta correo electronico como unico identificador y navega a `HOME` tras una respuesta exitosa.
 - Las rutas privadas requieren un token DRF valido tanto en frontend como en backend.
