@@ -1,2 +1,2 @@
 Django==6.1.1
-psycopg[binary]==3.2.10
+djangorestframework>=3.16,<4

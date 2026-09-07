@@ -12,7 +12,7 @@ Permitir que un usuario registrado valide sus credenciales y acceda al sistema d
 
 ### Backend
 
-El backend es un proyecto Django ubicado en `Backend/nexus/`. Para esta implementacion rapida se utilizara SQLite, que ya es la base de datos predeterminada en `settings.py` cuando no se define `DATABASE_ENGINE=postgres`.
+El backend es un proyecto Django ubicado en `Backend/nexus/`. Para esta implementacion rapida se utilizara SQLite como unica base de datos.
 
 La estructura actual relevante es:
 
@@ -40,7 +40,7 @@ Situacion actual:
 - Para esta historia se propone autenticacion por token de Django REST Framework (`TokenAuthentication`), siguiendo el patron probado en el proyecto similar; no es JWT.
 - `Backend/nexus/nexus/views/auth.py` esta vacio; no existe aun la logica de login o logout.
 - `nexus/urls.py` intenta incluir `auth_api.urls` bajo `/api/auth/`, pero la app `auth_api` y ese modulo no existen en el esqueleto actual. La configuracion de URLs debe corregirse como parte de la implementacion.
-- El `docker-compose.yml` actual define un servicio de base de datos externo y variables para `DATABASE_ENGINE=postgres`; esa configuracion no forma parte de esta implementacion y debe ajustarse o no utilizarse para trabajar con SQLite.
+- `docker-compose.yml` ejecuta unicamente el servicio web; SQLite se almacena en el archivo local configurado por Django.
 - No hay modelos, serializadores, endpoints protegidos ni pruebas propias de autenticacion.
 
 ### Frontend
