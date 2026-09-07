@@ -32,6 +32,9 @@ ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,1
 # Application definition
 
 INSTALLED_APPS = [
+    'nexus',
+    'apps.identity',
+    'apps.students',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,8 +45,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 ]
 
+AUTH_USER_MODEL = 'identity.CustomUser'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'nexus.middleware.DevelopmentCorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -87,6 +93,12 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+
+CORS_ALLOWED_ORIGINS = [
+    origin
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:4200').split(',')
+    if origin
+]
 
 
 # Password validation

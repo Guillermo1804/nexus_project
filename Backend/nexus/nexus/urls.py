@@ -17,10 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from nexus.views.auth import CustomAuthToken, Logout
+from nexus.views.auth import CurrentUser, CustomAuthToken, Logout, Register
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/login/', CustomAuthToken.as_view(), name='auth-login'),
+    path('api/auth/register/', Register.as_view(), name='auth-register'),
     path('api/auth/logout/', Logout.as_view(), name='auth-logout'),
+    path('api/auth/me/', CurrentUser.as_view(), name='auth-current-user'),
 ]

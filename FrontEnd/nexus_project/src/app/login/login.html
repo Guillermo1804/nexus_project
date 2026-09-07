@@ -1,1 +1,23 @@
-<p>login works!</p>
+<main class="auth-page">
+  <section class="auth-card" aria-label="Acceso a NEXUS">
+    <aside class="auth-art" aria-hidden="true">
+      <span class="art-sun"></span><span class="art-rings"></span><span class="art-grid"></span>
+      <div class="art-copy"><span class="art-brand">NEXUS</span><h2>Todo tu avance, conectado.</h2><p>Ingresa para consultar y dar seguimiento a tu trayectoria academica.</p></div>
+    </aside>
+    <section class="auth-panel" aria-labelledby="login-title">
+      <div class="panel-heading"><span class="brand-mark">N</span><div><p class="eyebrow">NEXUS</p><h1 id="login-title">Bienvenido</h1></div></div>
+      <p class="intro">Inicia sesion con tu correo institucional.</p>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field"><label for="email">Correo electronico</label><input id="email" type="email" formControlName="email" autocomplete="email" inputmode="email" placeholder="nombre@correo.com" />
+          @if (form.controls.email.touched && form.controls.email.invalid) { <span class="validation">Ingresa un correo electronico valido.</span> }
+        </div>
+        <div class="field"><label for="password">Contrasena</label><input id="password" type="password" formControlName="password" autocomplete="current-password" placeholder="Tu contrasena" />
+          @if (form.controls.password.touched && form.controls.password.invalid) { <span class="validation">La contrasena es obligatoria.</span> }
+        </div>
+        @if (loginError) { <p class="error" role="alert">No fue posible iniciar sesion. Verifica tus datos e intenta de nuevo.</p> }
+        <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Validando...' : 'Iniciar sesion' }}</button>
+      </form>
+      <p class="register-link">Aun no tienes cuenta? <a routerLink="/register">Crear cuenta</a></p>
+    </section>
+  </section>
+</main>
