@@ -8,6 +8,54 @@ Como usuario autorizado, quiero iniciar sesion para acceder a la informacion cor
 
 Permitir que un usuario registrado valide sus credenciales y acceda al sistema de forma segura. El flujo debe distinguir entre una autenticacion exitosa, unas credenciales invalidas y el cierre de sesion, sin exponer informacion sensible.
 
+## Estado actual del esqueleto
+
+### Backend
+
+El backend es un proyecto Django ubicado en `Backend/nexus/`. Para esta implementacion rapida se utilizara SQLite, que ya es la base de datos predeterminada en `settings.py` cuando no se define `DATABASE_ENGINE=postgres`.
+
+La estructura actual relevante es:
+
+```text
+Backend/
+|-- Dockerfile
+|-- docker-compose.yml
+|-- requirements.txt
+`-- nexus/
+	|-- manage.py
+	`-- nexus/
+		|-- settings.py
+		|-- urls.py
+		`-- views/
+			|-- alumnos.py
+			|-- asesor.py
+			|-- auth.py
+			`-- comite.py
+```
+
+Situacion actual:
+
+- `django.contrib.auth` y `django.contrib.sessions` estan instalados como parte de la configuracion base de Django.
+- El middleware de sesiones y autenticacion esta habilitado como parte de la configuracion base de Django.
+- Para esta historia se propone autenticacion por token de Django REST Framework (`TokenAuthentication`), siguiendo el patron probado en el proyecto similar; no es JWT.
+- `Backend/nexus/nexus/views/auth.py` esta vacio; no existe aun la logica de login o logout.
+- `nexus/urls.py` intenta incluir `auth_api.urls` bajo `/api/auth/`, pero la app `auth_api` y ese modulo no existen en el esqueleto actual. La configuracion de URLs debe corregirse como parte de la implementacion.
+- El `docker-compose.yml` actual define un servicio de base de datos externo y variables para `DATABASE_ENGINE=postgres`; esa configuracion no forma parte de esta implementacion y debe ajustarse o no utilizarse para trabajar con SQLite.
+- No hay modelos, serializadores, endpoints protegidos ni pruebas propias de autenticacion.
+
+### Frontend
+
+El frontend es una aplicacion Angular 20 standalone ubicada en `FrontEnd/nexus_project/`.
+
+Situacion actual:
+
+- `src/app/app.ts` solo renderiza el `RouterOutlet` y conserva el titulo base.
+- `src/app/app.routes.ts` no define rutas.
+- No existen aun pagina de login, servicio de autenticacion, guard, interceptor HTTP ni modelo de tokens/sesion.
+- El proyecto ya incluye `@angular/forms`, `@angular/router` y `rxjs`, por lo que pueden utilizarse para implementar el flujo sin agregar dependencias inicialmente.
+
+Esta historia describe el comportamiento objetivo; no debe interpretarse que los endpoints o componentes anteriores ya estan implementados.
+
 ## Criterios de aceptacion
 
 ### CA-01.1 - Inicio de sesion exitoso
@@ -55,60 +103,83 @@ Permitir que un usuario registrado valide sus credenciales y acceda al sistema d
 
 ### Flujo propuesto
 
-1. El usuario introduce identificador y contrasena en el formulario.
+1. El usuario introduce su correo electronico y contrasena en el formulario.
 2. El frontend valida que los campos sean obligatorios y envia la solicitud al endpoint de autenticacion.
 3. El backend verifica que el usuario este activo y que las credenciales sean validas.
-4. En caso exitoso, el backend devuelve el mecanismo de sesion definido por el proyecto y la informacion minima del usuario autenticado.
-5. El frontend almacena el estado segun la politica de seguridad del proyecto, actualiza el contexto de autenticacion y navega al area protegida.
+4. En caso exitoso, el backend emite un token DRF y devuelve la informacion minima del usuario autenticado, incluyendo el rol autorizado.
+5. El frontend almacena el token segun la politica de seguridad del proyecto, actualiza el contexto de autenticacion y navega a la pantalla `HOME`.
 6. En caso fallido, el frontend conserva el formulario, muestra un error generico y no guarda credenciales.
-7. Al cerrar sesion, el cliente solicita la invalidacion al backend cuando aplique, limpia el estado local y navega al inicio de sesion.
+7. Si el token expira o deja de ser valido, el frontend limpia el estado local, muestra un modal informando que la sesion expiro y solicita volver a iniciar sesion.
+8. Al cerrar sesion, el cliente solicita la invalidacion al backend, limpia el estado local y navega al inicio de sesion.
 
 ### Componentes a considerar
 
-- **Frontend Angular:** pagina o componente de login, servicio de autenticacion, interceptor HTTP, guard de rutas y modelo de usuario/sesion.
-- **Backend:** endpoint de login, validacion de usuario activo, emision o gestion de sesion, endpoint de logout y middleware de proteccion.
-- **Seguridad:** contrasenas almacenadas con hash seguro en backend, transporte cifrado, respuestas de error uniformes y ausencia de credenciales en logs.
+- **Frontend Angular:** pagina o componente standalone de login, servicio de autenticacion, interceptor HTTP, guard de rutas y modelo de usuario/sesion.
+- **Backend Django:** app de autenticacion, rutas bajo `/api/auth/`, vistas de login/logout, validacion de usuario activo, emision y validacion de tokens DRF, roles por grupos, revocacion de tokens y proteccion de recursos.
+- **Seguridad:** contrasenas almacenadas con hash seguro en backend, tokens revocables y almacenados en base de datos, transporte cifrado, respuestas de error uniformes y ausencia de credenciales o tokens en logs.
 
-### Contrato pendiente de confirmar
+### Contrato definido y pendientes
 
-- Ruta y metodo del endpoint de login.
+- Identificador de acceso definido: correo electronico como unico identificador. El backend debe validar su formato y resolverlo contra un usuario activo con correo unico.
+- Metodo y ruta final de login, tomando `/api/auth/` como prefijo existente en `nexus/urls.py`.
 - Nombres de los campos enviados y estructura de la respuesta.
-- Uso de cookie de sesion o token y su tiempo de expiracion.
+- Estrategia definida: `TokenAuthentication` de Django REST Framework y encabezado `Authorization: Token <token>`.
+- Politica de expiracion o rotacion de tokens, si se requiere, y mecanismo de renovacion.
+- Lugar de almacenamiento de los tokens en el frontend; no se deben guardar tokens en `localStorage`.
+- Metodo y ruta de logout, incluyendo la eliminacion o invalidacion efectiva del token.
 - Codigo y formato de errores.
-- Endpoint y comportamiento esperado para logout.
-- Ruta inicial despues de autenticar y ruta de redireccion para usuarios no autenticados.
+- Ruta posterior al login definida: `HOME`. La ruta exacta del frontend debe ser `/home` o la que establezca el enrutamiento final.
+- Comportamiento definido para la expiracion: mostrar un modal indicando que la sesion expiro y que el usuario debe volver a iniciar sesion.
+- Politica ante multiples intentos fallidos: pendiente de definir.
 
-## Plan de desarrollo
+## Plan de implementacion
 
-### Fase 1 - Confirmar contrato
+### Fase 1 - Confirmar contrato y preparar el esqueleto
 
-- Revisar el backend existente y definir los endpoints de login/logout.
-- Confirmar el modelo de usuario, estado activo y permisos.
-- Acordar la estrategia de sesion, expiracion y renovacion.
+- Confirmar que el correo sea unico en el modelo de usuario y definir como se resolvera el correo antes de autenticarlo.
+- Confirmar las rutas, los metodos HTTP, los campos de entrada y las respuestas del contrato.
+- Definir el contrato del token: duracion, rotacion, formato de respuestas y mecanismo de revocacion.
+- Confirmar el modelo de usuario Django, el campo que representa el estado activo y los permisos requeridos.
+- Corregir la referencia de `nexus/urls.py` a `auth_api.urls` creando la app correspondiente o conectando las vistas al modulo real; no dejar un import a un modulo inexistente.
+- Acordar la estrategia de expiracion, renovacion y logout. El ejemplo de referencia no usa refresh token; si se agrega, debe documentarse por separado.
+- Definir la politica ante multiples intentos fallidos, incluyendo limites, ventana de tiempo y mensaje mostrado.
 - Documentar ejemplos de solicitudes y respuestas.
 
-### Fase 2 - Implementar backend
+### Fase 2 - Implementar backend Django
 
-- Crear o completar la validacion de credenciales.
-- Rechazar usuarios inactivos y credenciales invalidas con una respuesta uniforme.
-- Implementar la creacion, validacion e invalidacion de sesion.
-- Proteger los endpoints que requieran autenticacion.
-- Añadir pruebas unitarias y de integracion para los escenarios de aceptacion.
+- Crear la app y los modulos necesarios siguiendo el esqueleto actual, manteniendo separadas las responsabilidades de autenticacion y de las vistas futuras de `alumnos`, `asesor` y `comite`.
+- Incorporar Django REST Framework y `rest_framework.authtoken` en la configuracion y dependencias del backend.
+- Crear los modelos y migraciones necesarias para los tokens y registrar `rest_framework.authtoken` en `INSTALLED_APPS`.
+- Implementar el endpoint de login bajo el prefijo `/api/auth/` con correo, contrasena y validacion de credenciales mediante las APIs de Django REST Framework.
+- Rechazar usuarios inactivos y credenciales invalidas con la misma respuesta generica; no incluir contrasenas ni datos sensibles en logs o respuestas.
+- Crear `CustomAuthToken` a partir de `ObtainAuthToken`, verificando que el usuario este activo antes de responder.
+- Obtener los roles desde `user.groups`, rechazar usuarios sin rol valido y devolver solo el perfil minimo asociado al rol junto con el token.
+- Implementar logout como endpoint `POST` protegido por `IsAuthenticated`, eliminando el token del usuario y devolviendo una respuesta consistente.
+- Proteger los endpoints privados con `TokenAuthentication` y validar permisos en backend, sin depender exclusivamente de las guardas de Angular.
+- No usar `GET` para logout ni imprimir usuarios, tokens o credenciales en la salida del servidor.
+- Agregar migraciones, datos de prueba controlados y pruebas unitarias/de integracion para emision, validacion, usuario inactivo, usuario sin rol, roles validos, logout, revocacion y acceso sin token.
 
-### Fase 3 - Implementar frontend
+### Fase 3 - Implementar frontend Angular
 
-- Crear el formulario y sus validaciones.
-- Integrar el servicio de autenticacion con el contrato del backend.
-- Gestionar estados de carga, exito y error.
-- Añadir guardas e interceptor para proteger la navegacion y reaccionar a sesiones expiradas.
-- Implementar logout y limpieza del estado.
+- Crear una pagina standalone de login y registrarla en `app.routes.ts` como ruta publica.
+- Crear el modelo de usuario/token y un `AuthService` con `HttpClient` para login, consulta de identidad y logout.
+- Implementar el formulario reactivo con correo electronico, contrasena, campos obligatorios, formato basico y estado de carga.
+- Mostrar un mensaje generico para cualquier fallo de autenticacion y conservar los campos sin guardar contrasenas localmente.
+- Mantener el token en memoria siempre que sea posible y evitar `localStorage` salvo decision documentada.
+- Crear un guard para impedir la navegacion a rutas privadas sin un token valido y redirigir a `/login`.
+- Crear un interceptor para adjuntar `Authorization: Token <token>` y reaccionar ante respuestas `401`.
+- Implementar la ruta privada `HOME` y el cierre de sesion, eliminando el token en backend y limpiando el estado en memoria antes de navegar a `/login`.
+- Implementar el modal de sesion expirada ante respuestas `401` o invalidacion del token, evitando mostrarlo repetidamente durante la misma expiracion.
+- Agregar pruebas del formulario, servicio, guard, interceptor, revocacion y navegacion para los escenarios de aceptacion.
 
-### Fase 4 - Verificar la historia
+### Fase 4 - Integrar y verificar la historia
 
-- Probar login valido, credenciales invalidas, usuario inactivo y logout.
-- Verificar que una ruta privada no sea accesible sin sesion.
-- Confirmar que los mensajes no filtran informacion sensible.
-- Ejecutar pruebas automatizadas, build del frontend y pruebas manuales del flujo completo.
+- Ejecutar Django con SQLite, aplicar migraciones y verificar que el proyecto cargue sin errores de URLs; ajustar el flujo de Docker si se necesita conservarlo como entorno de desarrollo.
+- Ejecutar pruebas de backend para login valido, credenciales invalidas, usuario inactivo, usuario sin rol, roles validos, logout, revocacion y acceso a recursos protegidos.
+- Ejecutar pruebas de Angular y el build de produccion.
+- Probar manualmente el flujo integrado: login valido con correo, error generico, acceso a `HOME`, recarga, modal de sesion expirada y logout.
+- Confirmar que una ruta privada no sea accesible sin un token DRF valido aunque se acceda directamente por URL.
+- Confirmar que no se almacenen contrasenas ni tokens en `localStorage` o logs; el token debe permanecer en memoria salvo decision documentada.
 
 ## Riesgos y mitigaciones
 
@@ -116,24 +187,25 @@ Permitir que un usuario registrado valide sus credenciales y acceda al sistema d
 | --- | --- |
 | Exposicion de credenciales o tokens | Usar HTTPS, no registrar secretos y aplicar la estrategia de almacenamiento acordada. |
 | Enumeracion de usuarios por mensajes distintos | Responder con un mensaje generico para cualquier fallo de autenticacion. |
-| Sesion persistente despues de logout | Invalidar la sesion en backend y limpiar todo el estado del cliente. |
+| Token reutilizable despues de logout | Eliminar el token en backend y limpiar todo el estado del cliente. |
 | Acceso directo a rutas privadas | Aplicar guardas en frontend y autorizacion real en backend. |
 | Contrato frontend/backend inconsistente | Definir ejemplos de API antes de integrar y cubrirlos con pruebas. |
 
 ## Definicion de terminado
 
 - Los tres criterios de aceptacion pasan en pruebas automatizadas y manuales.
-- Las rutas privadas requieren una sesion valida tanto en frontend como en backend.
-- Logout impide reutilizar la sesion invalidada.
+- La referencia a `auth_api.urls` esta resuelta y el backend arranca correctamente con el esqueleto existente.
+- El contrato de autenticacion esta documentado con rutas, metodos, campos, respuestas y estrategia `TokenAuthentication`.
+- El login acepta correo electronico como unico identificador y navega a `HOME` tras una respuesta exitosa.
+- Las rutas privadas requieren un token DRF valido tanto en frontend como en backend.
+- Logout impide reutilizar el token eliminado y limpia el estado local.
+- Una sesion expirada o un token invalido muestra el modal definido y devuelve al usuario al login.
 - No se almacenan ni registran contrasenas.
 - Los mensajes de error no permiten identificar usuarios ni credenciales validas.
 - La documentacion del contrato de autenticacion esta actualizada.
 - El build y las pruebas del proyecto finalizan correctamente.
 
-## Preguntas para refinamiento
+## Pendientes de refinamiento
 
-1. ¿El identificador de acceso sera correo electronico, nombre de usuario o ambos?
-2. ¿La sesion se gestionara mediante cookies HttpOnly o tokens?
-3. ¿Que pantalla debe mostrarse inmediatamente despues del login?
-4. ¿Que politica se aplicara despues de varios intentos fallidos?
-5. ¿Como se debe informar al usuario cuando la sesion expire?
+1. ¿Que politica se aplicara despues de varios intentos fallidos?
+2. ¿Los tokens tendran expiracion y rotacion, o permaneceran validos hasta ejecutar logout?
