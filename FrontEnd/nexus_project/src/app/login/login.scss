@@ -1,10 +1,290 @@
-:host { display: block; }
-.auth-page { align-items: center; background: #c7f3e8; display: flex; justify-content: center; min-height: 100vh; overflow: hidden; padding: 2rem; }
-.auth-card { background: #fff; border-radius: 8px; box-shadow: 0 24px 64px rgb(13 72 78 / 20%); display: grid; grid-template-columns: minmax(18rem, .95fr) minmax(22rem, 1.05fr); max-width: 62rem; min-height: 34rem; overflow: hidden; width: 100%; }
-.auth-art { background: linear-gradient(135deg, #007f86 0%, #00bfa6 53%, #a6e847 100%); color: #fff; overflow: hidden; padding: 3rem; position: relative; }
-.art-sun { background: #e7f752; border-radius: 50%; height: 10rem; position: absolute; right: -3.5rem; top: -3.5rem; width: 10rem; }
-.art-rings { border: 20px solid rgb(255 255 255 / 18%); border-radius: 50%; bottom: -6rem; height: 16rem; left: -6rem; position: absolute; width: 16rem; }
-.art-grid { background-image: linear-gradient(90deg, rgb(255 255 255 / 14%) 1px, transparent 1px), linear-gradient(rgb(255 255 255 / 14%) 1px, transparent 1px); background-size: 1rem 1rem; height: 11rem; position: absolute; right: -2rem; top: 8rem; transform: rotate(-18deg); width: 16rem; }
-.art-copy { bottom: 3rem; max-width: 17rem; position: absolute; z-index: 1; }.art-brand, .eyebrow { font-size: .76rem; font-weight: 700; letter-spacing: .12em; }.art-copy h2 { font-size: 2.1rem; line-height: 1.05; margin: .75rem 0; }.art-copy p { font-size: .95rem; line-height: 1.5; margin: 0; }
-.auth-panel { align-self: center; margin: 0 auto; max-width: 25rem; padding: 2.5rem; width: 100%; }.panel-heading { align-items: center; display: flex; gap: .8rem; }.brand-mark { align-items: center; background: #007f86; border-radius: 5px; color: #fff; display: inline-flex; font-size: 1rem; font-weight: 800; height: 2.15rem; justify-content: center; width: 2.15rem; }.eyebrow { color: #00858b; margin: 0 0 .25rem; }h1 { font-size: 1.8rem; line-height: 1.1; margin: 0; }.intro { color: #667085; line-height: 1.45; margin: 1.35rem 0 1.75rem; }form { display: grid; gap: 1.1rem; }.field { display: grid; gap: .42rem; }label { color: #344054; font-size: .88rem; font-weight: 700; }input { border: 1px solid #d0d5dd; border-radius: 5px; min-height: 2.8rem; padding: .7rem .8rem; }input:focus { border-color: #00a792; outline: 3px solid rgb(0 167 146 / 16%); }button { background: #008d82; border: 0; border-radius: 5px; color: #fff; cursor: pointer; font-weight: 700; min-height: 2.85rem; padding: .7rem 1rem; }button:hover:not(:disabled) { background: #006f69; }button:disabled { cursor: wait; opacity: .65; }.validation, .error { color: #b42318; font-size: .82rem; }.error { background: #fef3f2; border-left: 3px solid #f04438; margin: 0; padding: .75rem; }.register-link { color: #667085; font-size: .9rem; margin: 1.5rem 0 0; }a { color: #007d76; font-weight: 800; text-decoration: none; }a:hover { text-decoration: underline; }
-@media (max-width: 700px) { .auth-page { padding: 1rem; }.auth-card { display: block; max-width: 30rem; min-height: 0; }.auth-art { min-height: 13rem; padding: 1.5rem; }.art-copy { bottom: 1.5rem; max-width: 18rem; }.art-copy h2 { font-size: 1.5rem; margin: .45rem 0; }.art-copy p { font-size: .82rem; }.art-grid { top: 2rem; }.auth-panel { padding: 2rem 1.5rem; } }
+:host {
+  display: block;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.auth-page {
+  align-items: center;
+  background: #F5F7FB;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.auth-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(44, 24, 103, 0.22);
+  display: grid;
+  grid-template-columns: minmax(18rem, .95fr) minmax(22rem, 1.05fr);
+  max-width: 62rem;
+  min-height: 34rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.auth-art {
+  background: linear-gradient(
+    135deg,
+    #2C1867 0%,
+    #4E50DC 55%,
+    #6365EF 100%
+  );
+  color: #FFFFFF;
+  overflow: hidden;
+  padding: 3rem;
+  position: relative;
+}
+
+.art-sun {
+  background: #EEEEFF;
+  border-radius: 50%;
+  height: 10rem;
+  position: absolute;
+  right: -3.5rem;
+  top: -3.5rem;
+  width: 10rem;
+}
+
+.art-rings {
+  border: 20px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  bottom: -6rem;
+  height: 16rem;
+  left: -6rem;
+  position: absolute;
+  width: 16rem;
+}
+
+.art-grid {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgb(255 255 255 / 14%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      rgb(255 255 255 / 14%) 1px,
+      transparent 1px
+    );
+  background-size: 1rem 1rem;
+  height: 11rem;
+  position: absolute;
+  right: -2rem;
+  top: 8rem;
+  transform: rotate(-18deg);
+  width: 16rem;
+}
+
+.art-copy {
+  bottom: 3rem;
+  max-width: 18rem;
+  position: absolute;
+  z-index: 1;
+}
+
+.art-brand,
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.art-brand {
+  color: #FFFFFF;
+}
+
+.art-copy h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: .75rem 0;
+}
+
+.art-copy p {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.auth-panel {
+  align-self: center;
+  margin: 0 auto;
+  max-width: 25rem;
+  padding: 2.5rem;
+  width: 100%;
+}
+
+.panel-heading {
+  align-items: center;
+  display: flex;
+  gap: .8rem;
+}
+
+.brand-mark {
+  align-items: center;
+  background: #6365EF;
+  border-radius: 8px;
+  color: #FFFFFF;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 800;
+  height: 2.3rem;
+  justify-content: center;
+  width: 2.3rem;
+}
+
+.eyebrow {
+  color: #6365EF;
+  margin: 0 0 .25rem;
+}
+
+h1 {
+  color: #101828;
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.intro {
+  color: #667085;
+  font-size: .875rem;
+  line-height: 1.5;
+  margin: 1.35rem 0 1.75rem;
+}
+
+form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.field {
+  display: grid;
+  gap: .42rem;
+}
+
+label {
+  color: #475467;
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+input {
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  border-radius: 6px;
+  color: #101828;
+  font-family: inherit;
+  font-size: .875rem;
+  min-height: 2.8rem;
+  padding: .7rem .8rem;
+}
+
+input::placeholder {
+  color: #98A2B3;
+}
+
+input:focus {
+  border-color: #6365EF;
+  outline: 3px solid rgb(99 101 239 / 16%);
+}
+
+button {
+  background: #6365EF;
+  border: 0;
+  border-radius: 8px;
+  color: #FFFFFF;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: .875rem;
+  font-weight: 700;
+  min-height: 2.85rem;
+  padding: .7rem 1rem;
+}
+
+button:hover:not(:disabled) {
+  background: #4E50DC;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.validation,
+.error {
+  color: #B42318;
+  font-size: .75rem;
+  line-height: 1.4;
+}
+
+.error {
+  background: #FEF3F2;
+  border: 1px solid #FECDCA;
+  border-left: 3px solid #B42318;
+  border-radius: 8px;
+  margin: 0;
+  padding: .75rem;
+}
+
+.register-link {
+  color: #667085;
+  font-size: .875rem;
+  margin: 1.5rem 0 0;
+}
+
+a {
+  color: #6365EF;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #4E50DC;
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .auth-page {
+    padding: 1rem;
+  }
+
+  .auth-card {
+    display: block;
+    max-width: 30rem;
+    min-height: 0;
+  }
+
+  .auth-art {
+    min-height: 13rem;
+    padding: 1.5rem;
+  }
+
+  .art-copy {
+    bottom: 1.5rem;
+    max-width: 18rem;
+  }
+
+  .art-copy h2 {
+    font-size: 1.5rem;
+    margin: .45rem 0;
+  }
+
+  .art-copy p {
+    font-size: .8125rem;
+  }
+
+  .art-grid {
+    top: 2rem;
+  }
+
+  .auth-panel {
+    padding: 2rem 1.5rem;
+  }
+}
