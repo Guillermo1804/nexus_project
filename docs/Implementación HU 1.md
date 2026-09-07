@@ -2,9 +2,9 @@
 
 ## Estado
 
-Fase 1 - Confirmar contrato.
+Fase 2 - Backend implementado y entorno Docker preparado.
 
-Esta fase se documenta como una propuesta inicial porque la carpeta `Backend/` esta vacia y el frontend Angular aun contiene un proyecto base sin rutas ni integracion HTTP.
+La fase 1 definio un contrato inicial basado en sesiones Django. En esta fase se implemento ese contrato en el backend y se preparo un entorno reproducible con Docker Compose para ejecutar Django junto con PostgreSQL.
 
 ## Tecnologias confirmadas
 
@@ -15,10 +15,60 @@ Esta fase se documenta como una propuesta inicial porque la carpeta `Backend/` e
 
 ## Hallazgos del repositorio
 
-- No existen actualmente archivos Django, proyecto, aplicaciones, modelos, migraciones ni configuracion de base de datos.
+- El proyecto Django base existe en `Backend/nexus/` y utiliza el modelo `User` integrado de Django.
+- No se requiere un modelo propio ni migraciones de la aplicacion de autenticacion, porque la autenticacion usa las migraciones incluidas por Django.
 - Angular ya tiene configurado el router, pero `routes` esta vacio.
 - Angular tiene disponible `@angular/forms` como dependencia.
 - La pantalla actual es el contenido de bienvenida generado por Angular y aun no representa el flujo de autenticacion.
+
+## Implementacion de fase 2
+
+### Backend Django
+
+- Se creo la aplicacion `auth_api`.
+- Se expusieron `POST /api/auth/login/`, `POST /api/auth/logout/` y `GET /api/auth/session/`.
+- El login usa `authenticate()` y `login()` de Django, acepta JSON y devuelve solamente `id`, `username` e `is_staff`.
+- Las credenciales invalidas, los usuarios inexistentes, los usuarios inactivos y las solicitudes incompletas devuelven el mismo `401` con `Credenciales invalidas.`.
+- Logout valida que exista una sesion, la invalida y responde `204`.
+- La consulta de sesion responde `401` con `No autenticado.` cuando no hay sesion valida.
+- La vista de sesion entrega la cookie CSRF para que el cliente pueda preparar solicitudes de cambio de estado.
+- Se mantuvo la cookie de sesion `HttpOnly` y se parametrizaron secreto, hosts, cookies seguras y origenes CSRF mediante variables de entorno.
+
+### Base de datos y Docker
+
+- SQLite continua siendo la base de datos predeterminada para desarrollo local.
+- Se agrego soporte para PostgreSQL mediante `DATABASE_ENGINE=postgres` y variables `POSTGRES_*`.
+- `Backend/docker-compose.yml` levanta `web` y `db` usando `postgres:16-alpine`, un volumen persistente y un healthcheck antes de iniciar Django.
+- `Backend/Dockerfile` instala las dependencias, ejecuta migraciones y arranca Django en el puerto `8000`.
+- Las dependencias Python quedaron declaradas en `Backend/requirements.txt`.
+
+Para levantar el backend y la base de datos con Docker:
+
+```bash
+cd Backend
+docker compose up --build
+```
+
+La API queda disponible en `http://localhost:8000/`. En un entorno real se debe definir un `DJANGO_SECRET_KEY` seguro, restringir `DJANGO_ALLOWED_HOSTS`, usar HTTPS y configurar `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` y `CSRF_TRUSTED_ORIGINS`.
+
+### Pruebas implementadas
+
+Se agregaron pruebas para:
+
+- Login exitoso y respuesta mínima del usuario.
+- Respuesta uniforme ante contraseña incorrecta y usuario inexistente.
+- Rechazo de usuarios inactivos.
+- Consulta de sesión, logout y rechazo posterior al logout.
+
+Validaciones ejecutadas correctamente:
+
+```bash
+cd Backend/nexus
+python manage.py test auth_api
+python manage.py check
+```
+
+Resultado: 4 pruebas correctas y sin errores de comprobación Django. La validación `docker compose config` no pudo ejecutarse en este entorno porque Docker CLI no está instalado o no está disponible en el `PATH`.
 
 ## Contrato propuesto
 
@@ -123,7 +173,7 @@ El backend invalidara la sesion y eliminara la cookie de sesion cuando correspon
 
 Estas rutas aun no estan implementadas.
 
-## Decisiones pendientes antes de la fase 2
+## Decisiones pendientes antes de la fase 3
 
 1. Confirmar si el identificador definitivo sera `username`, correo electronico o ambos.
 2. Confirmar la politica de expiracion, renovacion y duracion de la sesion.
@@ -134,8 +184,12 @@ Estas rutas aun no estan implementadas.
 
 ## Resultado de la fase 1
 
-Se dejo definido un contrato inicial de autenticacion basado en sesiones Django, SQLite para desarrollo, respuestas JSON uniformes y proteccion tanto en frontend como en backend. No se modifico codigo funcional porque el backend aun no existe y las decisiones pendientes deben confirmarse antes de implementarlo.
+Se dejo definido un contrato inicial de autenticacion basado en sesiones Django, SQLite para desarrollo, respuestas JSON uniformes y proteccion tanto en frontend como en backend.
+
+## Resultado de la fase 2
+
+El backend Django ya implementa el contrato de autenticacion y cuenta con pruebas automatizadas para los criterios principales. El entorno de despliegue local con Docker Compose permite ejecutar Django con PostgreSQL y conserva los datos en un volumen. El frontend Angular aun no consume estos endpoints y la configuracion de Docker debe validarse en un equipo con Docker instalado.
 
 ## Permiso requerido
 
-Solicito autorizacion para continuar con la fase 2: crear el proyecto Django, configurar SQLite, implementar el modelo/configuracion de autenticacion y exponer los endpoints definidos en este documento.
+Solicito autorizacion para continuar con la fase 3: implementar en Angular el formulario de login, el servicio de autenticacion, la gestion CSRF/sesion, la guardia de rutas, el interceptor HTTP, la ruta protegida `/inicio` y el cierre de sesion.
