@@ -1,0 +1,197 @@
+<div class="academic-committee-card nexus-card">
+  <!-- Card Header -->
+  <div class="nexus-card__header">
+    <div class="header-left">
+      <div class="icon-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6365EF" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="card-title">Comité Tutorial y Académico</h3>
+        <p class="card-subtitle">Cuerpo colegiado asignado al seguimiento doctoral (HU-04)</p>
+      </div>
+    </div>
+
+    @if (isCoordinator() && !isReadOnly()) {
+      <button type="button" class="btn-nexus-primary btn-sm" (click)="openAssignModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Asignar Miembro
+      </button>
+    }
+  </div>
+
+  <!-- Messages -->
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage() && !showAssignModal()) {
+    <div class="alert alert-danger">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Actualizando miembros del comité...</p>
+    </div>
+  } @else if (members().length === 0) {
+    <div class="empty-committee">
+      <div class="empty-icon">👥</div>
+      <p class="empty-title">Sin miembros asignados al comité</p>
+      <p class="empty-desc">El coordinador aún no ha designado asesores o vocales para este estudiante.</p>
+    </div>
+  } @else {
+    <!-- Members List -->
+    <div class="committee-list">
+      @for (member of members(); track member.id) {
+        <div class="member-item" [class.member-item--main]="member.rol_comite === 'ASESOR_PRINCIPAL'">
+          <!-- Avatar -->
+          <div class="member-avatar" [class.member-avatar--main]="member.rol_comite === 'ASESOR_PRINCIPAL'">
+            {{ getInitials(member.user_detail?.full_name || member.user_detail?.email) }}
+          </div>
+
+          <!-- Info -->
+          <div class="member-details">
+            <div class="member-name-row">
+              <span class="member-name">{{ member.user_detail?.full_name || 'Académico #' + member.user }}</span>
+              <app-pill-badge [type]="getRoleBadgeType(member.rol_comite)" size="sm">
+                {{ getRoleLabel(member.rol_comite) }}
+              </app-pill-badge>
+            </div>
+
+            <div class="member-meta">
+              <span class="meta-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                {{ member.user_detail?.email }}
+              </span>
+              <span class="meta-dot">•</span>
+              <span class="meta-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Asignado: {{ member.fecha_asignacion | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          @if (isCoordinator() && !isReadOnly()) {
+            <button
+              type="button"
+              class="btn-icon-danger"
+              title="Remover miembro del comité"
+              (click)="removeMember(member.id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ================= ASSIGN MEMBER MODAL ================= -->
+@if (showAssignModal()) {
+  <div class="modal-backdrop" (click)="closeAssignModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Asignar Miembro al Comité Tutorial</h3>
+        <button type="button" class="btn-close" (click)="closeAssignModal()">×</button>
+      </div>
+
+      <form [formGroup]="assignForm" (ngSubmit)="submitAssignMember()" class="modal-form">
+        @if (errorMessage()) {
+          <div class="alert alert-danger">
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <div class="form-group">
+          <label class="form-label" for="userId">Docente / Asesor Académico *</label>
+          @if (availableAdvisors().length > 0) {
+            <select id="userId" class="form-select" formControlName="userId">
+              <option [ngValue]="null" disabled>-- Seleccione un Asesor / Docente --</option>
+              @for (adv of availableAdvisors(); track adv.id) {
+                <option [value]="adv.id">
+                  {{ adv.full_name || adv.fullName || (adv.first_name + ' ' + adv.last_name) }} ({{ adv.email }})
+                </option>
+              }
+            </select>
+          } @else {
+            <input
+              id="userId"
+              type="number"
+              class="form-input"
+              formControlName="userId"
+              placeholder="Ingrese ID del asesor académico (ej. 2)"
+            />
+          }
+          @if (assignForm.get('userId')?.touched && assignForm.get('userId')?.invalid) {
+            <span class="field-error">Debe seleccionar un asesor o académico válido.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rolComite">Rol en el Comité *</label>
+          <select id="rolComite" class="form-select" formControlName="rolComite">
+            @for (opt of roleOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fechaAsignacion">Fecha de Asignación *</label>
+          <input
+            id="fechaAsignacion"
+            type="date"
+            class="form-input"
+            formControlName="fechaAsignacion"
+          />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-nexus-outline" (click)="closeAssignModal()" [disabled]="isSubmitting()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-nexus-primary" [disabled]="isSubmitting() || assignForm.invalid">
+            @if (isSubmitting()) {
+              Guardando...
+            } @else {
+              Asignar Miembro
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

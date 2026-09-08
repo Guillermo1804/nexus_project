@@ -1,0 +1,580 @@
+<div class="dashboard-page">
+  <!-- Top Header -->
+  <header class="dashboard-header">
+    <div class="header-titles">
+      <div class="badge-role">COORDINACIÓN ACADÉMICA</div>
+      <h1 class="page-title">Dashboard del Coordinador</h1>
+      <p class="page-subtitle">
+        Supervisión institucional, métricas analíticas en tiempo real y detección temprana de rezago doctoral.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button 
+        type="button" 
+        class="btn-export-cohort" 
+        (click)="exportCohortExcel()" 
+        [disabled]="isExporting()"
+        title="Exportar archivo Excel con el resumen de la cohorte (.xlsx)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="8" y1="13" x2="16" y2="13"></line>
+          <line x1="8" y1="17" x2="16" y2="17"></line>
+        </svg>
+        <span>Exportar Cohorte (.xlsx)</span>
+      </button>
+      <div class="period-pill">
+        <span class="period-dot"></span>
+        <span>Ciclo Activo: <strong>{{ periodService.activePeriod() }}</strong></span>
+      </div>
+      <button 
+        type="button" 
+        class="btn-refresh" 
+        (click)="loadAll()" 
+        [disabled]="loading() || loadingSupervision()"
+        aria-label="Actualizar métricas">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="loading() || loadingSupervision()">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Actualizar</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Calculando agregaciones y métricas institucionales...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-banner">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <h4>Error al cargar el dashboard</h4>
+        <p>{{ error() }}</p>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadAll()">Reintentar</button>
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <!-- 1. KPI Summary Cards Grid -->
+    <section class="kpis-grid" aria-label="Métricas Principales">
+      <!-- KPI 1: Estudiantes Activos -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-blue">
+          <span>👥</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Estudiantes Activos</span>
+          <div class="kpi-value">{{ kpis()?.total_estudiantes_activos || 0 }}</div>
+          <span class="kpi-sub">Matrícula doctoral en curso</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: Tutorías Registradas -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-purple">
+          <span>📘</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Tutorías del Periodo</span>
+          <div class="kpi-value">{{ kpis()?.total_tutorias_periodo || 0 }}</div>
+          <span class="kpi-sub">Sesiones documentadas</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: Acuerdos Activos -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-teal">
+          <span>📝</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Acuerdos en Seguimiento</span>
+          <div class="kpi-value">{{ kpis()?.total_acuerdos_activos || 0 }}</div>
+          <span class="kpi-sub">Pendientes y en proceso</span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Acuerdos Vencidos -->
+      <div class="kpi-card kpi-card--alert">
+        <div class="kpi-icon-wrap icon-red">
+          <span>⚠️</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Acuerdos Vencidos</span>
+          <div class="kpi-value text-alert">{{ kpis()?.total_acuerdos_vencidos || 0 }}</div>
+          <span class="kpi-sub text-alert">Requieren atención</span>
+        </div>
+      </div>
+
+      <!-- KPI 5: Tasa de Cumplimiento -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-green">
+          <span>🎯</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Cumplimiento Acuerdos</span>
+          <div class="kpi-value">{{ kpis()?.tasa_cumplimiento_acuerdos || 0 }}%</div>
+          <div class="kpi-progress">
+            <div class="kpi-progress-bar" [style.width.%]="kpis()?.tasa_cumplimiento_acuerdos || 0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 6: Promedio Avance Tesis -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap icon-indigo">
+          <span>📊</span>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">Avance Global de Tesis</span>
+          <div class="kpi-value">{{ kpis()?.promedio_avance_tesis || 0 }}%</div>
+          <div class="kpi-progress">
+            <div class="kpi-progress-bar bar-indigo" [style.width.%]="kpis()?.promedio_avance_tesis || 0"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Institutional Risk Semaphore Section -->
+    <section class="risk-section">
+      <div class="section-heading">
+        <h2 class="section-title">Semáforo de Riesgo Institucional</h2>
+        <p class="section-subtitle">Detección reactiva de anomalías en compromisos y periodicidad tutorial</p>
+      </div>
+
+      <div class="semaphore-grid">
+        <!-- Semaphore 1: Atención Crítica -->
+        <div 
+          class="semaphore-card card-critica" 
+          [class.active]="riskFilter() === 'CRITICO'"
+          (click)="setRiskFilter(riskFilter() === 'CRITICO' ? 'TODOS' : 'CRITICO')"
+          role="button"
+          tabindex="0">
+          <div class="semaphore-header">
+            <span class="semaphore-badge badge-critica">CRÍTICA</span>
+            <span class="semaphore-count">{{ riskSemaphore()?.atencion_critica || 0 }}</span>
+          </div>
+          <h3 class="semaphore-title">Atención Inmediata</h3>
+          <p class="semaphore-desc">Alumnos con acuerdos vencidos &gt; 15 días o sin tutoría &gt; 60 días.</p>
+          <div class="semaphore-footer">
+            <span>{{ riskFilter() === 'CRITICO' ? 'Filtro aplicado ✓' : 'Clic para filtrar' }}</span>
+          </div>
+        </div>
+
+        <!-- Semaphore 2: Atención Preventiva -->
+        <div 
+          class="semaphore-card card-preventiva" 
+          [class.active]="riskFilter() === 'PREVENTIVO'"
+          (click)="setRiskFilter(riskFilter() === 'PREVENTIVO' ? 'TODOS' : 'PREVENTIVO')"
+          role="button"
+          tabindex="0">
+          <div class="semaphore-header">
+            <span class="semaphore-badge badge-preventiva">PREVENTIVA</span>
+            <span class="semaphore-count">{{ riskSemaphore()?.atencion_preventiva || 0 }}</span>
+          </div>
+          <h3 class="semaphore-title">Alerta Preventiva</h3>
+          <p class="semaphore-desc">Acuerdos por vencer en &le; 5 días o sin tutoría &gt; 45 días.</p>
+          <div class="semaphore-footer">
+            <span>{{ riskFilter() === 'PREVENTIVO' ? 'Filtro aplicado ✓' : 'Clic para filtrar' }}</span>
+          </div>
+        </div>
+
+        <!-- Semaphore 3: Al Día -->
+        <div 
+          class="semaphore-card card-al-dia" 
+          [class.active]="riskFilter() === 'AL_DIA'"
+          (click)="setRiskFilter(riskFilter() === 'AL_DIA' ? 'TODOS' : 'AL_DIA')"
+          role="button"
+          tabindex="0">
+          <div class="semaphore-header">
+            <span class="semaphore-badge badge-al-dia">AL DÍA</span>
+            <span class="semaphore-count">{{ riskSemaphore()?.alumnos_al_dia || 0 }}</span>
+          </div>
+          <h3 class="semaphore-title">Seguimiento Regular</h3>
+          <p class="semaphore-desc">Trayectoria académica y sesiones en tiempos regulares sin incidencias.</p>
+          <div class="semaphore-footer">
+            <span>{{ riskFilter() === 'AL_DIA' ? 'Filtro aplicado ✓' : 'Clic para filtrar' }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Active Supervision Rules Panel (HU-26) -->
+    <section class="supervision-section" aria-label="Alertas de Supervisión Activa">
+      <div class="section-heading-with-actions">
+        <div>
+          <div class="supervision-pill">MOTOR DE REGLAS V2.0</div>
+          <h2 class="section-title">Alertas de Supervisión Activa</h2>
+          <p class="section-subtitle">
+            Detección proactiva centralizada: rezago tutorial (&gt;45 días), acuerdos concluidos sin evidencia y calendarización próxima (&le; 7 días).
+          </p>
+        </div>
+
+        <div class="supervision-summary-badges">
+          <div class="summary-chip" [class.active]="supervisionTypeFilter() === 'TODAS'" (click)="setSupervisionTypeFilter('TODAS')">
+            <span class="chip-label">Total Alertas:</span>
+            <span class="chip-count">{{ totalSupervisionAlertas() }}</span>
+          </div>
+          <div class="summary-chip chip-tutoria" [class.active]="supervisionTypeFilter() === 'FALTA_TUTORIA_ACTIVA'" (click)="setSupervisionTypeFilter('FALTA_TUTORIA_ACTIVA')">
+            <span class="chip-icon">📘</span>
+            <span class="chip-label">Sin Tutoría (&gt;45d):</span>
+            <span class="chip-count">{{ supervisionSummary().falta_tutoria }}</span>
+          </div>
+          <div class="summary-chip chip-evidencia" [class.active]="supervisionTypeFilter() === 'ACUERDO_SIN_EVIDENCIA'" (click)="setSupervisionTypeFilter('ACUERDO_SIN_EVIDENCIA')">
+            <span class="chip-icon">📎</span>
+            <span class="chip-label">Sin Evidencia:</span>
+            <span class="chip-count">{{ supervisionSummary().acuerdo_sin_evidencia }}</span>
+          </div>
+          <div class="summary-chip chip-proxima" [class.active]="supervisionTypeFilter() === 'PROXIMA_TUTORIA_CERCANA'" (click)="setSupervisionTypeFilter('PROXIMA_TUTORIA_CERCANA')">
+            <span class="chip-icon">📅</span>
+            <span class="chip-label">Próximas (&le;7d):</span>
+            <span class="chip-count">{{ supervisionSummary().proxima_tutoria }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Severity Filter Toolbar -->
+      <div class="supervision-toolbar">
+        <span class="toolbar-label">Filtrar por Severidad:</span>
+        <div class="sev-pills">
+          <button 
+            type="button" 
+            class="sev-chip" 
+            [class.active]="supervisionSeverityFilter() === 'TODAS'"
+            (click)="setSupervisionSeverityFilter('TODAS')">
+            Todas
+          </button>
+          <button 
+            type="button" 
+            class="sev-chip chip-alta" 
+            [class.active]="supervisionSeverityFilter() === 'ALTA'"
+            (click)="setSupervisionSeverityFilter('ALTA')">
+            Alta
+          </button>
+          <button 
+            type="button" 
+            class="sev-chip chip-media" 
+            [class.active]="supervisionSeverityFilter() === 'MEDIA'"
+            (click)="setSupervisionSeverityFilter('MEDIA')">
+            Media
+          </button>
+          <button 
+            type="button" 
+            class="sev-chip chip-informativa" 
+            [class.active]="supervisionSeverityFilter() === 'INFORMATIVA'"
+            (click)="setSupervisionSeverityFilter('INFORMATIVA')">
+            Informativa
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerts List / Grid -->
+      @if (loadingSupervision()) {
+        <div class="supervision-loading">
+          <div class="spinner-sm"></div>
+          <span>Evaluando reglas de supervisión activa...</span>
+        </div>
+      } @else if (filteredSupervisionAlerts().length === 0) {
+        <div class="supervision-empty">
+          <span class="empty-emoji">✨</span>
+          <h4>No hay alertas activas para este criterio</h4>
+          <p>Los estudiantes cumplen con sus sesiones de tutoría, evidencias documentales y calendarización.</p>
+        </div>
+      } @else {
+        <div class="supervision-alerts-grid">
+          @for (alert of filteredSupervisionAlerts(); track alert.regla_id + '-' + alert.student_id + '-' + (alert.agreement_id || alert.session_id || alert.dias_sin_tutoria || alert.titulo)) {
+            <div class="supervision-card alert-sev-{{ alert.severidad.toLowerCase() }}">
+              <div class="supervision-card-header">
+                <div class="alert-type-indicator">
+                  <span class="rule-icon">{{ getSupervisionTypeIcon(alert.tipo) }}</span>
+                  <span class="rule-id">{{ alert.regla_id }}</span>
+                </div>
+                <app-pill-badge 
+                  [type]="getSeverityBadgeType(alert.severidad)" 
+                  [text]="alert.severidad">
+                </app-pill-badge>
+              </div>
+
+              <div class="supervision-card-body">
+                <h4 class="alert-title">{{ alert.titulo }}</h4>
+                <p class="alert-message">{{ alert.mensaje }}</p>
+
+                <div class="alert-student-info">
+                  <span class="student-name-tag">🎓 {{ alert.student_nombre }}</span>
+                  <span class="student-mat-tag">({{ alert.student_matricula }})</span>
+                </div>
+
+                @if (alert.dias_sin_tutoria !== undefined) {
+                  <div class="alert-meta-row">
+                    <span class="meta-label">Inactividad tutorial:</span>
+                    <strong class="meta-val meta-danger">{{ alert.dias_sin_tutoria }} días</strong>
+                  </div>
+                }
+                @if (alert.agreement_descripcion) {
+                  <div class="alert-meta-row">
+                    <span class="meta-label">Acuerdo:</span>
+                    <strong class="meta-val">{{ alert.agreement_descripcion }}</strong>
+                  </div>
+                }
+                @if (alert.fecha_proxima_reunion) {
+                  <div class="alert-meta-row">
+                    <span class="meta-label">Fecha programada:</span>
+                    <strong class="meta-val">{{ alert.fecha_proxima_reunion }} (en {{ alert.dias_restantes }} días)</strong>
+                  </div>
+                }
+              </div>
+
+              <div class="supervision-card-footer">
+                <button 
+                  type="button" 
+                  class="btn-alert-action" 
+                  (click)="navigateToStudent(alert.student_id)">
+                  Ir al Expediente &rarr;
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- 4. Cohort Distribution & Progress Section -->
+    @if (cohortDistribution().length > 0) {
+      <section class="cohort-section">
+        <div class="section-heading">
+          <h2 class="section-title">Distribución y Avance por Cohorte</h2>
+          <p class="section-subtitle">Promedio del avance de tesis doctoral segmentado por generación</p>
+        </div>
+
+        <div class="cohort-grid">
+          @for (coh of cohortDistribution(); track coh.cohorte) {
+            <div 
+              class="cohort-card" 
+              [class.active]="cohortFilter() === coh.cohorte"
+              (click)="setCohortFilter(cohortFilter() === coh.cohorte ? 'TODAS' : coh.cohorte)">
+              <div class="cohort-card-header">
+                <span class="cohort-name">Generación {{ coh.cohorte }}</span>
+                <span class="cohort-count">{{ coh.total_estudiantes }} estudiante(s)</span>
+              </div>
+              <div class="cohort-progress-wrap">
+                <div class="cohort-progress-track">
+                  <div class="cohort-progress-fill" [style.width.%]="coh.promedio_avance"></div>
+                </div>
+                <span class="cohort-pct">{{ coh.promedio_avance }}%</span>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- 5. Prioritized Students Attention Table -->
+    <section class="prioritized-table-section">
+      <div class="table-header-block">
+        <div>
+          <h2 class="section-title">Tabla Priorizada de Atención a Estudiantes</h2>
+          <p class="section-subtitle">Ordenamiento automático según índice de rezago y criticidad tutorial</p>
+        </div>
+
+        <!-- Filter Controls Toolbar -->
+        <div class="toolbar">
+          <!-- Search Box -->
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              [ngModel]="searchTerm()" 
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Buscar alumno, matrícula o asesor..."
+              aria-label="Buscar estudiante">
+            @if (searchTerm()) {
+              <button type="button" class="btn-clear" (click)="onSearchChange('')">&times;</button>
+            }
+          </div>
+
+          <!-- Cohort Selector -->
+          <div class="select-box">
+            <select [ngModel]="cohortFilter()" (ngModelChange)="setCohortFilter($event)">
+              <option value="TODAS">Todas las Cohortes</option>
+              @for (c of availableCohorts(); track c) {
+                <option [value]="c">Cohorte {{ c }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Risk Selector -->
+          <div class="risk-pills">
+            <button 
+              type="button" 
+              class="risk-chip" 
+              [class.active]="riskFilter() === 'TODOS'"
+              (click)="setRiskFilter('TODOS')">
+              Todos
+            </button>
+            <button 
+              type="button" 
+              class="risk-chip chip-critico" 
+              [class.active]="riskFilter() === 'CRITICO'"
+              (click)="setRiskFilter('CRITICO')">
+              Críticos
+            </button>
+            <button 
+              type="button" 
+              class="risk-chip chip-preventivo" 
+              [class.active]="riskFilter() === 'PREVENTIVO'"
+              (click)="setRiskFilter('PREVENTIVO')">
+              Preventivos
+            </button>
+            <button 
+              type="button" 
+              class="risk-chip chip-al-dia" 
+              [class.active]="riskFilter() === 'AL_DIA'"
+              (click)="setRiskFilter('AL_DIA')">
+              Al Día
+            </button>
+          </div>
+
+          @if (riskFilter() !== 'TODOS' || cohortFilter() !== 'TODAS' || searchTerm()) {
+            <button type="button" class="btn-clear-all" (click)="clearFilters()">Limpiar Filtros</button>
+          }
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div class="table-container">
+        @if (filteredStudents().length === 0) {
+          <div class="empty-table">
+            <div class="empty-icon">🔍</div>
+            <h4>Sin coincidencias</h4>
+            <p>No se encontraron estudiantes para los filtros seleccionados.</p>
+            <button type="button" class="btn-reset-filters" (click)="clearFilters()">Restablecer Filtros</button>
+          </div>
+        } @else {
+          <table class="nexus-table">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Cohorte</th>
+                <th>Asesor Principal</th>
+                <th>Días sin Tutoría</th>
+                <th>Acuerdos Vencidos</th>
+                <th>Avance de Tesis</th>
+                <th>Nivel de Riesgo</th>
+                <th class="text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (student of filteredStudents(); track student.id) {
+                <tr class="table-row-risk-{{ student.nivel_riesgo.toLowerCase() }}">
+                  <!-- Student Column -->
+                  <td class="student-col">
+                    <div class="student-info">
+                      <strong class="student-name">{{ student.nombre }}</strong>
+                      <span class="student-matricula">{{ student.matricula }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Cohort -->
+                  <td>
+                    <span class="cohort-tag">{{ student.cohorte }}</span>
+                  </td>
+
+                  <!-- Principal Advisor -->
+                  <td>
+                    <span class="advisor-name">{{ student.asesor_principal }}</span>
+                  </td>
+
+                  <!-- Days without Tutoring -->
+                  <td>
+                    <span 
+                      class="days-badge" 
+                      [class.days-warning]="student.dias_sin_tutoria !== null && student.dias_sin_tutoria > 45 && student.dias_sin_tutoria <= 60"
+                      [class.days-danger]="student.dias_sin_tutoria === null || student.dias_sin_tutoria > 60">
+                      {{ student.dias_sin_tutoria_display }}
+                    </span>
+                  </td>
+
+                  <!-- Overdue Agreements -->
+                  <td>
+                    @if (student.acuerdos_vencidos > 0) {
+                      <span class="overdue-tag">{{ student.acuerdos_vencidos }} vencido(s)</span>
+                    } @else {
+                      <span class="no-overdue">0</span>
+                    }
+                  </td>
+
+                  <!-- Thesis Progress -->
+                  <td>
+                    <div class="thesis-cell">
+                      <div class="progress-track-sm">
+                        <div class="progress-fill-sm" [style.width.%]="student.avance_tesis"></div>
+                      </div>
+                      <span class="progress-text-sm">{{ student.avance_tesis }}%</span>
+                    </div>
+                  </td>
+
+                  <!-- Risk Badge -->
+                  <td>
+                    <app-pill-badge 
+                      [type]="getRiskBadgeType(student.nivel_riesgo)" 
+                      [text]="getRiskLabel(student.nivel_riesgo)">
+                    </app-pill-badge>
+                  </td>
+
+                  <!-- Action -->
+                  <td class="text-right">
+                    <div style="display: inline-flex; gap: 6px; align-items: center;">
+                      <button 
+                        type="button" 
+                        class="btn-icon-export" 
+                        (click)="exportStudentExcel(student.id, student.matricula)"
+                        [disabled]="isExporting()"
+                        title="Exportar Expediente Excel (.xlsx)">
+                        📊
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-icon-export" 
+                        (click)="exportStudentPdf(student.id, student.matricula)"
+                        [disabled]="isExporting()"
+                        title="Descargar Cédula PDF (.pdf)">
+                        📑
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-view-expediente" 
+                        (click)="navigateToDossier(student.id)"
+                        title="Consultar Cédula Oficial / Full Dossier">
+                        📄 Cédula
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-view-expediente" 
+                        (click)="navigateToStudent(student.id)"
+                        title="Consultar expediente completo">
+                        Expediente &rarr;
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <div class="table-footer-info">
+            <span>Mostrando {{ filteredStudents().length }} de {{ prioritizedStudents().length }} estudiante(s) evaluados</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>
