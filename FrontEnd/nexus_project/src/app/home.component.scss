@@ -1,0 +1,10 @@
+.home-page { min-height: 100vh; padding: clamp(2rem, 7vw, 6rem); }
+.home-header { display: flex; justify-content: space-between; gap: 2rem; align-items: start; max-width: 70rem; margin: 0 auto 3rem; }
+.eyebrow { color: #b75d32; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.14rem; }
+h1 { margin: 0.5rem 0; color: #173f3f; font: 700 clamp(2.5rem, 7vw, 5rem)/0.95 Georgia, serif; }
+p { color: #526767; }
+button { padding: 0.75rem 1rem; border: 1px solid #173f3f; background: transparent; color: #173f3f; font: 700 0.9rem inherit; cursor: pointer; }
+.role-panel { max-width: 30rem; margin: 0 auto; padding: 2rem; background: #fffdf8; border-left: 0.5rem solid #e9a23b; box-shadow: 8px 8px 0 #173f3f; }
+.role-panel span { display: block; color: #b75d32; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+.role-panel strong { display: block; margin-top: 0.5rem; color: #173f3f; font: 700 2rem Georgia, serif; }
+@media (max-width: 600px) { .home-header { flex-direction: column; } }

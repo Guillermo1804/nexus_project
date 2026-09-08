@@ -54,7 +54,7 @@ Situacion actual:
 - No existen aun pagina de login, servicio de autenticacion, guard, interceptor HTTP ni modelo de tokens/sesion.
 - El proyecto ya incluye `@angular/forms`, `@angular/router` y `rxjs`, por lo que pueden utilizarse para implementar el flujo sin agregar dependencias inicialmente.
 
-Esta historia describe el comportamiento objetivo; no debe interpretarse que los endpoints o componentes anteriores ya estan implementados.
+El backend de autenticacion y el flujo frontend base ya estan implementados; la integracion completa queda para la Fase 4.
 
 ## Criterios de aceptacion
 

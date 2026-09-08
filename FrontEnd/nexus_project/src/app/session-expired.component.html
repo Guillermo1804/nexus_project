@@ -1,0 +1,10 @@
+@if (auth.sessionExpired()) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="expired-title">
+      <p class="eyebrow">Sesion finalizada</p>
+      <h2 id="expired-title">Tu sesion expiro</h2>
+      <p>Debes volver a iniciar sesion para continuar.</p>
+      <button type="button" (click)="returnToLogin()">Volver a iniciar sesion</button>
+    </section>
+  </div>
+}
