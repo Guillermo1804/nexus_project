@@ -50,11 +50,7 @@ AUTH_USER_MODEL = 'identity.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-<<<<<<< HEAD
-    'corsheaders.middleware.CorsMiddleware',
-=======
     'nexus.middleware.DevelopmentCorsMiddleware',
->>>>>>> 5500b6479b20ea3dd7350205b1f3603b392e4fa2
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -100,16 +96,9 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-<<<<<<< HEAD
-    origin for origin in os.getenv(
-        'CORS_ALLOWED_ORIGINS',
-        'http://localhost:4200,http://127.0.0.1:4200',
-    ).split(',') if origin
-=======
     origin
     for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:4200').split(',')
     if origin
->>>>>>> 5500b6479b20ea3dd7350205b1f3603b392e4fa2
 ]
 
 
@@ -136,11 +125,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
