@@ -4,15 +4,15 @@
       <span class="product">NEXUS</span>
       <h1>Inicio</h1>
     </div>
-    <button type="button" (click)="logout()" [disabled]="isLeaving">
-      {{ isLeaving ? 'Cerrando sesion...' : 'Cerrar sesion' }}
+    <button class="logout-btn" type="button" (click)="logout()" [disabled]="isLeaving">
+      {{ isLeaving ? 'Cerrando sesión...' : 'Cerrar sesión' }}
     </button>
   </header>
 
   @if (auth.user(); as user) {
-    <section aria-label="Informacion de sesion">
-      <p>Bienvenido, {{ user.first_name || user.email }}.</p>
-      <p class="role">Rol: {{ user.rol }}</p>
-    </section>
+  <section aria-label="Informacion de sesion">
+    <p>Bienvenido, {{ user.first_name || user.email }}.</p>
+    <p class="role">Rol: {{ user.rol }}</p>
+  </section>
   }
 </main>

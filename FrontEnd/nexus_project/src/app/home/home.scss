@@ -1,7 +1,62 @@
-.home-shell { margin: 0 auto; max-width: 70rem; padding: 2rem; }
-header { align-items: center; border-bottom: 1px solid #d1d5db; display: flex; justify-content: space-between; padding-bottom: 1rem; }
-h1 { font-size: 1.5rem; margin: .35rem 0 0; }
-.product { color: #007f86; font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
-button { background: #fff; border: 1px solid #007f86; border-radius: 4px; color: #00646a; cursor: pointer; padding: .65rem .9rem; }
-section { margin-top: 2rem; }
-.role { color: #4b5563; }
+.home-shell {
+  margin: 0 auto;
+  max-width: 70rem;
+  padding: 2rem;
+}
+
+header {
+  align-items: center;
+  border-bottom: 1px solid #d1d5db;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: .35rem 0 0;
+}
+
+.product {
+  color: #007f86;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+button {
+  background: #fff;
+  border: 1px solid #007f86;
+  border-radius: 4px;
+  color: #00646a;
+  cursor: pointer;
+  padding: .65rem .9rem;
+}
+
+.logout-btn {
+  background: #007f86;
+  color: #fff;
+  border: 1px solid #007f86;
+  border-radius: 8px;
+  padding: .7rem 1rem;
+  font-weight: 600;
+  transition: transform .2s ease, opacity .2s ease, background .2s ease;
+}
+
+.logout-btn:hover:not(:disabled) {
+  background: #00646a;
+  transform: translateY(-1px);
+}
+
+.logout-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+section {
+  margin-top: 2rem;
+}
+
+.role {
+  color: #4b5563;
+}
