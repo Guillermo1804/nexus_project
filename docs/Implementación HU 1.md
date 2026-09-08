@@ -64,8 +64,31 @@ Resultado:
 - Definir o validar una restriccion de unicidad para el correo del usuario.
 - Definir respuestas especificas para perfiles de dominio cuando existan modelos de `alumnos`, `asesor` y `comite`.
 - Proteger los endpoints privados de cada modulo con `TokenAuthentication` y permisos.
+<<<<<<< HEAD
 - Agregar pruebas automatizadas permanentes para credenciales invalidas, usuarios inactivos, usuarios sin grupo, roles, logout y acceso sin token.
+=======
+>>>>>>> 5500b6479b20ea3dd7350205b1f3603b392e4fa2
 - Definir la politica de expiracion o rotacion de tokens.
+
+## Fase 3 - Frontend Angular
+
+- Se creo la ruta publica `/login` con un formulario reactivo para correo y contrasena.
+- Se agrego la ruta publica `/register` para crear una cuenta y su expediente de estudiante. Captura nombre, correo, matricula, cohorte y programa doctoral; crea `CustomUser` con rol inicial `STUDENT` y su registro `Student` asociado antes de autenticarlo.
+- El token y los datos minimos de usuario se mantienen solo en memoria; no se usa `localStorage` ni se persiste la contrasena.
+- La ruta privada `/home` usa una guarda de Angular y contiene el cierre de sesion.
+- Un interceptor agrega `Authorization: Token <token>` a las solicitudes autenticadas. Una respuesta `401` limpia la sesion, redirige a `/login` y muestra un unico aviso de sesion expirada.
+- Para desarrollo local, el frontend consume `http://localhost:8000/api/auth/` y el backend permite solo el origen `http://localhost:4200`. El origen se puede cambiar mediante `CORS_ALLOWED_ORIGINS`.
+
+## Contrato de autenticacion
+
+| Metodo | Ruta | Cuerpo / encabezado | Respuesta |
+| --- | --- | --- | --- |
+| `POST` | `/api/auth/login/` | `{ "email", "password" }` | `200` con `token`, datos minimos y `rol`; `401` generico para credenciales no validas. |
+| `POST` | `/api/auth/register/` | `{ "first_name", "last_name", "email", "password", "matricula", "cohorte", "programa_doctoral" }` | `201` con `token`, datos minimos y rol `STUDENT`; `400` si no se puede crear la cuenta. |
+| `GET` | `/api/auth/me/` | `Authorization: Token <token>` | `200` con la identidad minima; `401` sin token valido. |
+| `POST` | `/api/auth/logout/` | `Authorization: Token <token>` | `200` y elimina el token; `401` sin token valido. |
+
+La vigencia actual del token termina cuando se ejecuta logout; una politica de expiracion o rotacion queda pendiente de refinamiento.
 
 ## Validacion de la implementacion
 

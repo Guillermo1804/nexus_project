@@ -32,6 +32,9 @@ ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,1
 # Application definition
 
 INSTALLED_APPS = [
+    'nexus',
+    'apps.identity',
+    'apps.students',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,9 +46,15 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+AUTH_USER_MODEL = 'identity.CustomUser'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+<<<<<<< HEAD
     'corsheaders.middleware.CorsMiddleware',
+=======
+    'nexus.middleware.DevelopmentCorsMiddleware',
+>>>>>>> 5500b6479b20ea3dd7350205b1f3603b392e4fa2
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -91,10 +100,16 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
+<<<<<<< HEAD
     origin for origin in os.getenv(
         'CORS_ALLOWED_ORIGINS',
         'http://localhost:4200,http://127.0.0.1:4200',
     ).split(',') if origin
+=======
+    origin
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:4200').split(',')
+    if origin
+>>>>>>> 5500b6479b20ea3dd7350205b1f3603b392e4fa2
 ]
 
 
