@@ -1,0 +1,25 @@
+<main class="home-shell">
+  <header>
+    <div>
+      <span class="product">NEXUS</span>
+      <h1>Inicio</h1>
+    </div>
+    <button class="logout-btn" type="button" (click)="logout()" [disabled]="isLeaving">
+      {{ isLeaving ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+    </button>
+  </header>
+
+  @if (auth.user(); as user) {
+  <section aria-label="Informacion de sesion">
+    <p>Bienvenido, {{ user.first_name || user.email }}.</p>
+    <p class="role">Rol: {{ user.role }}</p>
+    <p>Permisos efectivos: {{ user.permissions.join(', ') }}</p>
+    @if (auth.hasPermission('users.role.assign')) {
+      <a routerLink="/admin/roles">Administrar roles</a>
+      <a routerLink="/admin/users">Cuentas institucionales</a>
+      <a routerLink="/admin/committee">Asociaciones académicas</a>
+      <a routerLink="/admin/audit">Historial administrativo</a>
+    }
+  </section>
+  }
+</main>
