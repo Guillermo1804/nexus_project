@@ -1,0 +1,44 @@
+<main>
+  <h1>Asociaciones académicas</h1>
+  <p>Vincula cuentas de asesoría o comité con estudiantes y controla su vigencia.</p>
+  <form (ngSubmit)="createAssignment()">
+    <label>Cuenta institucional
+      <select name="user" [(ngModel)]="form.user" required [disabled]="loading">
+        <option [ngValue]="null">Selecciona una cuenta</option>
+        @for (user of users; track user.id) { <option [ngValue]="user.id">{{ user.email }} ({{ user.role }})</option> }
+      </select>
+    </label>
+    <label>Estudiante
+      <select name="student" [(ngModel)]="form.student" required [disabled]="loading">
+        <option [ngValue]="null">Selecciona un estudiante</option>
+        @for (student of students; track student.id) { <option [ngValue]="student.id">{{ student.matricula }} - {{ student.nombre_completo }}</option> }
+      </select>
+    </label>
+    <label>Participación
+      <select name="rol_comite" [(ngModel)]="form.rol_comite">
+        <option value="ASESOR_PRINCIPAL">Asesor principal</option>
+        <option value="COASESOR">Coasesor</option>
+        <option value="VOCAL">Vocal</option>
+        <option value="SECRETARIO">Secretario</option>
+      </select>
+    </label>
+    <button type="submit" [disabled]="loading">Crear asociación</button>
+  </form>
+  @if (loading) { <p>Cargando asociaciones...</p> } @else {
+    <table>
+      <thead><tr><th>Cuenta</th><th>Estudiante</th><th>Participación</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody>
+        @for (assignment of assignments; track assignment.id) {
+          <tr>
+            <td>{{ assignment.user_email }}</td>
+            <td>{{ assignment.student_name }}</td>
+            <td>{{ assignment.rol_comite }}</td>
+            <td>{{ assignment.is_active ? 'Activa' : 'Inactiva' }}</td>
+            <td><button type="button" (click)="toggle(assignment)">{{ assignment.is_active ? 'Desactivar' : 'Activar' }}</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+  @if (error) { <p role="alert">{{ error }}</p> }
+</main>
