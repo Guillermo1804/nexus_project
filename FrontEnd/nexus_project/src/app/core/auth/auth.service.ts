@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { AuthenticatedUser, LoginCredentials, LoginResponse, RegistrationData } from './auth.models';
+import { AuthenticatedUser, LoginCredentials, LoginResponse, Permission, RegistrationData, RoleAssignment, UserRole } from './auth.models';
 import { environment } from '../../../environments/environment';
 
 const AUTH_API = `${environment.apiUrl}/auth`;
@@ -34,6 +34,18 @@ export class AuthService {
 
   logout(): Observable<unknown> {
     return this.http.post(`${AUTH_API}/logout/`, {}).pipe(tap(() => this.clearSession()));
+  }
+
+  loadUsers(): Observable<AuthenticatedUser[]> {
+    return this.http.get<AuthenticatedUser[]>(`${AUTH_API}/users/`);
+  }
+
+  assignRole(userId: number, role: UserRole): Observable<AuthenticatedUser> {
+    return this.http.patch<AuthenticatedUser>(`${AUTH_API}/users/${userId}/role/`, { role } satisfies RoleAssignment);
+  }
+
+  hasPermission(permission: Permission): boolean {
+    return this.user()?.permissions.includes(permission) ?? false;
   }
 
   accessToken(): string | null {

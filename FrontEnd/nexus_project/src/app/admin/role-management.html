@@ -1,0 +1,29 @@
+<main>
+  <h1>Administración de roles</h1>
+  <p>Asigna el rol institucional que define los permisos efectivos del usuario.</p>
+
+  @if (loading) {
+    <p>Cargando usuarios...</p>
+  } @else {
+    <table>
+      <thead>
+        <tr><th>Usuario</th><th>Rol</th><th>Permisos efectivos</th></tr>
+      </thead>
+      <tbody>
+        @for (user of users; track user.id) {
+          <tr>
+            <td>{{ user.email }}</td>
+            <td>
+              <select [ngModel]="user.role" (ngModelChange)="assignRole(user, $event)">
+                @for (role of roles; track role) { <option [value]="role">{{ role }}</option> }
+              </select>
+            </td>
+            <td>{{ user.permissions.join(', ') }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (error) { <p role="alert">{{ error }}</p> }
+</main>

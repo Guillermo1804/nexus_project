@@ -3,16 +3,150 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import CustomUser, Student
+from .models import AcademicCommittee, AdminAuditLog, CustomUser, Semester, Student, TutoringSession
+from .permissions import permissions_for_user
 
 
 INVALID_CREDENTIALS = 'Correo o contrasena incorrectos.'
 
 
 class UserSerializer(serializers.ModelSerializer):
+    roles = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'first_name', 'last_name', 'role')
+        fields = ('id', 'email', 'first_name', 'last_name', 'role', 'roles', 'permissions')
+
+    def get_roles(self, user):
+        return [user.role]
+
+    def get_permissions(self, user):
+        return sorted(permissions_for_user(user))
+
+
+class RoleAssignmentSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=CustomUser.Role.choices)
+
+
+class InstitutionalUserCreateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    role = serializers.ChoiceField(choices=[
+        (CustomUser.Role.TUTOR, 'Tutor'),
+        (CustomUser.Role.COMMITTEE_MEMBER, 'Miembro del comité'),
+        (CustomUser.Role.PROGRAM_COORDINATOR, 'Coordinador del programa'),
+        (CustomUser.Role.ACADEMIC_ADMIN, 'Administrador académico'),
+    ])
+
+    def validate_email(self, value):
+        normalized_email = value.lower()
+        if CustomUser.objects.filter(email__iexact=normalized_email).exists():
+            raise serializers.ValidationError('Este correo ya esta registrado.')
+        return normalized_email
+
+    def validate_password(self, value):
+        password_validation.validate_password(value)
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        return CustomUser.objects.create_user(password=password, **validated_data)
+
+
+class CommitteeAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicCommittee
+        fields = ('user', 'student', 'rol_comite', 'fecha_asignacion', 'is_active')
+
+    def validate(self, attrs):
+        user = attrs.get('user', self.instance.user if self.instance else None)
+        if user.role not in (
+            CustomUser.Role.TUTOR,
+            CustomUser.Role.COMMITTEE_MEMBER,
+        ):
+            raise serializers.ValidationError('La cuenta debe tener rol de tutor o miembro del comité.')
+        return attrs
+
+
+class CommitteeAssignmentReadSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    student_name = serializers.CharField(source='student.nombre_completo', read_only=True)
+    fecha_asignacion = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AcademicCommittee
+        fields = (
+            'id',
+            'user',
+            'user_email',
+            'student',
+            'student_name',
+            'rol_comite',
+            'fecha_asignacion',
+            'is_active',
+        )
+
+    def get_fecha_asignacion(self, assignment):
+        return assignment.fecha_asignacion.date().isoformat() if hasattr(assignment.fecha_asignacion, 'date') else assignment.fecha_asignacion
+
+
+class AdminAuditLogSerializer(serializers.ModelSerializer):
+    actor_email = serializers.EmailField(source='actor.email', read_only=True)
+    target_user_email = serializers.EmailField(source='target_user.email', read_only=True)
+
+    class Meta:
+        model = AdminAuditLog
+        fields = ('id', 'action', 'actor', 'actor_email', 'target_user', 'target_user_email', 'committee_assignment', 'details', 'created_at')
+
+
+class StudentRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ('id', 'matricula', 'nombre_completo', 'programa_doctoral', 'cohorte', 'estatus_activo')
+
+
+class TutoringSessionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TutoringSession
+        fields = (
+            'student',
+            'semester',
+            'fecha_sesion',
+            'modalidad',
+            'resumen',
+            'proxima_reunion_fecha',
+            'proxima_reunion_notas',
+        )
+
+    def validate(self, attrs):
+        if attrs['semester'].student_id != attrs['student'].id:
+            raise serializers.ValidationError('El semestre no pertenece al estudiante.')
+        return attrs
+
+    def create(self, validated_data):
+        return TutoringSession.objects.create(
+            created_by=self.context['request'].user,
+            **validated_data,
+        )
+
+
+class TutoringSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TutoringSession
+        fields = (
+            'id',
+            'student',
+            'semester',
+            'fecha_sesion',
+            'modalidad',
+            'resumen',
+            'proxima_reunion_fecha',
+            'proxima_reunion_notas',
+            'created_by',
+        )
 
 
 class LoginSerializer(serializers.Serializer):
