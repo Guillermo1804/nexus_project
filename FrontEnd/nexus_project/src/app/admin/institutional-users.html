@@ -1,0 +1,18 @@
+<main>
+  <h1>Cuentas institucionales</h1>
+  <p>Crea cuentas para asesores, miembros del comité, coordinadores y administradores académicos.</p>
+  <form (ngSubmit)="createUser()">
+    <label>Nombre <input name="first_name" [(ngModel)]="form.first_name" required></label>
+    <label>Apellidos <input name="last_name" [(ngModel)]="form.last_name" required></label>
+    <label>Correo institucional <input name="email" type="email" [(ngModel)]="form.email" required></label>
+    <label>Contraseña temporal <input name="password" type="password" [(ngModel)]="form.password" required></label>
+    <label>Rol
+      <select name="role" [(ngModel)]="form.role">
+        @for (role of roles; track role) { <option [value]="role">{{ role }}</option> }
+      </select>
+    </label>
+    <button type="submit" [disabled]="saving">{{ saving ? 'Creando...' : 'Crear cuenta' }}</button>
+  </form>
+  @if (message) { <p role="status">{{ message }}</p> }
+  @if (error) { <p role="alert">{{ error }}</p> }
+</main>

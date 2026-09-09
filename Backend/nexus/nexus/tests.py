@@ -3,7 +3,7 @@ from datetime import date
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import AcademicCommittee, Semester, Student, TutoringSession
+from .models import AcademicCommittee, AdminAuditLog, Semester, Student, TutoringSession
 
 
 class AuthenticationApiTests(APITestCase):
@@ -273,3 +273,102 @@ class ScopeAuthorizationApiTests(APITestCase):
         self.authenticate(self.student_user)
         denied = self.client.get('/api/academic/overview/')
         self.assertEqual(denied.status_code, 403)
+
+
+class SuperAdminApiTests(APITestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+        self.admin = self.user_model.objects.create_superuser(
+            email='system@example.com', password='Correcta-12345', first_name='System', last_name='Admin',
+        )
+        self.student_user = self.user_model.objects.create_user(
+            email='student@example.com', password='Correcta-12345', first_name='Ana', last_name='Lopez',
+        )
+        self.student = Student.objects.create(
+            user=self.student_user, matricula='DOC-001', nombre_completo='Ana Lopez', cohorte='2026',
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=self.admin).key}')
+
+    def test_system_admin_can_create_institutional_user(self):
+        response = self.client.post('/api/admin/users/', {
+            'first_name': 'Eva',
+            'last_name': 'Diaz',
+            'email': 'eva@example.com',
+            'password': 'Segura-12345',
+            'role': 'TUTOR',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['role'], 'TUTOR')
+        self.assertTrue(self.user_model.objects.filter(email='eva@example.com', role='TUTOR').exists())
+        self.assertTrue(AdminAuditLog.objects.filter(
+            action=AdminAuditLog.Action.INSTITUTIONAL_USER_CREATED,
+            actor=self.admin,
+            target_user__email='eva@example.com',
+        ).exists())
+
+    def test_system_admin_can_create_and_deactivate_committee_assignment(self):
+        tutor = self.user_model.objects.create_user(
+            email='tutor@example.com', password='Correcta-12345', first_name='Eva', last_name='Diaz',
+            role=self.user_model.Role.TUTOR,
+        )
+        created = self.client.post('/api/admin/committee/', {
+            'user': tutor.id,
+            'student': self.student.id,
+            'rol_comite': 'COASESOR',
+            'is_active': True,
+        }, format='json')
+
+        self.assertEqual(created.status_code, 201)
+        assignment_id = created.data['id']
+        updated = self.client.patch(
+            f'/api/admin/committee/{assignment_id}/',
+            {'is_active': False},
+            format='json',
+        )
+
+        self.assertEqual(updated.status_code, 200)
+        self.assertFalse(updated.data['is_active'])
+        self.assertEqual(
+            AdminAuditLog.objects.filter(action=AdminAuditLog.Action.COMMITTEE_ASSIGNED).count(),
+            1,
+        )
+        self.assertEqual(
+            AdminAuditLog.objects.filter(action=AdminAuditLog.Action.COMMITTEE_STATUS_CHANGED).count(),
+            1,
+        )
+
+    def test_non_admin_cannot_create_institutional_user_or_assignment(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=self.student_user).key}')
+        user_response = self.client.post('/api/admin/users/', {}, format='json')
+        assignment_response = self.client.get('/api/admin/committee/')
+
+        self.assertEqual(user_response.status_code, 403)
+        self.assertEqual(assignment_response.status_code, 403)
+
+    def test_system_admin_can_read_audit_history_and_role_changes_are_recorded(self):
+        response = self.client.patch(
+            f'/api/auth/users/{self.student_user.id}/role/',
+            {'role': self.user_model.Role.TUTOR},
+            format='json',
+        )
+        audit_response = self.client.get('/api/admin/audit/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(audit_response.status_code, 200)
+        self.assertEqual(audit_response.data[0]['action'], 'ROLE_ASSIGNED')
+        self.assertEqual(audit_response.data[0]['details']['previous_role'], 'STUDENT')
+        self.assertEqual(audit_response.data[0]['details']['new_role'], 'TUTOR')
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=self.student_user).key}')
+        self.assertEqual(self.client.get('/api/admin/audit/').status_code, 403)
+
+    def test_system_admin_can_list_active_students_for_assignments(self):
+        inactive_student = Student.objects.create(
+            matricula='DOC-999', nombre_completo='Inactivo', cohorte='2026', estatus_activo=False,
+        )
+        response = self.client.get('/api/admin/students/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([student['id'] for student in response.data], [self.student.id])
+        self.assertNotIn(inactive_student.id, [student['id'] for student in response.data])

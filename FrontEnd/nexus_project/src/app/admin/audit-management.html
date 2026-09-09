@@ -1,0 +1,21 @@
+<main>
+  <h1>Historial administrativo</h1>
+  <p>Consulta los cambios realizados sobre roles, cuentas y asociaciones.</p>
+  @if (loading) { <p>Cargando historial...</p> } @else {
+    <table>
+      <thead><tr><th>Fecha</th><th>Acción</th><th>Administrador</th><th>Cuenta afectada</th><th>Detalles</th></tr></thead>
+      <tbody>
+        @for (log of logs; track log.id) {
+          <tr>
+            <td>{{ log.created_at | date:'medium' }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.actor_email }}</td>
+            <td>{{ log.target_user_email || 'Asociación académica' }}</td>
+            <td>{{ log.details | json }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+  @if (error) { <p role="alert">{{ error }}</p> }
+</main>

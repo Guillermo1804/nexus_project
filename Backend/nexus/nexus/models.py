@@ -102,6 +102,21 @@ class AcademicCommittee(models.Model):
 		]
 
 
+class AdminAuditLog(models.Model):
+	class Action(models.TextChoices):
+		ROLE_ASSIGNED = 'ROLE_ASSIGNED', 'Rol asignado'
+		INSTITUTIONAL_USER_CREATED = 'INSTITUTIONAL_USER_CREATED', 'Cuenta institucional creada'
+		COMMITTEE_ASSIGNED = 'COMMITTEE_ASSIGNED', 'Asociacion creada'
+		COMMITTEE_STATUS_CHANGED = 'COMMITTEE_STATUS_CHANGED', 'Estado de asociacion cambiado'
+
+	action = models.CharField(max_length=40, choices=Action.choices, db_index=True)
+	actor = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name='admin_audit_actions')
+	target_user = models.ForeignKey(CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name='admin_audit_targets')
+	committee_assignment = models.ForeignKey(AcademicCommittee, null=True, blank=True, on_delete=models.SET_NULL, related_name='admin_audit_logs')
+	details = models.JSONField(default=dict, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+
 class TutoringSession(models.Model):
 	class Modality(models.TextChoices):
 		IN_PERSON = 'PRESENCIAL', 'Presencial'

@@ -19,6 +19,11 @@ from django.urls import path
 
 from .views import (
     GlobalAcademicOverviewView,
+    CommitteeAssignmentListCreateView,
+    CommitteeAssignmentUpdateView,
+    AdminStudentListView,
+    AdminAuditLogListView,
+    InstitutionalUserCreateView,
     LoginView,
     LogoutView,
     MeView,
@@ -37,6 +42,11 @@ urlpatterns = [
     path('api/auth/me/', MeView.as_view(), name='auth-me'),
     path('api/auth/users/', UserRoleListView.as_view(), name='auth-users'),
     path('api/auth/users/<int:user_id>/role/', UserRoleUpdateView.as_view(), name='auth-user-role'),
+    path('api/admin/users/', InstitutionalUserCreateView.as_view(), name='admin-users'),
+    path('api/admin/committee/', CommitteeAssignmentListCreateView.as_view(), name='admin-committee'),
+    path('api/admin/committee/<int:assignment_id>/', CommitteeAssignmentUpdateView.as_view(), name='admin-committee-update'),
+    path('api/admin/students/', AdminStudentListView.as_view(), name='admin-students'),
+    path('api/admin/audit/', AdminAuditLogListView.as_view(), name='admin-audit'),
     path('api/records/<int:student_id>/', StudentRecordView.as_view(), name='student-record'),
     path('api/tutoring/', TutoringSessionCreateView.as_view(), name='tutoring-create'),
     path('api/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
