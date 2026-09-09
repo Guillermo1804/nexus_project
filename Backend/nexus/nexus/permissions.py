@@ -7,7 +7,7 @@ ROLE_PERMISSIONS = {
     CustomUser.Role.STUDENT: {'records.read.own'},
     CustomUser.Role.TUTOR: {'tutoring.create'},
     CustomUser.Role.COMMITTEE_MEMBER: {'records.read.assigned', 'tutoring.create'},
-    CustomUser.Role.PROGRAM_COORDINATOR: {'academic.read.global'},
+    CustomUser.Role.PROGRAM_COORDINATOR: {'academic.read.global', 'students.create',},
     CustomUser.Role.ACADEMIC_ADMIN: {'users.role.assign'},
     CustomUser.Role.SYSTEM_ADMIN: {
         'records.read.own',
@@ -40,3 +40,8 @@ class CanReadGlobalAcademics(BasePermission):
 class CanCreateTutoring(BasePermission):
     def has_permission(self, request, view):
         return 'tutoring.create' in permissions_for_user(request.user)
+    
+    
+class CanCreateStudent(BasePermission):
+    def has_permission(self, request, view):
+        return 'students.create' in permissions_for_user(request.user)

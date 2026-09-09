@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 
 from .models import AcademicCommittee, AdminAuditLog, CustomUser, Student
-from .permissions import CanAssignRoles, CanCreateTutoring, CanReadGlobalAcademics, permissions_for_user
+from .permissions import CanAssignRoles, CanCreateStudent, CanCreateTutoring, CanReadGlobalAcademics, permissions_for_user
 from .serializers import (
     LoginSerializer,
     InstitutionalUserCreateSerializer,
@@ -18,6 +18,7 @@ from .serializers import (
     AdminAuditLogSerializer,
     RegistrationSerializer,
     RoleAssignmentSerializer,
+    StudentCreateSerializer,
     StudentRecordSerializer,
     TutoringSessionCreateSerializer,
     TutoringSessionSerializer,
@@ -150,6 +151,20 @@ class AdminStudentListView(APIView):
     def get(self, request):
         students = Student.objects.filter(estatus_activo=True).order_by('matricula')
         return Response(StudentRecordSerializer(students, many=True).data)
+
+class StudentCreateView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [CanCreateStudent]
+
+    def post(self, request):
+        serializer = StudentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+
+        return Response(
+            StudentRecordSerializer(student).data,
+            status=status.HTTP_201_CREATED
+        )
 
 
 class CommitteeAssignmentUpdateView(APIView):
