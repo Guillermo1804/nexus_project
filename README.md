@@ -10,11 +10,7 @@ El sistema unifica el expediente de los estudiantes de posgrado integrando en ti
 
 El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacoplado**:
 
-* **Backend (Django & Django REST Framework):**
-  - Estructurado en 9 aplicaciones modulares (`identity`, `students`, `tutoring`, `agreements`, `thesis`, `academic_output`, `evidence`, `monitoring`, `reporting`).
-  - Autenticación y seguridad mediante JSON Web Tokens (`djangorestframework-simplejwt`) con control de acceso basado en roles (RBAC: `STUDENT`, `TUTOR`, `COMMITTEE_MEMBER`, `PROGRAM_COORDINATOR`, `ACADEMIC_ADMIN`, `SYSTEM_ADMIN`).
-  - Persistencia relacional normalizada con soporte para SQLite (entorno local) y PostgreSQL (producción).
-  - Motores de generación documental con `reportlab` (PDF) y `openpyxl` (Excel).
+
 * **Frontend (Angular 20 Standalone):**
   - Arquitectura moderna basada 100% en **Standalone Components** y reactividad con **Angular Signals** y Formularios Reactivos.
   - Organización por capas: `core/` (guards, interceptores JWT, modelos, servicios HTTP), `features/` (módulos de negocio) y `shared/` (componentes reutilizables, App Shell, línea de tiempo longitudinal y Badges semafóricos).
@@ -35,7 +31,7 @@ El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacopl
 
 1. **Navegar a la carpeta del backend y crear el entorno virtual:**
    ```bash
-   cd Backend/nexus
+   cd BackEnd
    python3 -m venv .venv
    source .venv/bin/activate  # En Windows: .venv\Scripts\activate
    ```
