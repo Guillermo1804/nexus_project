@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
+from .models import Student
+
 
 class AuthenticationApiTests(APITestCase):
     def setUp(self):
@@ -70,3 +72,43 @@ class AuthenticationApiTests(APITestCase):
         self.assertEqual(logout_response.status_code, 200)
         self.assertEqual(logout_response.data, {'logout': True})
         self.assertEqual(protected_response.status_code, 401)
+
+    def test_register_creates_student_and_returns_authenticated_session(self):
+        response = self.client.post(
+            '/api/auth/register/',
+            {
+                'first_name': 'Luis',
+                'last_name': 'Gomez',
+                'email': 'luis@example.com',
+                'password': 'Segura-12345',
+                'matricula': 'DOC-001',
+                'programa_doctoral': 'Doctorado en Ciencias',
+                'cohorte': '2026',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['role'], 'STUDENT')
+        self.assertIn('token', response.data)
+        user = self.user_model.objects.get(email='luis@example.com')
+        student = Student.objects.get(user=user)
+        self.assertEqual(student.matricula, 'DOC-001')
+
+    def test_register_rejects_duplicate_email_and_matricula(self):
+        response = self.client.post(
+            '/api/auth/register/',
+            {
+                'first_name': 'Otra',
+                'last_name': 'Persona',
+                'email': self.user.email,
+                'password': 'Segura-12345',
+                'matricula': 'DOC-001',
+                'programa_doctoral': 'Doctorado en Ciencias',
+                'cohorte': '2026',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)

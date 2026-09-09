@@ -16,8 +16,8 @@ export class Register {
   private readonly router = inject(Router);
 
   protected readonly form = this.formBuilder.group({
-    first_name: [''],
-    last_name: [''],
+    first_name: ['', [Validators.required, Validators.maxLength(150)]],
+    last_name: ['', [Validators.required, Validators.maxLength(150)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     passwordConfirmation: ['', [Validators.required]],

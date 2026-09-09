@@ -1,7 +1,7 @@
 # Avance de integracion frontend-backend
 
 **Fecha:** 2026-09-09
-**Etapa:** implementacion de HU-01, autenticacion y cierre de sesion
+**Etapa:** autenticacion HU-01 y registro de cuentas de estudiantes
 
 ## Cambios realizados
 
@@ -30,6 +30,10 @@
 - El login autentica por correo, rechaza usuarios inactivos y devuelve un error generico.
 - El logout elimina el token DRF y el token deja de funcionar inmediatamente.
 - Se agregaron pruebas de login valido, credenciales invalidas, usuario inactivo, endpoint protegido y revocacion.
+- Se habilito `POST /api/auth/register/` para el formulario existente del frontend.
+- El registro crea de forma atomica un `CustomUser` y su perfil `Student`.
+- Las cuentas nuevas reciben el rol `STUDENT` y una sesion por token automaticamente.
+- Se validan contrasena, correo unico y matricula unica.
 
 ## Validacion
 
@@ -43,15 +47,16 @@ Desde `Backend/nexus`:
 - `python manage.py check`: correcto.
 - `python manage.py migrate --noinput`: correcto; se aplicaron las migraciones de `authtoken`.
 - `python manage.py test nexus`: 5 pruebas correctas.
+- `python manage.py test nexus`: 7 pruebas correctas, incluyendo registro y duplicados.
 
 ## Estado de la conexion
 
-La API de HU-01 ya esta implementada. El flujo soporta login, acceso a un recurso protegido de identidad y logout con revocacion.
+La API de HU-01 ya esta implementada. El flujo soporta login, acceso a un recurso protegido de identidad y logout con revocacion. Adicionalmente, la aplicacion ya permite crear cuentas de estudiantes desde la ruta `/register`.
 
-El registro no se implemento porque esta explicitamente fuera del alcance inicial de HU-01. La ruta de registro existente en el frontend pertenece a otra funcionalidad y no debe considerarse parte de la validacion de esta historia.
+El registro se implemento como funcionalidad complementaria solicitada: no cambia la historia HU-01 ni agrega roles administrativos. Toda cuenta creada desde el frontend queda como estudiante.
 
 ## Siguiente etapa propuesta
 
-Ejecutar una prueba manual extremo a extremo con Django y Angular activos: login valido, credenciales invalidas, acceso a `/home`, respuesta `401`, modal de sesion expirada y logout. Despues se puede pasar a la siguiente historia.
+Ejecutar una prueba manual extremo a extremo con Django y Angular activos: crear cuenta, login, acceso a `/home`, credenciales invalidas, respuesta `401`, modal de sesion expirada y logout. Despues se puede pasar a la siguiente historia.
 
 **Se requiere autorizacion para continuar con la siguiente historia de usuario.**
