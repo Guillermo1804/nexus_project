@@ -3,8 +3,16 @@ export interface AuthenticatedUser {
   email: string;
   first_name: string;
   last_name: string;
-  rol: string;
+  role: UserRole;
 }
+
+export type UserRole =
+  | 'STUDENT'
+  | 'TUTOR'
+  | 'COMMITTEE_MEMBER'
+  | 'PROGRAM_COORDINATOR'
+  | 'ACADEMIC_ADMIN'
+  | 'SYSTEM_ADMIN';
 
 export interface LoginCredentials {
   email: string;

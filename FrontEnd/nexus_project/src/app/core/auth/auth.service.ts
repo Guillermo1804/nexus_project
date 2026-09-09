@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { AuthenticatedUser, LoginCredentials, LoginResponse, RegistrationData } from './auth.models';
+import { environment } from '../../../environments/environment';
 
-const AUTH_API = 'http://localhost:8000/api/auth';
+const AUTH_API = `${environment.apiUrl}/auth`;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,8 +17,7 @@ export class AuthService {
   login(credentials: LoginCredentials): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${AUTH_API}/login/`, credentials).pipe(
       tap((response) => {
-        this.token.set(response.token);
-        this.user.set(response);
+        this.setSession(response);
         this.sessionExpired.set(false);
       }),
     );
@@ -26,8 +26,7 @@ export class AuthService {
   register(data: RegistrationData): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${AUTH_API}/register/`, data).pipe(
       tap((response) => {
-        this.token.set(response.token);
-        this.user.set(response);
+        this.setSession(response);
         this.sessionExpired.set(false);
       }),
     );
@@ -60,5 +59,10 @@ export class AuthService {
   clearSession(): void {
     this.token.set(null);
     this.user.set(null);
+  }
+
+  private setSession(response: LoginResponse): void {
+    this.token.set(response.token);
+    this.user.set(response);
   }
 }
