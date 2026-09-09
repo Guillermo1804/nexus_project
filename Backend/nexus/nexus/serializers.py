@@ -3,16 +3,77 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import CustomUser, Student
+from .models import CustomUser, Semester, Student, TutoringSession
+from .permissions import permissions_for_user
 
 
 INVALID_CREDENTIALS = 'Correo o contrasena incorrectos.'
 
 
 class UserSerializer(serializers.ModelSerializer):
+    roles = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'first_name', 'last_name', 'role')
+        fields = ('id', 'email', 'first_name', 'last_name', 'role', 'roles', 'permissions')
+
+    def get_roles(self, user):
+        return [user.role]
+
+    def get_permissions(self, user):
+        return sorted(permissions_for_user(user))
+
+
+class RoleAssignmentSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=CustomUser.Role.choices)
+
+
+class StudentRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ('id', 'matricula', 'nombre_completo', 'programa_doctoral', 'cohorte', 'estatus_activo')
+
+
+class TutoringSessionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TutoringSession
+        fields = (
+            'student',
+            'semester',
+            'fecha_sesion',
+            'modalidad',
+            'resumen',
+            'proxima_reunion_fecha',
+            'proxima_reunion_notas',
+        )
+
+    def validate(self, attrs):
+        if attrs['semester'].student_id != attrs['student'].id:
+            raise serializers.ValidationError('El semestre no pertenece al estudiante.')
+        return attrs
+
+    def create(self, validated_data):
+        return TutoringSession.objects.create(
+            created_by=self.context['request'].user,
+            **validated_data,
+        )
+
+
+class TutoringSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TutoringSession
+        fields = (
+            'id',
+            'student',
+            'semester',
+            'fecha_sesion',
+            'modalidad',
+            'resumen',
+            'proxima_reunion_fecha',
+            'proxima_reunion_notas',
+            'created_by',
+        )
 
 
 class LoginSerializer(serializers.Serializer):

@@ -17,7 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from .views import LoginView, LogoutView, MeView, RegisterView
+from .views import (
+    GlobalAcademicOverviewView,
+    LoginView,
+    LogoutView,
+    MeView,
+    RegisterView,
+    StudentRecordView,
+    TutoringSessionCreateView,
+    UserRoleListView,
+    UserRoleUpdateView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +35,9 @@ urlpatterns = [
     path('api/auth/register/', RegisterView.as_view(), name='auth-register'),
     path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('api/auth/me/', MeView.as_view(), name='auth-me'),
+    path('api/auth/users/', UserRoleListView.as_view(), name='auth-users'),
+    path('api/auth/users/<int:user_id>/role/', UserRoleUpdateView.as_view(), name='auth-user-role'),
+    path('api/records/<int:student_id>/', StudentRecordView.as_view(), name='student-record'),
+    path('api/tutoring/', TutoringSessionCreateView.as_view(), name='tutoring-create'),
+    path('api/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
 ]

@@ -4,7 +4,16 @@ export interface AuthenticatedUser {
   first_name: string;
   last_name: string;
   role: UserRole;
+  roles: UserRole[];
+  permissions: Permission[];
 }
+
+export type Permission =
+  | 'records.read.own'
+  | 'records.read.assigned'
+  | 'academic.read.global'
+  | 'tutoring.create'
+  | 'users.role.assign';
 
 export type UserRole =
   | 'STUDENT'
@@ -29,4 +38,8 @@ export interface RegistrationData extends LoginCredentials {
 
 export interface LoginResponse extends AuthenticatedUser {
   token: string;
+}
+
+export interface RoleAssignment {
+  role: UserRole;
 }
