@@ -35,7 +35,7 @@ El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacopl
 
 1. **Navegar a la carpeta del backend y crear el entorno virtual:**
    ```bash
-   cd BackEnd
+   cd Backend/nexus
    python3 -m venv .venv
    source .venv/bin/activate  # En Windows: .venv\Scripts\activate
    ```

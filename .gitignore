@@ -144,5 +144,10 @@ Thumbs.db
 
 # Carpeta temporal de referencia / staging
 nexus/
+!Backend/nexus/
+!Backend/nexus/**
 temp/
 tmp/
+
+__pycache__/
+*.pyc
