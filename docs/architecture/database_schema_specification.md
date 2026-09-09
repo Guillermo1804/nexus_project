@@ -9,7 +9,7 @@
 
 El presente documento constituye la **especificación canónica y prescriptiva** del modelo de datos relacional para el sistema N.E.X.U.S. La arquitectura de persistencia está diseñada bajo principios de **integridad referencial estricta, trazabilidad histórica, soporte de control de acceso basado en roles (RBAC) e indexación optimizada** para agregaciones analíticas de alta concurrencia (Línea de Tiempo, Semáforos de Supervisión Activa y Dossier Académico).
 
-El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de aplicación de dominio y el subsistema de seguridad de Django.
+El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de dominio y el subsistema de seguridad de Django. La definición de las entidades y sus reglas de persistencia se concentra en `models.py`; la definición de tareas, operaciones y endpoints se trabaja en `views/`, siguiendo la estructura descrita en `DOCUMENTACION.md`.
 
 ---
 
@@ -52,10 +52,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ## 3. Especificación Detallada por Módulo
 
-### 3.1. Módulo: `apps.identity` (Autenticación y Seguridad)
+### 3.1. Módulo: Autenticación y Seguridad
 
 #### Tabla: `identity_customuser`
-* **Modelo Django:** `apps.identity.models.CustomUser`
+* **Modelo Django:** `models.py` (`CustomUser`)
 * **Descripción:** Entidad central de autenticación y autorización del sistema. Reemplaza el modelo estándar de Django (`AbstractBaseUser`, `PermissionsMixin`).
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Default / Choices | Descripción |
@@ -82,10 +82,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.2. Módulo: `apps.students` (Expedientes y Comités)
+### 3.2. Módulo: Expedientes y Comités
 
 #### Tabla: `students_student`
-* **Modelo Django:** `apps.students.models.Student`
+* **Modelo Django:** `models.py` (`Student`)
 * **Descripción:** Expediente maestro de información académica del estudiante doctoral.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Regla de Integridad |
@@ -107,7 +107,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `students_semester`
-* **Modelo Django:** `apps.students.models.Semester`
+* **Modelo Django:** `models.py` (`Semester`)
 * **Descripción:** Ciclo lectivo semestral cursado por el estudiante (Semestres 1 al 6).
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Restricciones |
@@ -127,7 +127,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `students_academiccommittee`
-* **Modelo Django:** `apps.students.models.AcademicCommittee`
+* **Modelo Django:** `models.py` (`AcademicCommittee`)
 * **Descripción:** Conformación oficial del comité tutorial del estudiante.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -147,10 +147,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.3. Módulo: `apps.tutoring` (Sesiones y Minutas de Tutoría)
+### 3.3. Módulo: Sesiones y Minutas de Tutoría
 
 #### Tabla: `tutoring_tutoringsession`
-* **Modelo Django:** `apps.tutoring.models.TutoringSession`
+* **Modelo Django:** `models.py` (`TutoringSession`)
 * **Descripción:** Registro de cada reunión de tutoría formal celebrada entre el estudiante y su comité.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -170,7 +170,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `tutoring_tutoringparticipant`
-* **Modelo Django:** `apps.tutoring.models.TutoringParticipant`
+* **Modelo Django:** `models.py` (`TutoringParticipant`)
 * **Descripción:** Lista de asistencia y roles de los académicos y estudiante en la sesión.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -188,7 +188,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `tutoring_tutoringobservation`
-* **Modelo Django:** `apps.tutoring.models.TutoringObservation`
+* **Modelo Django:** `models.py` (`TutoringObservation`)
 * **Descripción:** Observaciones técnicas puntuales emitidas por un docente en la sesión.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Descripción |
@@ -203,10 +203,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.4. Módulo: `apps.agreements` (Acuerdos, Compromisos y Auditoría)
+### 3.4. Módulo: Acuerdos, Compromisos y Auditoría
 
 #### Tabla: `agreements_agreement`
-* **Modelo Django:** `apps.agreements.models.Agreement`
+* **Modelo Django:** `models.py` (`Agreement`)
 * **Descripción:** Compromiso académico formal con fecha de entrega y responsable.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -229,7 +229,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `agreements_agreementauditlog`
-* **Modelo Django:** `apps.agreements.models.AgreementAuditLog`
+* **Modelo Django:** `models.py` (`AgreementAuditLog`)
 * **Descripción:** Bitácora inmutable de trazabilidad sobre cada cambio de estado de un acuerdo.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos |
@@ -244,10 +244,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.5. Módulo: `apps.thesis` (Avance de Tesis Doctoral)
+### 3.5. Módulo: Avance de Tesis Doctoral
 
 #### Tabla: `thesis_thesisprogress`
-* **Modelo Django:** `apps.thesis.models.ThesisProgress`
+* **Modelo Django:** `models.py` (`ThesisProgress`)
 * **Descripción:** Registro cuantitativo y cualitativo del avance del proyecto de tesis doctoral por semestre.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Validaciones |
@@ -265,10 +265,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.6. Módulo: `apps.academic_output` (Producción Científica y Estancias)
+### 3.6. Módulo: Producción Científica y Estancias
 
 #### Tabla: `academic_output_publication`
-* **Modelo Django:** `apps.academic_output.models.Publication`
+* **Modelo Django:** `models.py` (`Publication`)
 * **Descripción:** Registro de artículos en revistas indexadas (JCR/Scopus, Conacyt) y capítulos de libro.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -290,7 +290,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_academicevent`
-* **Modelo Django:** `apps.academic_output.models.AcademicEvent`
+* **Modelo Django:** `models.py` (`AcademicEvent`)
 * **Descripción:** Ponencias y presentaciones en congresos, coloquios y simposios.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -311,7 +311,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_researchstay`
-* **Modelo Django:** `apps.academic_output.models.ResearchStay`
+* **Modelo Django:** `models.py` (`ResearchStay`)
 * **Descripción:** Estancias de investigación científica nacional e internacional.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos |
@@ -333,7 +333,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_otherproduct`
-* **Modelo Django:** `apps.academic_output.models.OtherProduct`
+* **Modelo Django:** `models.py` (`OtherProduct`)
 * **Descripción:** Software registrado, patentes, prototipos industriales y bases de datos.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -351,10 +351,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.7. Módulo: `apps.evidence` (Repositorio de Archivos y DOIs)
+### 3.7. Módulo: Repositorio de Archivos y DOIs
 
 #### Tabla: `evidence_evidence`
-* **Modelo Django:** `apps.evidence.models.Evidence`
+* **Modelo Django:** `models.py` (`Evidence`)
 * **Descripción:** Depósito polimórfico de soporte documental (archivos físicos y DOIs persistentes) vinculado a cualquier actividad académica del estudiante.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Restricciones |
@@ -377,15 +377,15 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.8. Módulos Analíticos y de Agregación: `apps.monitoring` y `apps.reporting`
+### 3.8. Tareas Analíticas y de Agregación en `views/`
 
-Los módulos `monitoring` y `reporting` **no persisten tablas independientes**, sino que operan como **capas de servicios de agregación y cómputo de alto rendimiento** sobre el grafo de tablas relacionales:
+Las tareas analíticas y de reportes **no persisten tablas independientes**, sino que se implementan en `views/` como **lógica de agregación y cómputo de alto rendimiento** sobre el grafo de tablas relacionales definido en `models.py`:
 
-1. **`SupervisionRulesEngine` (`apps.monitoring.supervision_rules`):**
+1. **Tareas de supervisión en `views/`:**
    - Ejecuta consultas compuestas indexadas sobre `students_student`, `tutoring_tutoringsession`, `agreements_agreement` y `evidence_evidence` para calcular semáforos de riesgo en tiempo real (alumnos sin tutoría >45 días, acuerdos concluidos sin evidencia adjunta, tutorías próximas <=7 días).
-2. **`TimelineService` (`apps.monitoring.views.TimelineView`):**
+2. **Tareas de línea de tiempo en `views/`:**
    - Agrega cronológicamente eventos ordenados por `db_index` de fecha desde `tutoring_tutoringsession`, `agreements_agreement`, `thesis_thesisprogress`, `academic_output_*` y `evidence_evidence`.
-3. **`DossierReportEngine` (`apps.reporting.pdf_export` y `excel_export`):**
+3. **Tareas de dossier y reportes en `views/`:**
    - Genera reportes institucionales multi-hoja en Excel (`openpyxl`) y PDF vectorizado (`reportlab`) consolidando el historial íntegro del expediente.
 
 ---
