@@ -13,7 +13,7 @@
   <section aria-label="Informacion de sesion">
     <p>Bienvenido, {{ user.first_name || user.email }}.</p>
     <p class="role">Rol: {{ user.role }}</p>
-    <p>Permisos efectivos: {{ user.permissions.join(', ') }}</p>
+    <!-- <p>Permisos efectivos: {{ user.permissions.join(', ') }}</p> -->
     @if (auth.hasPermission('users.role.assign')) {
       <a routerLink="/admin/roles">Administrar roles</a>
       <a routerLink="/admin/users">Cuentas institucionales</a>

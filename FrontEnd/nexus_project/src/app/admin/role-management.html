@@ -7,18 +7,21 @@
   } @else {
     <table>
       <thead>
-        <tr><th>Usuario</th><th>Rol</th><th>Permisos efectivos</th></tr>
+        <tr><th>Usuario</th><th>Rol institucional</th></tr>
       </thead>
       <tbody>
         @for (user of users; track user.id) {
           <tr>
             <td>{{ user.email }}</td>
             <td>
-              <select [ngModel]="user.role" (ngModelChange)="assignRole(user, $event)">
+              <select
+                [ngModel]="user.role"
+                [disabled]="user.email === 'admin@nexus.com'"
+                (ngModelChange)="assignRole(user, $event)"
+              >
                 @for (role of roles; track role) { <option [value]="role">{{ role }}</option> }
               </select>
             </td>
-            <td>{{ user.permissions.join(', ') }}</td>
           </tr>
         }
       </tbody>

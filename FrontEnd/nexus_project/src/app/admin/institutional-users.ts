@@ -7,6 +7,7 @@ import { InstitutionalRole } from './admin.models';
   selector: 'app-institutional-users',
   imports: [FormsModule],
   templateUrl: './institutional-users.html',
+  styleUrls: ['./institutional-users.scss'],
 })
 export class InstitutionalUsers {
   private readonly admin = inject(AdminService);
