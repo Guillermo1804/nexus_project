@@ -7,6 +7,7 @@ import { AuditManagement } from './admin/audit-management';
 import { Home } from './home/home';
 import { Login } from './login/login';
 import { Register } from './register/register';
+import { RegistroEstudiante } from './coordinador/registro-estudiante';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -36,6 +37,11 @@ export const routes: Routes = [
     canActivate: [authGuard, permissionGuard],
     data: { requiredPermission: 'users.role.assign' },
   },
+  {
+    path: 'coordinator/students/new',
+    component: RegistroEstudiante,
+    canActivate: [authGuard, permissionGuard],
+    data: { requiredPermission: 'students.create' },},
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];
