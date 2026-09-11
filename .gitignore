@@ -5,3 +5,119 @@ Backend/venv/
 FrontEnd/nexus_project/node_modules/
 FrontEnd/nexus_project/.angular/
 FrontEnd/nexus_project/dist/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.tox/
+.nox/
+
+# Empaquetado y builds Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ------------------------------------------
+# 2. Node.js & Angular
+# ------------------------------------------
+node_modules/
+.angular/
+dist/
+out-tsc/
+bazel-out/
+.nx/
+
+# Caches y logs de gestores de paquetes
+.npm/
+.npm-cache/
+npm_cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Cobertura de tests frontend
+/coverage
+karma-reports/
+
+# ------------------------------------------
+# 3. Entornos y Secretos
+# ------------------------------------------
+.env
+.env.*
+!.env.example
+.git_backup/
+backups/
+
+# ------------------------------------------
+# 4. IDEs, Editores y Sistema Operativo
+# ------------------------------------------
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# JetBrains (PyCharm, WebStorm, IntelliJ)
+.idea/
+
+# Editores de texto y temporales
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Archivos de Sistema Operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ------------------------------------------
+# 5. Archivos multimedia pesados / Temporales locales
+# ------------------------------------------
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.wmv
+*.flv
+*.webm
+
+# Carpeta temporal de referencia / staging
+nexus/
+temp/
+tmp/
+
+# ------------------------------------------
+# 6. Gobernanza multi-agente (repo privado aparte) y material de referencia
+# ------------------------------------------
+# El sistema de auditoría/orquestación vive en su propio repositorio privado,
+# montado como workspace/ y gitignoreado por el repo de producto.
+workspace/
+
+# Copia de referencia del sistema fuente (Syncify) usada para la adaptación
+referencia-syncify-workspace/
