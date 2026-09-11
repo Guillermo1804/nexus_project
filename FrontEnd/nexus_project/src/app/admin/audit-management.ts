@@ -8,6 +8,7 @@ import { AdminService } from './admin.service';
   selector: 'app-audit-management',
   imports: [DatePipe, JsonPipe],
   templateUrl: './audit-management.html',
+  styleUrls: ['./audit-management.scss'],
 })
 export class AuditManagement {
   private readonly admin = inject(AdminService);

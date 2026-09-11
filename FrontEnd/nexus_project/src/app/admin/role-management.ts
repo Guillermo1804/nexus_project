@@ -17,6 +17,7 @@ const AVAILABLE_ROLES: UserRole[] = [
   selector: 'app-role-management',
   imports: [FormsModule],
   templateUrl: './role-management.html',
+  styleUrls: ['./role-management.scss'],
 })
 export class RoleManagement {
   private readonly auth = inject(AuthService);
@@ -30,6 +31,8 @@ export class RoleManagement {
   }
 
   assignRole(user: AuthenticatedUser, role: UserRole): void {
+    if (user.email === 'admin@nexus.com') return;
+
     this.error = '';
     this.auth.assignRole(user.id, role).subscribe({
       next: (updatedUser) => {

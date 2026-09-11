@@ -10,6 +10,7 @@ const FALLBACK_CREATE_ERROR = 'No fue posible crear la cuenta. Verifica los dato
   selector: 'app-institutional-users',
   imports: [FormsModule],
   templateUrl: './institutional-users.html',
+  styleUrls: ['./institutional-users.scss'],
 })
 export class InstitutionalUsers {
   private readonly admin = inject(AdminService);

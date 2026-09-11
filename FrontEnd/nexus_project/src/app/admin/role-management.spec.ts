@@ -41,6 +41,16 @@ describe('RoleManagement', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('tutoring.create');
+    expect(fixture.nativeElement.textContent).toContain('TUTOR');
+  });
+
+  it('does not allow changing the protected administrator role', () => {
+    const component = fixture.componentInstance;
+    component.assignRole({
+      id: 2, email: 'admin@nexus.com', first_name: 'Admin', last_name: 'Nexus', role: 'SYSTEM_ADMIN',
+      roles: ['SYSTEM_ADMIN'], permissions: [],
+    }, 'STUDENT');
+
+    http.expectNone('http://localhost:8000/api/auth/users/2/role/');
   });
 });

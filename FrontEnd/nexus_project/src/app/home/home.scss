@@ -1,62 +1,208 @@
+:host {
+  --ink: #21163e;
+  --muted: #6d6b7d;
+  --line: #e3e5ee;
+  --surface: #ffffff;
+  --surface-soft: #f7f7fc;
+  --accent: #494ad5;
+  --accent-dark: #3536b9;
+  display: block;
+  min-height: 100vh;
+}
+
 .home-shell {
+  min-height: 100vh;
+  padding: clamp(1.25rem, 4vw, 3.5rem);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 90% 0%, rgb(73 74 213 / 10%), transparent 22rem),
+    linear-gradient(135deg, #f5f7fb 0%, #eef1f7 100%);
+  color: var(--ink);
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+.home-shell::before {
+  background: rgb(73 74 213 / 5%);
+  border: 1px solid rgb(73 74 213 / 10%);
+  border-radius: 50%;
+  content: '';
+  height: 22rem;
+  position: absolute;
+  right: -10rem;
+  top: 14rem;
+  width: 22rem;
+}
+
+header,
+section {
   margin: 0 auto;
   max-width: 70rem;
-  padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 header {
   align-items: center;
-  border-bottom: 1px solid #d1d5db;
+  background: rgb(255 255 255 / 88%);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(33 22 62 / 7%);
   display: flex;
   justify-content: space-between;
-  padding-bottom: 1rem;
+  min-height: 5.5rem;
+  padding: 1.25rem 1.5rem;
+}
+
+header > div {
+  display: grid;
+  gap: .25rem;
 }
 
 h1 {
-  font-size: 1.5rem;
-  margin: .35rem 0 0;
+  color: var(--ink);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -.04em;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .product {
-  color: #007f86;
-  font-size: .78rem;
+  color: var(--accent);
+  font-family: 'Consolas', monospace;
+  font-size: .7rem;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .18em;
+  text-transform: uppercase;
 }
 
 button {
-  background: #fff;
-  border: 1px solid #007f86;
-  border-radius: 4px;
-  color: #00646a;
   cursor: pointer;
-  padding: .65rem .9rem;
+  font: inherit;
 }
 
 .logout-btn {
-  background: #007f86;
-  color: #fff;
-  border: 1px solid #007f86;
+  background: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 8px;
+  box-shadow: 0 3px 8px rgb(73 74 213 / 20%);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 650;
   padding: .7rem 1rem;
-  font-weight: 600;
-  transition: transform .2s ease, opacity .2s ease, background .2s ease;
+  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 
 .logout-btn:hover:not(:disabled) {
-  background: #00646a;
+  background: var(--accent-dark);
+  box-shadow: 0 6px 14px rgb(73 74 213 / 25%);
   transform: translateY(-1px);
 }
 
+.logout-btn:focus-visible,
+section a:focus-visible {
+  outline: 3px solid rgb(73 74 213 / 28%);
+  outline-offset: 3px;
+}
+
 .logout-btn:disabled {
-  opacity: .6;
   cursor: not-allowed;
+  opacity: .6;
 }
 
 section {
-  margin-top: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(33 22 62 / 7%);
+  margin-top: 1.5rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+section::before {
+  background: var(--accent);
+  border-radius: 4px 0 0 4px;
+  content: '';
+  inset: 1.5rem auto 1.5rem 0;
+  position: absolute;
+  width: 4px;
+}
+
+section p {
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 0 0 .65rem;
+}
+
+section p:first-child {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -.02em;
+  margin-bottom: .9rem;
+}
+
+section p:last-of-type {
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-family: 'Consolas', monospace;
+  font-size: .78rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
 }
 
 .role {
-  color: #4b5563;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+section a {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #383978;
+  display: inline-flex;
+  font-size: .86rem;
+  font-weight: 600;
+  margin: 0 .6rem .6rem 0;
+  min-height: 2.75rem;
+  padding: .7rem 1rem;
+  text-decoration: none;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+section a::after {
+  content: '\2192';
+  font-size: 1rem;
+  margin-left: .65rem;
+}
+
+section a:hover {
+  background: #f0f0ff;
+  border-color: rgb(73 74 213 / 45%);
+  color: var(--accent-dark);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 36rem) {
+  .home-shell {
+    padding: 1rem;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .logout-btn {
+    width: 100%;
+  }
+
+  section a {
+    margin-right: 0;
+    width: 100%;
+  }
 }
