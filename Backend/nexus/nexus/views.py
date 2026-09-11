@@ -86,6 +86,7 @@ class UserRoleUpdateView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [CanAssignRoles]
 
+    @transaction.atomic
     def patch(self, request, user_id):
         user = CustomUser.objects.filter(pk=user_id).first()
         if user is None:
@@ -109,6 +110,7 @@ class InstitutionalUserCreateView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [CanAssignRoles]
 
+    @transaction.atomic
     def post(self, request):
         serializer = InstitutionalUserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -130,6 +132,7 @@ class CommitteeAssignmentListCreateView(APIView):
         assignments = AcademicCommittee.objects.select_related('user', 'student').order_by('student__matricula')
         return Response(CommitteeAssignmentReadSerializer(assignments, many=True).data)
 
+    @transaction.atomic
     def post(self, request):
         serializer = CommitteeAssignmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -171,6 +174,7 @@ class CommitteeAssignmentUpdateView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [CanAssignRoles]
 
+    @transaction.atomic
     def patch(self, request, assignment_id):
         assignment = AcademicCommittee.objects.filter(pk=assignment_id).first()
         if assignment is None:
