@@ -24,16 +24,25 @@ export class RoleManagement {
   protected users: AuthenticatedUser[] = [];
   protected loading = true;
   protected error = '';
+  protected readonly updatingUserIds = new Set<number>();
 
   constructor() {
     this.loadUsers();
   }
 
   assignRole(user: AuthenticatedUser, role: UserRole): void {
+    if (role === user.role || this.updatingUserIds.has(user.id)) {
+      return;
+    }
+
     this.error = '';
-    this.auth.assignRole(user.id, role).subscribe({
+    this.updatingUserIds.add(user.id);
+    this.auth.assignRole(user.id, role).pipe(
+      finalize(() => this.updatingUserIds.delete(user.id)),
+    ).subscribe({
       next: (updatedUser) => {
         this.users = this.users.map((currentUser) => currentUser.id === updatedUser.id ? updatedUser : currentUser);
+        this.error = '';
       },
       error: () => this.error = 'No fue posible actualizar el rol.',
     });

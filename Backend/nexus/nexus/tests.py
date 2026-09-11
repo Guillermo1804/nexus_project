@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from datetime import date
+from unittest.mock import patch
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
@@ -66,6 +67,31 @@ class AuthenticationApiTests(APITestCase):
         self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.data['role'], 'TUTOR')
         self.assertEqual(updated.data['permissions'], ['tutoring.create'])
+        audit_log = AdminAuditLog.objects.get(action=AdminAuditLog.Action.ROLE_ASSIGNED)
+        self.assertEqual(audit_log.target_user_id, self.user.id)
+        self.assertEqual(audit_log.details, {'previous_role': 'STUDENT', 'new_role': 'TUTOR'})
+
+    def test_role_assignment_rolls_back_when_audit_log_fails(self):
+        admin = self.user_model.objects.create_user(
+            email='admin@example.com',
+            password=self.password,
+            first_name='Admin',
+            last_name='Nexus',
+            role=self.user_model.Role.ACADEMIC_ADMIN,
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=admin).key}')
+
+        with patch.object(AdminAuditLog.objects, 'create', side_effect=RuntimeError('audit unavailable')):
+            with self.assertRaises(RuntimeError):
+                self.client.patch(
+                    f'/api/auth/users/{self.user.id}/role/',
+                    {'role': self.user_model.Role.TUTOR},
+                    format='json',
+                )
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.role, self.user_model.Role.STUDENT)
+        self.assertEqual(AdminAuditLog.objects.count(), 0)
 
     def test_invalid_credentials_use_generic_error(self):
         response = self.client.post(

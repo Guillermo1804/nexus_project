@@ -93,14 +93,15 @@ class UserRoleUpdateView(APIView):
         serializer = RoleAssignmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         previous_role = user.role
-        user.role = serializer.validated_data['role']
-        user.save(update_fields=['role', 'updated_at'])
-        AdminAuditLog.objects.create(
-            action=AdminAuditLog.Action.ROLE_ASSIGNED,
-            actor=request.user,
-            target_user=user,
-            details={'previous_role': previous_role, 'new_role': user.role},
-        )
+        with transaction.atomic():
+            user.role = serializer.validated_data['role']
+            user.save(update_fields=['role', 'updated_at'])
+            AdminAuditLog.objects.create(
+                action=AdminAuditLog.Action.ROLE_ASSIGNED,
+                actor=request.user,
+                target_user=user,
+                details={'previous_role': previous_role, 'new_role': user.role},
+            )
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 

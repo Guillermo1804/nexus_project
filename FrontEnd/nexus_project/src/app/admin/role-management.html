@@ -14,7 +14,7 @@
           <tr>
             <td>{{ user.email }}</td>
             <td>
-              <select [ngModel]="user.role" (ngModelChange)="assignRole(user, $event)">
+              <select [ngModel]="user.role" [disabled]="updatingUserIds.has(user.id)" (ngModelChange)="assignRole(user, $event)">
                 @for (role of roles; track role) { <option [value]="role">{{ role }}</option> }
               </select>
             </td>
