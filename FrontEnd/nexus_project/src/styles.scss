@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -49,4 +50,25 @@ body {
 
 button, input, select, textarea {
   font-family: inherit;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eeeeff;
+  color: #494ad5;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  width: fit-content;
+
+  .nexus-brand-icon {
+    display: inline-block;
+    flex-shrink: 0;
+  }
+}
 }
