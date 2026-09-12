@@ -23,7 +23,7 @@
         <a routerLink="/coordinator/students/new">Registrar estudiante</a>
       }
 
-      @if (user.role !== 'STUDENT' && (auth.hasPermission('academic.read.global') || auth.hasPermission('users.role.assign') || auth.hasPermission('students.create'))) {
+      @if (user.role === 'PROGRAM_COORDINATOR' && auth.hasPermission('academic.read.global')) {
         <a [routerLink]="['/expediente', 1]">Ver expediente</a>
       }
 
