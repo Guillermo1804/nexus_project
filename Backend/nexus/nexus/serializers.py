@@ -105,7 +105,78 @@ class AdminAuditLogSerializer(serializers.ModelSerializer):
 class StudentRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
-        fields = ('id', 'matricula', 'nombre_completo', 'programa_doctoral', 'cohorte', 'estatus_activo')
+        fields = (
+            'id',
+            'matricula',
+            'nombre_completo',
+            'programa_doctoral',
+            'cohorte',
+            'estatus_activo',
+        )
+
+
+class StudentCreateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    matricula = serializers.CharField(max_length=20)
+    programa_doctoral = serializers.CharField(max_length=255)
+    fecha_ingreso = serializers.DateField()
+    cohorte = serializers.CharField(max_length=20)
+
+    def validate_email(self, value):
+        normalized_email = value.lower()
+
+        if CustomUser.objects.filter(
+            email__iexact=normalized_email
+        ).exists():
+            raise serializers.ValidationError(
+                'Este correo ya esta registrado.'
+            )
+
+        return normalized_email
+
+    def validate_matricula(self, value):
+        if Student.objects.filter(matricula=value).exists():
+            raise serializers.ValidationError(
+                'Esta matricula ya esta registrada.'
+            )
+
+        return value
+
+    def validate_password(self, value):
+        password_validation.validate_password(value)
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+
+        student_data = {
+            'matricula': validated_data.pop('matricula'),
+            'programa_doctoral': validated_data.pop('programa_doctoral'),
+            'fecha_ingreso': validated_data.pop('fecha_ingreso'),
+            'cohorte': validated_data.pop('cohorte'),
+        }
+
+        with transaction.atomic():
+            user = CustomUser.objects.create_user(
+                password=password,
+                role=CustomUser.Role.STUDENT,
+                **validated_data,
+            )
+
+            student = Student.objects.create(
+                user=user,
+                matricula=student_data['matricula'],
+                nombre_completo=f"{user.first_name} {user.last_name}".strip(),
+                programa_doctoral=student_data['programa_doctoral'],
+                fecha_ingreso=student_data['fecha_ingreso'],
+                cohorte=student_data['cohorte'],
+            )
+
+        return student
+
 
 
 class TutoringSessionCreateSerializer(serializers.ModelSerializer):

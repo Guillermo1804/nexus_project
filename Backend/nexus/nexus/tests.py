@@ -1,6 +1,8 @@
-from django.contrib.auth import get_user_model
 from datetime import date
 from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.db.utils import OperationalError
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
@@ -332,6 +334,19 @@ class SuperAdminApiTests(APITestCase):
             actor=self.admin,
             target_user__email='eva@example.com',
         ).exists())
+
+    def test_institutional_user_is_not_kept_if_audit_log_fails(self):
+        with patch.object(AdminAuditLog.objects, 'create', side_effect=OperationalError('no such table: nexus_adminauditlog')):
+            with self.assertRaises(OperationalError):
+                self.client.post('/api/admin/users/', {
+                    'first_name': 'Eva',
+                    'last_name': 'Diaz',
+                    'email': 'eva@example.com',
+                    'password': 'Segura-12345',
+                    'role': 'TUTOR',
+                }, format='json')
+
+        self.assertFalse(self.user_model.objects.filter(email='eva@example.com').exists())
 
     def test_system_admin_can_create_and_deactivate_committee_assignment(self):
         tutor = self.user_model.objects.create_user(

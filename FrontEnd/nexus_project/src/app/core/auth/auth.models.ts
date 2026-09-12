@@ -13,7 +13,8 @@ export type Permission =
   | 'records.read.assigned'
   | 'academic.read.global'
   | 'tutoring.create'
-  | 'users.role.assign';
+  | 'users.role.assign'
+  | 'students.create';
 
 export type UserRole =
   | 'STUDENT'
