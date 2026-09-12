@@ -1,3 +1,52 @@
-* { box-sizing: border-box; }
-body { background: #f4f7f8; color: #1f2937; font-family: Arial, Helvetica, sans-serif; margin: 0; }
-button, input { font: inherit; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #6365EF;
+  --primary-hover: #4E50DC;
+  --primary-light: #EEEEFF;
+  --primary-subtle: #F5F6FF;
+  --emphasis: #2C1867;
+  --emphasis-dark: #1F1048;
+  --bg-app: #F5F7FB;
+  --bg-card: #FFFFFF;
+  --border: #E4E7EC;
+  --border-light: #F2F4F7;
+  --text-primary: #101828;
+  --text-secondary: #475467;
+  --text-muted: #667085;
+  --text-subtle: #98A2B3;
+  --text-inverse: #FFFFFF;
+
+  --badge-pending-bg: #F6FCFE;
+  --badge-pending-text: #57949D;
+  --badge-in-progress-bg: #FEF8F3;
+  --badge-in-progress-text: #B57136;
+  --badge-concluded-bg: #E9FEF1;
+  --badge-concluded-text: #437E5C;
+  --badge-overdue-bg: #F8F1FF;
+  --badge-overdue-text: #A14D98;
+  --badge-active-bg: #E9FEF1;
+  --badge-active-text: #437E5C;
+  --badge-inactive-bg: #F3F4F6;
+  --badge-inactive-text: #6B7280;
+  --badge-info-bg: #F0F5FF;
+  --badge-info-text: #3B82F6;
+  --danger-bg: #FEF3F2;
+  --danger-text: #B42318;
+  --danger-border: #FECDCA;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}

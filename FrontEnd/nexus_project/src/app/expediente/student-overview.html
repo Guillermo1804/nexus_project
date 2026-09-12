@@ -1,0 +1,294 @@
+<main class="overview-shell">
+  <header class="overview-topbar">
+    <div class="topbar-brand">
+      <span class="product">NEXUS</span>
+      <span class="view-title">Expediente del Estudiante</span>
+    </div>
+    <a routerLink="/home" class="btn-return">Volver al inicio</a>
+  </header>
+
+  @if (cargando) {
+    <div class="state-container loading-state" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Cargando expediente del estudiante...</p>
+    </div>
+  } @else if (error) {
+    <div class="state-container error-state" role="alert">
+      <p class="error-message">{{ error }}</p>
+      <button type="button" class="btn-retry" (click)="cargarExpediente()">Reintentar</button>
+    </div>
+  } @else if (overview) {
+    <!-- Encabezado con datos del estudiante -->
+    <div class="student-header-card">
+      <div class="student-header-info">
+        <h1 class="student-name">{{ overview.nombre_completo }}</h1>
+        <div class="student-meta">
+          <span class="meta-item"><strong>Matrícula:</strong> {{ overview.matricula }}</span>
+          <span class="meta-item"><strong>Programa:</strong> {{ overview.programa_doctoral }}</span>
+          <span class="meta-item"><strong>Cohorte:</strong> {{ overview.cohorte }}</span>
+        </div>
+      </div>
+      <div class="student-header-status">
+        @if (overview.estatus_activo) {
+          <span class="badge badge-active">ACTIVO</span>
+        } @else {
+          <span class="badge badge-inactive">INACTIVO</span>
+        }
+      </div>
+    </div>
+
+    <div class="overview-layout">
+      <!-- Columna Principal 70% -->
+      <section class="main-column">
+        <!-- 1. Tarjeta Semestre Actual -->
+        <article class="card current-semester-card">
+          <h2 class="card-title">Semestre Actual</h2>
+          @if (overview.current_semester) {
+            <div class="semester-details">
+              <div class="semester-badge-row">
+                <span class="semester-number">Semestre {{ overview.current_semester.numero }}</span>
+                @if (overview.current_semester.is_active) {
+                  <span class="badge badge-active">Activo</span>
+                }
+              </div>
+              <p class="semester-dates">
+                <strong>Periodo:</strong>
+                {{ overview.current_semester.fecha_inicio }} al {{ overview.current_semester.fecha_fin }}
+              </p>
+            </div>
+          } @else {
+            <p class="empty-state">Sin semestre activo</p>
+          }
+        </article>
+
+        <!-- 2. Tarjeta Avance de Tesis -->
+        <article class="card thesis-progress-card">
+          <div class="card-header-row">
+            <h2 class="card-title">Avance de Tesis</h2>
+            <span class="progress-pct">{{ overview.thesis_progress.porcentaje_avance }}%</span>
+          </div>
+          <div class="progress-bar-container">
+            <div
+              class="progress-bar-fill"
+              [style.width.%]="overview.thesis_progress.porcentaje_avance"
+              role="progressbar"
+              [attr.aria-valuenow]="overview.thesis_progress.porcentaje_avance"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+          <div class="thesis-observations">
+            <strong>Observaciones:</strong>
+            <p>{{ overview.thesis_progress.observaciones || 'Sin observaciones registradas.' }}</p>
+          </div>
+          @if (overview.thesis_progress.fecha_registro) {
+            <div class="thesis-update-date">
+              <strong>Fecha de actualización:</strong>
+              <span>{{ overview.thesis_progress.fecha_registro }}</span>
+            </div>
+          }
+          @if (overview.thesis_progress.componentes_json && (overview.thesis_progress.componentes_json | keyvalue).length > 0) {
+            <div class="thesis-components">
+              <strong>Componentes:</strong>
+              <ul>
+                @for (item of overview.thesis_progress.componentes_json | keyvalue; track item.key) {
+                  <li><strong>{{ item.key }}:</strong> {{ item.value }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </article>
+
+        <!-- 3. Tarjeta Acuerdos Abiertos -->
+        <article class="card agreements-card">
+          <h2 class="card-title">Acuerdos Abiertos</h2>
+          @if (overview.open_agreements.length === 0) {
+            <p class="empty-state">Sin acuerdos pendientes</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Descripción</th>
+                    <th>Responsable</th>
+                    <th>Fecha límite</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (acuerdo of overview.open_agreements; track acuerdo.id) {
+                    <tr>
+                      <td class="desc-cell">{{ acuerdo.descripcion }}</td>
+                      <td>{{ acuerdo.responsable_nombre }}</td>
+                      <td>{{ acuerdo.fecha_limite }}</td>
+                      <td>
+                        <span
+                          class="badge"
+                          [ngClass]="{
+                            'badge-pending': acuerdo.estado === 'PENDIENTE',
+                            'badge-in-progress': acuerdo.estado === 'EN_PROCESO',
+                            'badge-overdue': acuerdo.is_vencido
+                          }"
+                        >
+                          {{ acuerdo.is_vencido ? 'VENCIDO' : acuerdo.estado }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </article>
+
+        <!-- 4. Tarjeta Actividad Académica Reciente -->
+        <article class="card recent-activity-card">
+          <h2 class="card-title">Actividad Académica Reciente</h2>
+          @if (overview.recent_academic_activity.length === 0) {
+            <p class="empty-state">Sin actividad académica registrada</p>
+          } @else {
+            <ul class="activity-list">
+              @for (act of overview.recent_academic_activity; track act.titulo + act.fecha) {
+                <li class="activity-item">
+                  <div class="activity-header">
+                    <span class="badge badge-info">{{ act.tipo }}</span>
+                    <span class="activity-date">{{ act.fecha }}</span>
+                  </div>
+                  <h3 class="activity-title">{{ act.titulo }}</h3>
+                  <p class="activity-detail">{{ act.detalle }}</p>
+                </li>
+              }
+            </ul>
+          }
+        </article>
+      </section>
+
+      <!-- Columna Lateral 30% -->
+      <aside class="side-column">
+        <!-- 5. Tarjeta Comité Tutorial -->
+        <article class="card committee-card">
+          <h2 class="card-title">Comité Tutorial</h2>
+          @if (!overview.advisors.advisor && !overview.advisors.coadvisor && (!overview.advisors.members || overview.advisors.members.length === 0)) {
+            <p class="empty-state">Comité pendiente de asignación</p>
+          } @else {
+            <div class="committee-members-list">
+              @if (overview.advisors.advisor) {
+                <div class="advisor-item">
+                  <span class="role-tag advisor-primary">Asesor Principal</span>
+                  <div class="member-name">{{ overview.advisors.advisor.nombre_completo }}</div>
+                  <div class="member-email">{{ overview.advisors.advisor.email }}</div>
+                </div>
+              }
+              @if (overview.advisors.coadvisor) {
+                <div class="advisor-item">
+                  <span class="role-tag advisor-co">Coasesor</span>
+                  <div class="member-name">{{ overview.advisors.coadvisor.nombre_completo }}</div>
+                  <div class="member-email">{{ overview.advisors.coadvisor.email }}</div>
+                </div>
+              }
+              @for (member of overview.advisors.members; track member.id) {
+                <div class="advisor-item">
+                  <span class="role-tag">{{ member.rol_comite }}</span>
+                  <div class="member-name">{{ member.nombre_completo }}</div>
+                  <div class="member-email">{{ member.email }}</div>
+                </div>
+              }
+            </div>
+          }
+        </article>
+
+        <!-- 6. Tarjeta Última Tutoría -->
+        <article class="card tutoring-card">
+          <h2 class="card-title">Última Tutoría</h2>
+          @if (overview.last_tutoring) {
+            <div class="tutoring-details">
+              <div class="tutoring-meta">
+                <span class="tutoring-date"><strong>Fecha:</strong> {{ overview.last_tutoring.fecha_sesion }}</span>
+                <span class="badge badge-info">{{ overview.last_tutoring.modalidad }}</span>
+              </div>
+              <div class="tutoring-summary">
+                <strong>Resumen:</strong>
+                <p>{{ overview.last_tutoring.resumen }}</p>
+              </div>
+              @if (overview.last_tutoring.proxima_reunion_fecha) {
+                <div class="next-meeting">
+                  <strong>Próxima reunión:</strong>
+                  <p>{{ overview.last_tutoring.proxima_reunion_fecha }}</p>
+                </div>
+              }
+              @if (overview.last_tutoring.proxima_reunion_notas) {
+                <div class="next-meeting-notes">
+                  <strong>Notas de próxima reunión:</strong>
+                  <p>{{ overview.last_tutoring.proxima_reunion_notas }}</p>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">Sin sesiones registradas</p>
+          }
+        </article>
+
+        <!-- 7. Tarjeta Semestres Registrados (HU-05) -->
+        <article class="card semesters-card">
+          <div class="card-header-row">
+            <h2 class="card-title">Semestres Registrados</h2>
+            @if (auth.hasPermission('semesters.manage')) {
+              <button
+                type="button"
+                class="btn-toggle-sem"
+                (click)="mostrarFormSemestre = !mostrarFormSemestre"
+              >
+                {{ mostrarFormSemestre ? 'Cancelar' : '+ Agregar' }}
+              </button>
+            }
+          </div>
+
+          @if (mostrarFormSemestre && auth.hasPermission('semesters.manage')) {
+            <form [formGroup]="semForm" (ngSubmit)="registrarSemestre()" class="sem-form">
+              <label>
+                Número de semestre (1-6)
+                <input type="number" formControlName="numero" min="1" max="6" />
+              </label>
+              <label>
+                Fecha de inicio
+                <input type="date" formControlName="fecha_inicio" />
+              </label>
+              <label>
+                Fecha de fin
+                <input type="date" formControlName="fecha_fin" />
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="is_active" />
+                Semestre activo
+              </label>
+              @if (errorSemestre) {
+                <p class="error-inline">{{ errorSemestre }}</p>
+              }
+              <button type="submit" class="btn-save-sem" [disabled]="guardandoSemestre">
+                {{ guardandoSemestre ? 'Guardando...' : 'Guardar Semestre' }}
+              </button>
+            </form>
+          }
+
+          @if (overview.semesters && overview.semesters.length > 0) {
+            <ul class="semesters-list">
+              @for (sem of overview.semesters; track sem.id) {
+                <li class="semester-list-item">
+                  <div class="sem-item-info">
+                    <span class="sem-num">Semestre {{ sem.numero }}</span>
+                    <span class="sem-period">{{ sem.fecha_inicio }} - {{ sem.fecha_fin }}</span>
+                  </div>
+                  @if (sem.is_active) {
+                    <span class="badge badge-active">ACTIVO</span>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-state">No hay semestres registrados</p>
+          }
+        </article>
+      </aside>
+    </div>
+  }
+</main>

@@ -14,7 +14,8 @@ export type Permission =
   | 'academic.read.global'
   | 'tutoring.create'
   | 'users.role.assign'
-  | 'students.create';
+  | 'students.create'
+  | 'semesters.manage';
 
 export type UserRole =
   | 'STUDENT'

@@ -60,7 +60,12 @@
       }
 
       @if (mensajeExito) {
-        <p class="mensaje exito">{{ mensajeExito }}</p>
+        <div class="mensaje exito">
+          <p>{{ mensajeExito }}</p>
+          @if (nuevoEstudianteId) {
+            <a [routerLink]="['/expediente', nuevoEstudianteId]">Consultar expediente del estudiante</a>
+          }
+        </div>
       }
 
       <button type="submit" [disabled]="guardando">

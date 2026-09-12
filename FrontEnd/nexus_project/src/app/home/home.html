@@ -15,8 +15,16 @@
       <p class="role">Rol: {{ user.role }}</p>
       <p>Permisos efectivos: {{ user.permissions.join(', ') }}</p>
 
+      @if (auth.hasPermission('records.read.own') && auth.user()) {
+        <a [routerLink]="['/expediente', auth.user()!.id]">Mi expediente académico</a>
+      }
+
       @if (auth.hasPermission('students.create')) {
         <a routerLink="/coordinator/students/new">Registrar estudiante</a>
+      }
+
+      @if (user.role !== 'STUDENT' && (auth.hasPermission('academic.read.global') || auth.hasPermission('users.role.assign') || auth.hasPermission('students.create'))) {
+        <a [routerLink]="['/expediente', 1]">Ver expediente</a>
       }
 
       @if (auth.hasPermission('users.role.assign')) {

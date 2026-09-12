@@ -29,6 +29,7 @@ export class RegistroEstudiante {
   protected guardando = false;
   protected mensajeExito = '';
   protected mensajeError = '';
+  protected nuevoEstudianteId: number | null = null;
 
   protected readonly formulario = this.fb.nonNullable.group({
     first_name: ['', Validators.required],
@@ -45,6 +46,7 @@ export class RegistroEstudiante {
     
     this.mensajeExito = '';
     this.mensajeError = '';
+    this.nuevoEstudianteId = null;
 
     if (this.formulario.invalid || this.guardando) {
       this.formulario.markAllAsTouched();
@@ -60,7 +62,8 @@ export class RegistroEstudiante {
       )
       .pipe(finalize(() => (this.guardando = false)))
       .subscribe({
-        next: () => {
+        next: (estudiante) => {
+          this.nuevoEstudianteId = estudiante.id;
           this.mensajeExito = 'Estudiante registrado correctamente.';
           this.formulario.reset();
         },
