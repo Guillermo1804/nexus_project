@@ -24,4 +24,22 @@ export interface TutoringSession extends TutoringSessionData {
   created_by: number;
 }
 
+export interface Semester {
+  id: number;
+  student: number;
+  numero: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateSemesterData {
+  numero: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  is_active?: boolean;
+}
+
 export type AcademicRole = UserRole;

@@ -280,3 +280,39 @@ class RegistrationSerializer(serializers.Serializer):
                 fecha_ingreso=timezone.localdate(),
             )
         return user
+
+
+class SemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Semester
+        fields = (
+            'id',
+            'student',
+            'numero',
+            'fecha_inicio',
+            'fecha_fin',
+            'is_active',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('id', 'student', 'created_at', 'updated_at')
+
+    def validate_numero(self, value):
+        if not (1 <= value <= 6):
+            raise serializers.ValidationError('El número de semestre debe estar entre 1 y 6.')
+        return value
+
+    def validate(self, attrs):
+        fecha_inicio = attrs.get('fecha_inicio') or (self.instance.fecha_inicio if self.instance else None)
+        fecha_fin = attrs.get('fecha_fin') or (self.instance.fecha_fin if self.instance else None)
+        if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
+            raise serializers.ValidationError({'fecha_fin': 'La fecha de fin debe ser posterior o igual a la fecha de inicio.'})
+        student = self.context.get('student') or (self.instance.student if self.instance else None)
+        numero = attrs.get('numero') or (self.instance.numero if self.instance else None)
+        if student and numero:
+            existing = Semester.objects.filter(student=student, numero=numero)
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise serializers.ValidationError({'numero': f'El estudiante ya tiene registrado el semestre {numero}.'})
+        return attrs
