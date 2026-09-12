@@ -10,10 +10,6 @@ ROLE_PERMISSIONS = {
     CustomUser.Role.PROGRAM_COORDINATOR: {'academic.read.global', 'students.create', 'semesters.manage', 'records.read.assigned'},
     CustomUser.Role.ACADEMIC_ADMIN: {'users.role.assign', 'academic.read.global', 'semesters.manage'},
     CustomUser.Role.SYSTEM_ADMIN: {
-        'records.read.own',
-        'records.read.assigned',
-        'academic.read.global',
-        'tutoring.create',
         'users.role.assign',
         'students.create',
         'semesters.manage',
@@ -24,8 +20,6 @@ ROLE_PERMISSIONS = {
 def permissions_for_user(user):
     if not user or not user.is_authenticated:
         return set()
-    if user.is_superuser:
-        return set().union(*ROLE_PERMISSIONS.values())
     return ROLE_PERMISSIONS.get(user.role, set())
 
 

@@ -270,6 +270,15 @@ class ScopeAuthorizationApiTests(APITestCase):
         self.authenticate(self.coordinator)
         self.assertEqual(self.client.get(f'/api/records/{self.student.id}/').status_code, 200)
 
+    def test_system_admin_cannot_read_student_record(self):
+        admin = self.user_model.objects.create_user(
+            email='admin_rec@example.com', password='Correcta-12345', first_name='Sys', last_name='Admin',
+            role=self.user_model.Role.SYSTEM_ADMIN,
+        )
+        self.authenticate(admin)
+        response = self.client.get(f'/api/records/{self.student.id}/')
+        self.assertEqual(response.status_code, 403)
+
     def test_tutor_can_create_session_only_for_assigned_student(self):
         AcademicCommittee.objects.create(
             student=self.student,
