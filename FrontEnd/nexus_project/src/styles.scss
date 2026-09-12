@@ -1,3 +1,23 @@
 * { box-sizing: border-box; }
-body { background: #f4f7f8; color: #1f2937; font-family: Arial, Helvetica, sans-serif; margin: 0; }
+body { background: #f4f7f8; color: #1f2937; font-family: 'Inter', system-ui, Arial, sans-serif; margin: 0; }
 button, input { font: inherit; }
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eeeeff;
+  color: #494ad5;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  width: fit-content;
+
+  .nexus-brand-icon {
+    display: inline-block;
+    flex-shrink: 0;
+  }
+}
