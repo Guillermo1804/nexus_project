@@ -5,17 +5,20 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { AcademicService } from '../core/academic/academic.service';
+import { StudentService } from '../core/students/student.service';
 import { StudentRecord } from '../core/academic/academic.models';
+import { AcademicCommitteeCardComponent } from '../students/academic-committee-card.component';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AcademicCommitteeCardComponent],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
 export class Home implements OnInit {
   protected readonly auth = inject(AuthService);
   private readonly academicService = inject(AcademicService);
+  protected readonly studentService = inject(StudentService);
   private readonly router = inject(Router);
   protected isLeaving = false;
   protected estudiantes: StudentRecord[] = [];
@@ -24,6 +27,10 @@ export class Home implements OnInit {
   ngOnInit(): void {
     if (this.auth.hasPermission('academic.read.global')) {
       this.cargarEstudiantes();
+    }
+    const role = this.auth.user()?.role;
+    if (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || this.auth.hasPermission('records.read.assigned')) {
+      this.studentService.loadStudents();
     }
   }
 

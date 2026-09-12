@@ -108,7 +108,7 @@ Thumbs.db
 *.webm
 
 # Carpeta temporal de referencia / staging
-nexus/
+/nexus/
 temp/
 tmp/
 

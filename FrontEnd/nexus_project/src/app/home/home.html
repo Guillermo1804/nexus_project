@@ -85,5 +85,28 @@
         }
       </section>
     }
+
+    @if (user.role === 'TUTOR' || user.role === 'COMMITTEE_MEMBER' || auth.hasPermission('records.read.assigned')) {
+      <section class="students-section committee-section">
+        <div class="section-header">
+          <h2>Estudiantes Asignados (Comité Tutorial)</h2>
+          <span class="count-badge">{{ studentService.students().length }} asignados</span>
+        </div>
+
+        @if (studentService.loading()) {
+          <p class="loading-hint">Cargando estudiantes asignados a tu comité...</p>
+        } @else if (studentService.students().length === 0) {
+          <div class="empty-card">
+            <p>No tienes estudiantes asignados a tu comité tutorial actualmente.</p>
+          </div>
+        } @else {
+          <div class="committee-cards-grid">
+            @for (est of studentService.students(); track est.id) {
+              <app-academic-committee-card [student]="est" />
+            }
+          </div>
+        }
+      </section>
+    }
   }
 </main>

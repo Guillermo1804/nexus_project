@@ -67,6 +67,10 @@ class Student(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
+	@property
+	def committee_relationships(self):
+		return self.committee_members
+
 	def __str__(self):
 		return f'{self.matricula} - {self.nombre_completo}'
 
@@ -94,7 +98,12 @@ class AcademicCommittee(models.Model):
 		VOCAL = 'VOCAL', 'Vocal'
 		SECRETARY = 'SECRETARIO', 'Secretario'
 
-	student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='committee_members')
+	student = models.ForeignKey(
+		Student,
+		on_delete=models.CASCADE,
+		related_name='committee_members',
+		related_query_name='committee_relationships',
+	)
 	user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='committee_assignments')
 	rol_comite = models.CharField(max_length=30, choices=Role.choices)
 	fecha_asignacion = models.DateField(default=timezone.now)

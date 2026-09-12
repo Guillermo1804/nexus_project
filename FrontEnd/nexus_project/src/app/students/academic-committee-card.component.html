@@ -1,0 +1,18 @@
+<article class="committee-student-card">
+  <div class="card-header">
+    <span class="matricula-tag">{{ student().matricula }}</span>
+    <span class="badge" [class.badge-active]="student().estatus_activo" [class.badge-inactive]="!student().estatus_activo">
+      {{ student().estatus_activo ? 'ACTIVO' : 'INACTIVO' }}
+    </span>
+  </div>
+
+  <h3 class="student-name">{{ student().nombre_completo }}</h3>
+  <p class="student-program">{{ student().programa_doctoral }}</p>
+
+  <div class="card-footer">
+    <span class="cohorte-label">Cohorte: <strong>{{ student().cohorte }}</strong></span>
+    <a [routerLink]="['/expediente', student().id]" class="btn-expediente">
+      Ver expediente
+    </a>
+  </div>
+</article>
