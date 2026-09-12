@@ -8,9 +8,26 @@ const AUTH_API = `${environment.apiUrl}/auth`;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly token = signal<string | null>(null);
-  readonly user = signal<AuthenticatedUser | null>(null);
+  private readonly token = signal<string | null>(this.getSavedToken());
+  readonly user = signal<AuthenticatedUser | null>(this.getSavedUser());
   readonly sessionExpired = signal(false);
+
+  private getSavedToken(): string | null {
+    try {
+      return typeof window !== 'undefined' ? localStorage.getItem('nexus_token') : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getSavedUser(): AuthenticatedUser | null {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('nexus_user') : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
 
   constructor(private readonly http: HttpClient) {}
 
@@ -71,10 +88,22 @@ export class AuthService {
   clearSession(): void {
     this.token.set(null);
     this.user.set(null);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('nexus_token');
+        localStorage.removeItem('nexus_user');
+      }
+    } catch {}
   }
 
   private setSession(response: LoginResponse): void {
     this.token.set(response.token);
     this.user.set(response);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nexus_token', response.token);
+        localStorage.setItem('nexus_user', JSON.stringify(response));
+      }
+    } catch {}
   }
 }
