@@ -68,7 +68,7 @@ class AuthenticationApiTests(APITestCase):
 
         self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.data['role'], 'TUTOR')
-        self.assertEqual(updated.data['permissions'], ['tutoring.create'])
+        self.assertEqual(updated.data['permissions'], ['records.read.assigned', 'tutoring.create'])
         audit_log = AdminAuditLog.objects.get(action=AdminAuditLog.Action.ROLE_ASSIGNED)
         self.assertEqual(audit_log.target_user_id, self.user.id)
         self.assertEqual(audit_log.details, {'previous_role': 'STUDENT', 'new_role': 'TUTOR'})
@@ -177,6 +177,25 @@ class AuthenticationApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('email', response.data)
+
+    def test_non_student_users_do_not_require_student_profile(self):
+        roles = [
+            self.user_model.Role.PROGRAM_COORDINATOR,
+            self.user_model.Role.TUTOR,
+            self.user_model.Role.SYSTEM_ADMIN,
+            self.user_model.Role.ACADEMIC_ADMIN,
+        ]
+        for role in roles:
+            u = self.user_model.objects.create_user(
+                email=f'{role.lower()}@nexus.test', password='Password123!', role=role
+            )
+            self.assertIsNone(u.student)
+            token = Token.objects.create(user=u)
+            self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+            response = self.client.get('/api/auth/me/')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data['role'], role)
+            self.assertIsNone(response.data['student_id'])
 
 
 class ScopeAuthorizationApiTests(APITestCase):

@@ -46,6 +46,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = []
 
+	@property
+	def student(self):
+		if self.role in [self.Role.STUDENT, 'ESTUDIANTE']:
+			return getattr(self, 'student_profile', None)
+		return None
+
 	def __str__(self):
 		return self.email
 
