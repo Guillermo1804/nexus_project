@@ -27,6 +27,8 @@ export class Register {
   });
   protected isSubmitting = false;
   protected registerError = false;
+  protected showPassword = false;
+  protected showConfirmPassword = false;
 
   submit(): void {
     this.registerError = false;

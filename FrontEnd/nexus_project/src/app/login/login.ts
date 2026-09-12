@@ -21,6 +21,7 @@ export class Login {
   });
   protected isSubmitting = false;
   protected loginError = false;
+  protected showPassword = false;
 
   submit(): void {
     this.loginError = false;
