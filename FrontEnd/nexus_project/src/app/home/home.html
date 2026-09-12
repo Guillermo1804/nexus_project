@@ -10,29 +10,80 @@
   </header>
 
   @if (auth.user(); as user) {
-    <section aria-label="Informacion de sesion">
+    <section aria-label="Informacion de sesion" class="user-card">
       <p>Bienvenido, {{ user.first_name || user.email }}.</p>
       <p class="role">Rol: {{ user.role }}</p>
       <p>Permisos efectivos: {{ user.permissions.join(', ') }}</p>
 
-      @if (auth.hasPermission('records.read.own') && auth.user()) {
-        <a [routerLink]="['/expediente', auth.user()!.id]">Mi expediente académico</a>
-      }
+      <div class="actions-row">
+        @if (auth.hasPermission('records.read.own') && auth.user()) {
+          <a [routerLink]="['/expediente', auth.user()!.id]" class="btn-action">Mi expediente académico</a>
+        }
 
-      @if (auth.hasPermission('students.create')) {
-        <a routerLink="/coordinator/students/new">Registrar estudiante</a>
-      }
+        @if (auth.hasPermission('students.create')) {
+          <a routerLink="/coordinator/students/new" class="btn-action">+ Registrar estudiante</a>
+        }
 
-      @if (user.role === 'PROGRAM_COORDINATOR' && auth.hasPermission('academic.read.global')) {
-        <a [routerLink]="['/expediente', 1]">Ver expediente</a>
-      }
-
-      @if (auth.hasPermission('users.role.assign')) {
-        <a routerLink="/admin/roles">Administrar roles</a>
-        <a routerLink="/admin/users">Cuentas institucionales</a>
-        <a routerLink="/admin/committee">Asociaciones académicas</a>
-        <a routerLink="/admin/audit">Historial administrativo</a>
-      }
+        @if (auth.hasPermission('users.role.assign')) {
+          <a routerLink="/admin/roles" class="btn-action">Administrar roles</a>
+          <a routerLink="/admin/users" class="btn-action">Cuentas institucionales</a>
+          <a routerLink="/admin/committee" class="btn-action">Asociaciones académicas</a>
+          <a routerLink="/admin/audit" class="btn-action">Historial administrativo</a>
+        }
+      </div>
     </section>
+
+    @if (auth.hasPermission('academic.read.global')) {
+      <section class="students-section">
+        <div class="section-header">
+          <h2>Padrón de Estudiantes de Posgrado</h2>
+          <span class="count-badge">{{ estudiantes.length }} registrados</span>
+        </div>
+
+        @if (cargandoEstudiantes) {
+          <p class="loading-hint">Cargando padrón de estudiantes...</p>
+        } @else if (estudiantes.length === 0) {
+          <div class="empty-card">
+            <p>No hay estudiantes registrados actualmente.</p>
+            <a routerLink="/coordinator/students/new">+ Registrar primer estudiante</a>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th>Matrícula</th>
+                  <th>Nombre completo</th>
+                  <th>Programa doctoral</th>
+                  <th>Cohorte</th>
+                  <th>Estatus</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (est of estudiantes; track est.id) {
+                  <tr>
+                    <td class="mono-cell">{{ est.matricula }}</td>
+                    <td class="name-cell">{{ est.nombre_completo }}</td>
+                    <td>{{ est.programa_doctoral }}</td>
+                    <td>{{ est.cohorte }}</td>
+                    <td>
+                      <span class="badge" [class.badge-active]="est.estatus_activo" [class.badge-inactive]="!est.estatus_activo">
+                        {{ est.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}
+                      </span>
+                    </td>
+                    <td>
+                      <a [routerLink]="['/expediente', est.id]" class="btn-view-expediente">
+                        Ver expediente
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
   }
 </main>
