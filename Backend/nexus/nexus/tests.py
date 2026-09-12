@@ -1,5 +1,8 @@
-from django.contrib.auth import get_user_model
 from datetime import date
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.db.utils import OperationalError
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
@@ -66,6 +69,31 @@ class AuthenticationApiTests(APITestCase):
         self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.data['role'], 'TUTOR')
         self.assertEqual(updated.data['permissions'], ['tutoring.create'])
+        audit_log = AdminAuditLog.objects.get(action=AdminAuditLog.Action.ROLE_ASSIGNED)
+        self.assertEqual(audit_log.target_user_id, self.user.id)
+        self.assertEqual(audit_log.details, {'previous_role': 'STUDENT', 'new_role': 'TUTOR'})
+
+    def test_role_assignment_rolls_back_when_audit_log_fails(self):
+        admin = self.user_model.objects.create_user(
+            email='admin@example.com',
+            password=self.password,
+            first_name='Admin',
+            last_name='Nexus',
+            role=self.user_model.Role.ACADEMIC_ADMIN,
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=admin).key}')
+
+        with patch.object(AdminAuditLog.objects, 'create', side_effect=RuntimeError('audit unavailable')):
+            with self.assertRaises(RuntimeError):
+                self.client.patch(
+                    f'/api/auth/users/{self.user.id}/role/',
+                    {'role': self.user_model.Role.TUTOR},
+                    format='json',
+                )
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.role, self.user_model.Role.STUDENT)
+        self.assertEqual(AdminAuditLog.objects.count(), 0)
 
     def test_invalid_credentials_use_generic_error(self):
         response = self.client.post(
@@ -307,6 +335,19 @@ class SuperAdminApiTests(APITestCase):
             target_user__email='eva@example.com',
         ).exists())
 
+    def test_institutional_user_is_not_kept_if_audit_log_fails(self):
+        with patch.object(AdminAuditLog.objects, 'create', side_effect=OperationalError('no such table: nexus_adminauditlog')):
+            with self.assertRaises(OperationalError):
+                self.client.post('/api/admin/users/', {
+                    'first_name': 'Eva',
+                    'last_name': 'Diaz',
+                    'email': 'eva@example.com',
+                    'password': 'Segura-12345',
+                    'role': 'TUTOR',
+                }, format='json')
+
+        self.assertFalse(self.user_model.objects.filter(email='eva@example.com').exists())
+
     def test_system_admin_can_create_and_deactivate_committee_assignment(self):
         tutor = self.user_model.objects.create_user(
             email='tutor@example.com', password='Correcta-12345', first_name='Eva', last_name='Diaz',
@@ -372,3 +413,78 @@ class SuperAdminApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([student['id'] for student in response.data], [self.student.id])
         self.assertNotIn(inactive_student.id, [student['id'] for student in response.data])
+
+    def test_hu05_create_semester_success(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+            'is_active': True,
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['numero'], 1)
+        self.assertEqual(response.data['student'], self.student.id)
+        self.assertTrue(response.data['is_active'])
+
+    def test_hu05_semester_number_out_of_range_rejected(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_range@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 7,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('numero', response.data)
+
+    def test_hu05_semester_end_date_before_start_rejected(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_date@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 2,
+            'fecha_inicio': '2025-06-30',
+            'fecha_fin': '2025-01-15',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('fecha_fin', response.data)
+
+    def test_hu05_semester_duplicate_rejected(self):
+        Semester.objects.create(
+            student=self.student, numero=1, fecha_inicio='2025-01-15', fecha_fin='2025-06-30'
+        )
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_dup@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('numero', response.data)
+
+    def test_hu05_unauthorized_user_cannot_create_semester(self):
+        student_user = self.user_model.objects.create_user(
+            email='estudiante_sem@test.com', password='password123', role=self.user_model.Role.STUDENT
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=student_user).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 403)

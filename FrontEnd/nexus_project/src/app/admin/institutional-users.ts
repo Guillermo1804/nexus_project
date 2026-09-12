@@ -1,12 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from './admin.service';
 import { InstitutionalRole } from './admin.models';
 
+const FALLBACK_CREATE_ERROR = 'No fue posible crear la cuenta. Verifica los datos e inténtalo nuevamente.';
+
 @Component({
   selector: 'app-institutional-users',
   imports: [FormsModule],
   templateUrl: './institutional-users.html',
+  styleUrls: ['./institutional-users.scss'],
 })
 export class InstitutionalUsers {
   private readonly admin = inject(AdminService);
@@ -26,10 +30,31 @@ export class InstitutionalUsers {
         this.form = { first_name: '', last_name: '', email: '', password: '', role: 'TUTOR' };
         this.saving = false;
       },
-      error: () => {
-        this.error = 'No fue posible crear la cuenta. Verifica los datos e inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.error = this.messageFromApiError(error);
         this.saving = false;
       },
     });
+  }
+
+  private messageFromApiError(error: HttpErrorResponse): string {
+    const payload = error.error;
+    if (typeof payload === 'string' && payload.trim()) {
+      return payload;
+    }
+    if (payload && typeof payload === 'object') {
+      if (typeof payload.detail === 'string' && payload.detail.trim()) {
+        return payload.detail;
+      }
+      for (const value of Object.values(payload)) {
+        if (typeof value === 'string' && value.trim()) {
+          return value;
+        }
+        if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim()) {
+          return value[0];
+        }
+      }
+    }
+    return FALLBACK_CREATE_ERROR;
   }
 }

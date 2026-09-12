@@ -9,6 +9,7 @@ import { AuthenticatedUser } from '../core/auth/auth.models';
   selector: 'app-committee-management',
   imports: [FormsModule],
   templateUrl: './committee-management.html',
+  styleUrls: ['./committee-management.scss'],
 })
 export class CommitteeManagement {
   private readonly admin = inject(AdminService);

@@ -1,0 +1,72 @@
+<main class="registro-shell">
+  <header>
+    <div>
+      <span class="product">NEXUS</span>
+      <h1>Registrar estudiante</h1>
+    </div>
+
+    <a routerLink="/home">Volver al inicio</a>
+  </header>
+
+  <section class="registro-card">
+    <p>
+      Ingresa los datos del estudiante para crear su cuenta y expediente.
+    </p>
+
+    <form [formGroup]="formulario" (ngSubmit)="registrar()">
+
+      <label>
+        Nombre
+        <input type="text" formControlName="first_name">
+      </label>
+
+      <label>
+        Apellidos
+        <input type="text" formControlName="last_name">
+      </label>
+
+      <label>
+        Correo institucional
+        <input type="email" formControlName="email">
+      </label>
+
+      <label>
+        Contraseña temporal
+        <input type="password" formControlName="password">
+      </label>
+
+      <label>
+        Matrícula
+        <input type="text" formControlName="matricula">
+      </label>
+
+      <label>
+        Programa doctoral
+        <input type="text" formControlName="programa_doctoral">
+      </label>
+
+      <label>
+        Fecha de ingreso
+        <input type="date" formControlName="fecha_ingreso">
+      </label>
+
+      <label>
+        Cohorte
+        <input type="text" formControlName="cohorte">
+      </label>
+
+      @if (mensajeError) {
+        <p class="mensaje error">{{ mensajeError }}</p>
+      }
+
+      @if (mensajeExito) {
+        <p class="mensaje exito">{{ mensajeExito }}</p>
+      }
+
+      <button type="submit" [disabled]="guardando">
+        {{ guardando ? 'Registrando...' : 'Registrar estudiante' }}
+      </button>
+
+    </form>
+  </section>
+</main>

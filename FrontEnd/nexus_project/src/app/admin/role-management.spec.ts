@@ -41,6 +41,34 @@ describe('RoleManagement', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('tutoring.create');
+    expect(fixture.nativeElement.textContent).toContain('TUTOR');
+  });
+
+  it('does not allow changing the protected administrator role', () => {
+    const component = fixture.componentInstance;
+    component.assignRole({
+      id: 2, email: 'admin@nexus.com', first_name: 'Admin', last_name: 'Nexus', role: 'SYSTEM_ADMIN',
+      roles: ['SYSTEM_ADMIN'], permissions: [],
+    }, 'STUDENT');
+
+    http.expectNone('http://localhost:8000/api/auth/users/2/role/');
+  });
+
+  it('keeps the confirmed role and shows an error when assigning fails', () => {
+    const component = fixture.componentInstance;
+    component.assignRole({
+      id: 1, email: 'student@example.com', first_name: 'Ana', last_name: 'Lopez', role: 'STUDENT',
+      roles: ['STUDENT'], permissions: ['records.read.own'],
+    }, 'TUTOR');
+    const request = http.expectOne('http://localhost:8000/api/auth/users/1/role/');
+    fixture.detectChanges();
+
+    expect((component as any).updatingUserIds.has(1)).toBeTrue();
+    request.flush({ detail: 'Error interno.' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('select').value).toBe('STUDENT');
+    expect((component as any).error).toBe('No fue posible actualizar el rol.');
+    expect(fixture.nativeElement.querySelector('select').disabled).toBeFalse();
   });
 });
