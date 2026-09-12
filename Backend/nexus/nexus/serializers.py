@@ -26,16 +26,23 @@ INVALID_CREDENTIALS = 'Correo o contrasena incorrectos.'
 class UserSerializer(serializers.ModelSerializer):
     roles = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
+    student_id = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'first_name', 'last_name', 'role', 'roles', 'permissions')
+        fields = ('id', 'email', 'first_name', 'last_name', 'role', 'roles', 'permissions', 'student_id')
 
     def get_roles(self, user):
         return [user.role]
 
     def get_permissions(self, user):
         return sorted(permissions_for_user(user))
+
+    def get_student_id(self, user):
+        if getattr(user, 'role', None) in [CustomUser.Role.STUDENT, 'ESTUDIANTE']:
+            profile = getattr(user, 'student_profile', None)
+            return profile.id if profile else None
+        return None
 
 
 class RoleAssignmentSerializer(serializers.Serializer):
