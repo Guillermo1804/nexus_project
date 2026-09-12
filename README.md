@@ -31,14 +31,14 @@ El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacopl
 
 1. **Navegar a la carpeta del backend y crear el entorno virtual:**
    ```bash
-   cd BackEnd
-   python3 -m venv .venv
-   source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+   cd Backend/nexus
+   python3 -m venv ../.venv
+   source ../.venv/bin/activate  # En Windows: ..\.venv\Scripts\activate
    ```
 
 2. **Instalar dependencias del proyecto:**
    ```bash
-   pip install -r requirements.txt
+   pip install -r ../requirements.txt
    ```
 
 3. **Ejecutar migraciones de base de datos:**
@@ -46,10 +46,11 @@ El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacopl
    python manage.py migrate
    ```
 
-4. **Crear superusuario administrador:**
+4. **Poblar datos de prueba (Simulación de 2 semanas de uso):**
    ```bash
-   python manage.py createsuperuser
+   python manage.py populate_data
    ```
+   *Crea usuarios institucionales, estudiantes, comités, semestres, tutorías, acuerdos con semáforos y avances de tesis con contraseña `Admin1234!`.*
 
 5. **Iniciar el servidor de desarrollo:**
    ```bash
@@ -84,19 +85,36 @@ El proyecto está diseñado bajo una arquitectura de **Monolito Modular Desacopl
 Para mantener la integridad y calidad del código en el equipo multidisciplinario, todos los integrantes deben adherirse a las siguientes directivas:
 
 ### 3.1. Estrategia de Ramas (*Branching Strategy*)
-* **Rama Principal (`main`):** Código de producción y releases estables. **El push directo a `main` está estrictamente prohibido.**
-* **Ramas de Integración de Sprint (`sprint-N-integration`):** Rama común donde se integran las características de cada Sprint.
-* **Ramas de Característica (*Feature Branches*):**  
-  Toda rama de trabajo individual o por subequipo debe crearse a partir de la rama de integración activa siguiendo la nomenclatura:
+* **Rama Principal (`main`):** Código de producción y releases estables aprobados al cierre del Sprint. **El push directo a `main` está estrictamente prohibido.**
+* **Rama de Integración Continua (`Development`):** Rama común donde se integran las características terminadas de cada Historia de Usuario.
+* **Ramas de Historia de Usuario (*HU Branches*):**  
+  Cada equipo trabaja en su rama dedicada siguiendo la nomenclatura:
   ```
-  feature/HU-{ID}-{nombre_corto}
+  HU-{ID}-{nombre_corto}
   ```
-  *Ejemplo:* `feature/HU-07-registro-sesion-tutoria`
+  *Ejemplos:* `HU-01-autenticarse`, `HU-02-controlar-acceso-por-rol`, `HU-03-registrar-estudiante`, `HU-04-asignar-comite-academico`, `HU-05-gestionar-semestres`, `HU-06-consultar-expediente-resumen-estudiante`.
+* **Flujo de Trabajo:**
+  1. Cada equipo sincroniza los últimos cambios de `Development` hacia su rama de HU.
+  2. Completa y valida los criterios de aceptación en su rama.
+  3. Ejecuta las pruebas unitarias y de integración.
+  4. Realiza el merge hacia `Development`.
+  5. Al concluir y validar todas las HU del Sprint, se realiza el merge final de `Development` hacia `main`.
 
 ---
 
-### 3.2. Política de Pull Requests (PR) y Code Review
-1. Todo cambio debe integrarse mediante Pull Request hacia la rama `sprint-N-integration`.
+### 3.2. Cuentas de Acceso de Demostración (Contraseña para todas: `Admin1234!`)
+
+| Rol | Correo Electrónico | Alcance y Vistas Principales |
+|---|---|---|
+| **`SYSTEM_ADMIN`** | `admin@nexus.com` | Gestión de roles, creación de cuentas institucionales y bitácora de auditoría. *(Restringido de ver expedientes académicos).* |
+| **`PROGRAM_COORDINATOR`** | `memosanchez101@gmail.com` | Padrón general de posgrado, alta de nuevos estudiantes y consulta/gestión integral de expedientes 70/30. |
+| **`TUTOR`** | `roberto.gomez@nexus.edu` | Tablero de estudiantes asignados (`AcademicCommitteeCardComponent`) y consulta de sus expedientes. |
+| **`STUDENT`** | `ana.morales@nexus.edu` | Consulta de su propio expediente longitudinal 70/30 (`/expediente/:id`). |
+
+---
+
+### 3.3. Política de Pull Requests (PR) y Code Review
+1. Todo cambio debe integrarse mediante Pull Request hacia la rama `Development`.
 2. El PR debe incluir:
    - Resumen técnico de los cambios implementados.
    - Referencia a los Criterios de Aceptación de la Historia de Usuario.

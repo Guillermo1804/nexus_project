@@ -111,20 +111,41 @@ Los endpoints responden en JSON con códigos HTTP semánticos (200, 201, 400, 40
 
 ### 5.3. Coordinación y Estudiantes (`/api/coordinator/` y `/api/students/`)
 - `POST /api/coordinator/students/`: Alta de estudiante (HU-03).
+- `GET /api/v1/students/`: Padrón y listado con filtrado estricto por relación RBAC (HU-04).
+  - Coordinadores y administradores ven el padrón completo.
+  - Tutores y miembros del comité ven **únicamente** los estudiantes donde son parte activa del comité tutorial (`committee_relationships__user=user`).
+  - Estudiantes ven únicamente su propio registro.
 - `GET /api/students/{id}/semesters/`: Consulta de semestres 1 a 6 de un estudiante (HU-05).
 - `POST /api/students/{id}/semesters/`: Registro y activación de semestre (HU-05).
 - `GET /api/records/{student_id}/` o `GET /api/students/{student_id}/academic-summary/`: Expediente resumido de estudiante con visión 70/30 (HU-06).
+  - Acceso permitido: Coordinador, Asesor o Miembro asignado, o el propio estudiante.
+  - **Seguridad RBAC:** El rol `SYSTEM_ADMIN` tiene el acceso estrictamente bloqueado con código `403 Forbidden`.
 
 ---
 
-## 6. Pruebas Automatizadas y Verificación
+## 6. Comando de Poblado de Datos Representativos
 
-Para ejecutar la suite completa de pruebas del backend:
+Para poblar la base de datos simulando 2 semanas de actividad real de la plataforma:
 ```bash
 cd Backend/nexus
-../.venv/bin/python manage.py test
+python manage.py populate_data
+# o directamente:
+python populate_data.py
 ```
-o con el intérprete configurado:
+*Genera usuarios de todos los roles institucionales con contraseña por defecto `Admin1234!`, estudiantes, semestres reglamentarios 1 a 6, asignaciones tutoriales, sesiones de tutoría, acuerdos en los 4 estados semafóricos, avances de tesis y producción científica.*
+
+---
+
+## 7. Pruebas Automatizadas y Verificación
+
+Para ejecutar la suite de pruebas del módulo de estudiantes y relaciones RBAC:
 ```bash
+cd Backend/nexus
+python manage.py test apps.students
+```
+
+Para ejecutar la suite completa de pruebas del backend (37 pruebas):
+```bash
+cd Backend/nexus
 python manage.py test
 ```
