@@ -1,5 +1,5 @@
 from django.contrib.auth import logout
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -234,6 +234,46 @@ class StudentRecordView(APIView):
             return Response({'detail': 'Expediente no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(StudentRecordSerializer(student).data)
+
+
+class StudentViewSet(viewsets.ModelViewSet):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = StudentRecordSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StudentCreateSerializer
+        return StudentRecordSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Student.objects.none()
+        if user.is_superuser or user.role in [
+            CustomUser.Role.PROGRAM_COORDINATOR,
+            CustomUser.Role.SYSTEM_ADMIN,
+            CustomUser.Role.ACADEMIC_ADMIN,
+            'COORDINADOR',
+            'ADMIN',
+        ]:
+            return Student.objects.all().order_by('id')
+        elif user.role in [CustomUser.Role.TUTOR, CustomUser.Role.COMMITTEE_MEMBER]:
+            return Student.objects.filter(
+                committee_relationships__user=user,
+                committee_relationships__is_active=True,
+            ).distinct().order_by('id')
+        elif user.role in [CustomUser.Role.STUDENT, 'ESTUDIANTE']:
+            return Student.objects.filter(user=user).order_by('id')
+        return Student.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        if 'students.create' not in permissions_for_user(request.user):
+            return Response({'detail': 'No tiene permisos para crear estudiantes.'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        return Response(StudentRecordSerializer(student).data, status=status.HTTP_201_CREATED)
 
 
 class TutoringSessionCreateView(APIView):
