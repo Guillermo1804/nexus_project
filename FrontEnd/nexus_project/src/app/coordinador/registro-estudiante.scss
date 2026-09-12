@@ -90,6 +90,38 @@ input {
   }
 }
 
+.password-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    padding-right: 42px;
+  }
+
+  .btn-toggle-password {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667085;
+    padding: 6px;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+    min-height: auto;
+
+    &:hover {
+      color: #6365EF;
+      background: transparent;
+    }
+  }
+}
+
 button[type="submit"] {
   padding: 12px 20px;
   background: var(--primary, #6365EF);

@@ -30,6 +30,7 @@ export class RegistroEstudiante {
   protected mensajeExito = '';
   protected mensajeError = '';
   protected nuevoEstudianteId: number | null = null;
+  protected showPassword = false;
 
   protected readonly formulario = this.fb.nonNullable.group({
     first_name: ['', Validators.required],
