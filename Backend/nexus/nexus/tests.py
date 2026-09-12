@@ -534,10 +534,18 @@ class SuperAdminApiTests(APITestCase):
         self.assertIn('recent_academic_activity', data)
 
     def test_hu06_academic_summary_canonical_endpoint(self):
+        coord = self.user_model.objects.create_user(
+            email='coord_hu06_sum@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coord).key}')
         res1 = self.client.get(f'/api/students/{self.student.id}/academic-summary/')
         self.assertEqual(res1.status_code, 200)
         res2 = self.client.get(f'/api/v1/students/{self.student.id}/overview/')
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(res1.data['student']['matricula'], self.student.matricula)
         self.assertEqual(res2.data['student']['matricula'], self.student.matricula)
+
+    def test_system_admin_cannot_access_academic_summary(self):
+        res = self.client.get(f'/api/students/{self.student.id}/academic-summary/')
+        self.assertEqual(res.status_code, 403)
 
