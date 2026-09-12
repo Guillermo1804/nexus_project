@@ -413,3 +413,78 @@ class SuperAdminApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([student['id'] for student in response.data], [self.student.id])
         self.assertNotIn(inactive_student.id, [student['id'] for student in response.data])
+
+    def test_hu05_create_semester_success(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+            'is_active': True,
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['numero'], 1)
+        self.assertEqual(response.data['student'], self.student.id)
+        self.assertTrue(response.data['is_active'])
+
+    def test_hu05_semester_number_out_of_range_rejected(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_range@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 7,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('numero', response.data)
+
+    def test_hu05_semester_end_date_before_start_rejected(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_date@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 2,
+            'fecha_inicio': '2025-06-30',
+            'fecha_fin': '2025-01-15',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('fecha_fin', response.data)
+
+    def test_hu05_semester_duplicate_rejected(self):
+        Semester.objects.create(
+            student=self.student, numero=1, fecha_inicio='2025-01-15', fecha_fin='2025-06-30'
+        )
+        coordinator = self.user_model.objects.create_user(
+            email='coord_sem_dup@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('numero', response.data)
+
+    def test_hu05_unauthorized_user_cannot_create_semester(self):
+        student_user = self.user_model.objects.create_user(
+            email='estudiante_sem@test.com', password='password123', role=self.user_model.Role.STUDENT
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=student_user).key}')
+        payload = {
+            'numero': 1,
+            'fecha_inicio': '2025-01-15',
+            'fecha_fin': '2025-06-30',
+        }
+        response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
+        self.assertEqual(response.status_code, 403)

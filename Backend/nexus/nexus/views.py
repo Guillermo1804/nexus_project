@@ -8,8 +8,15 @@ from rest_framework.views import APIView
 
 from django.db import transaction
 
-from .models import AcademicCommittee, AdminAuditLog, CustomUser, Student
-from .permissions import CanAssignRoles, CanCreateStudent, CanCreateTutoring, CanReadGlobalAcademics, permissions_for_user
+from .models import AcademicCommittee, AdminAuditLog, CustomUser, Semester, Student
+from .permissions import (
+    CanAssignRoles,
+    CanCreateStudent,
+    CanCreateTutoring,
+    CanManageSemesters,
+    CanReadGlobalAcademics,
+    permissions_for_user,
+)
 from .serializers import (
     LoginSerializer,
     InstitutionalUserCreateSerializer,
@@ -18,6 +25,7 @@ from .serializers import (
     AdminAuditLogSerializer,
     RegistrationSerializer,
     RoleAssignmentSerializer,
+    SemesterSerializer,
     StudentCreateSerializer,
     StudentRecordSerializer,
     TutoringSessionCreateSerializer,
@@ -261,3 +269,63 @@ class GlobalAcademicOverviewView(APIView):
     def get(self, request):
         students = Student.objects.filter(estatus_activo=True).order_by('matricula')
         return Response(StudentRecordSerializer(students, many=True).data)
+
+
+class StudentSemesterListCreateView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def _get_student_and_check_access(self, request, student_id, write=False):
+        student = Student.objects.filter(pk=student_id).first()
+        if not student:
+            return None, Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        user_perms = permissions_for_user(request.user)
+        if write:
+            if 'semesters.manage' not in user_perms:
+                return None, Response({'detail': 'No tiene permisos para administrar semestres.'}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            is_owner = student.user_id == request.user.id
+            is_assigned = AcademicCommittee.objects.filter(student=student, user=request.user, is_active=True).exists()
+            can_read = 'academic.read.global' in user_perms or (is_owner and 'records.read.own' in user_perms) or (is_assigned and 'records.read.assigned' in user_perms)
+            if not can_read:
+                return None, Response({'detail': 'No tiene permisos para consultar semestres de este estudiante.'}, status=status.HTTP_403_FORBIDDEN)
+        return student, None
+
+    def get(self, request, student_id):
+        student, error_response = self._get_student_and_check_access(request, student_id, write=False)
+        if error_response:
+            return error_response
+        semesters = Semester.objects.filter(student=student).order_by('numero')
+        return Response(SemesterSerializer(semesters, many=True).data, status=status.HTTP_200_OK)
+
+    def post(self, request, student_id):
+        student, error_response = self._get_student_and_check_access(request, student_id, write=True)
+        if error_response:
+            return error_response
+        serializer = SemesterSerializer(data=request.data, context={'student': student})
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if serializer.validated_data.get('is_active', True):
+                Semester.objects.filter(student=student).update(is_active=False)
+            semester = serializer.save(student=student)
+        return Response(SemesterSerializer(semester).data, status=status.HTTP_201_CREATED)
+
+
+class StudentSemesterDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, student_id, semester_id):
+        user_perms = permissions_for_user(request.user)
+        if 'semesters.manage' not in user_perms:
+            return Response({'detail': 'No tiene permisos para modificar semestres.'}, status=status.HTTP_403_FORBIDDEN)
+        semester = Semester.objects.filter(pk=semester_id, student_id=student_id).first()
+        if not semester:
+            return Response({'detail': 'Semestre no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SemesterSerializer(semester, data=request.data, partial=True, context={'student': semester.student})
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if serializer.validated_data.get('is_active') is True:
+                Semester.objects.filter(student=semester.student).exclude(pk=semester.pk).update(is_active=False)
+            semester = serializer.save()
+        return Response(SemesterSerializer(semester).data, status=status.HTTP_200_OK)
