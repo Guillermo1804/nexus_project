@@ -246,8 +246,15 @@
           @if (mostrarFormSemestre && auth.hasPermission('semesters.manage')) {
             <form [formGroup]="semForm" (ngSubmit)="registrarSemestre()" class="sem-form">
               <label>
-                Número de semestre (1-6)
-                <input type="number" formControlName="numero" min="1" max="6" />
+                Número de semestre (1 al 6)
+                <select formControlName="numero">
+                  <option [ngValue]="1">Semestre 1</option>
+                  <option [ngValue]="2">Semestre 2</option>
+                  <option [ngValue]="3">Semestre 3</option>
+                  <option [ngValue]="4">Semestre 4</option>
+                  <option [ngValue]="5">Semestre 5</option>
+                  <option [ngValue]="6">Semestre 6</option>
+                </select>
               </label>
               <label>
                 Fecha de inicio
