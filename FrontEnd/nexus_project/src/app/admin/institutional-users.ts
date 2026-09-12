@@ -19,6 +19,7 @@ export class InstitutionalUsers {
   protected message = '';
   protected error = '';
   protected saving = false;
+  protected showPassword = false;
 
   createUser(): void {
     this.message = '';
