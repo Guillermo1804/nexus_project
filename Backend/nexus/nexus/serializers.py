@@ -3,7 +3,20 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import AcademicCommittee, AdminAuditLog, CustomUser, Semester, Student, TutoringSession
+from .models import (
+    AcademicCommittee,
+    AcademicEvent,
+    AdminAuditLog,
+    Agreement,
+    CustomUser,
+    OtherProduct,
+    Publication,
+    ResearchStay,
+    Semester,
+    Student,
+    ThesisProgress,
+    TutoringSession,
+)
 from .permissions import permissions_for_user
 
 
@@ -102,7 +115,16 @@ class AdminAuditLogSerializer(serializers.ModelSerializer):
         fields = ('id', 'action', 'actor', 'actor_email', 'target_user', 'target_user_email', 'committee_assignment', 'details', 'created_at')
 
 
-class StudentRecordSerializer(serializers.ModelSerializer):
+class StudentOverviewSerializer(serializers.ModelSerializer):
+    student = serializers.SerializerMethodField()
+    current_semester = serializers.SerializerMethodField()
+    semesters = serializers.SerializerMethodField()
+    advisors = serializers.SerializerMethodField()
+    last_tutoring = serializers.SerializerMethodField()
+    open_agreements = serializers.SerializerMethodField()
+    thesis_progress = serializers.SerializerMethodField()
+    recent_academic_activity = serializers.SerializerMethodField()
+
     class Meta:
         model = Student
         fields = (
@@ -112,7 +134,142 @@ class StudentRecordSerializer(serializers.ModelSerializer):
             'programa_doctoral',
             'cohorte',
             'estatus_activo',
+            'student',
+            'current_semester',
+            'semesters',
+            'advisors',
+            'last_tutoring',
+            'open_agreements',
+            'thesis_progress',
+            'recent_academic_activity',
         )
+
+    def get_student(self, student):
+        return {
+            'id': student.id,
+            'matricula': student.matricula,
+            'nombre_completo': student.nombre_completo,
+            'programa_doctoral': student.programa_doctoral,
+            'cohorte': student.cohorte,
+            'fecha_ingreso': str(student.fecha_ingreso) if student.fecha_ingreso else '',
+            'estatus_activo': student.estatus_activo,
+        }
+
+    def get_current_semester(self, student):
+        current = student.semesters.filter(is_active=True).first() or student.semesters.order_by('-numero').first()
+        if not current:
+            return None
+        return {
+            'id': current.id,
+            'numero': current.numero,
+            'fecha_inicio': str(current.fecha_inicio),
+            'fecha_fin': str(current.fecha_fin),
+            'is_active': current.is_active,
+        }
+
+    def get_semesters(self, student):
+        return SemesterSerializer(student.semesters.all().order_by('numero'), many=True).data
+
+    def get_advisors(self, student):
+        principal = student.committee_members.filter(
+            rol_comite=AcademicCommittee.Role.PRINCIPAL_ADVISOR, is_active=True
+        ).select_related('user').first()
+        coadvisor = student.committee_members.filter(
+            rol_comite=AcademicCommittee.Role.CO_ADVISOR, is_active=True
+        ).select_related('user').first()
+        others = student.committee_members.filter(is_active=True).exclude(
+            rol_comite__in=[AcademicCommittee.Role.PRINCIPAL_ADVISOR, AcademicCommittee.Role.CO_ADVISOR]
+        ).select_related('user')
+
+        def _fmt(member):
+            if not member:
+                return None
+            return {
+                'id': member.user.id,
+                'nombre_completo': f"{member.user.first_name} {member.user.last_name}".strip() or member.user.email,
+                'email': member.user.email,
+                'rol_comite': member.rol_comite,
+            }
+
+        return {
+            'advisor': _fmt(principal),
+            'coadvisor': _fmt(coadvisor),
+            'members': [_fmt(m) for m in others],
+        }
+
+    def get_last_tutoring(self, student):
+        last = student.tutoring_sessions.order_by('-fecha_sesion', '-id').first()
+        if not last:
+            return None
+        return {
+            'id': last.id,
+            'fecha_sesion': str(last.fecha_sesion),
+            'modalidad': last.modalidad,
+            'resumen': last.resumen,
+            'proxima_reunion_fecha': str(last.proxima_reunion_fecha) if last.proxima_reunion_fecha else None,
+            'proxima_reunion_notas': last.proxima_reunion_notas,
+        }
+
+    def get_open_agreements(self, student):
+        agreements = student.agreements.filter(
+            estado__in=[Agreement.Status.PENDING, Agreement.Status.IN_PROGRESS]
+        ).select_related('responsable').order_by('fecha_limite')
+        return [
+            {
+                'id': a.id,
+                'descripcion': a.descripcion,
+                'fecha_limite': str(a.fecha_limite),
+                'estado': a.estado,
+                'responsable_nombre': f"{a.responsable.first_name} {a.responsable.last_name}".strip() or a.responsable.email,
+                'is_vencido': a.is_vencido,
+            }
+            for a in agreements
+        ]
+
+    def get_thesis_progress(self, student):
+        progress = student.thesis_progresses.order_by('-fecha_registro', '-id').first()
+        if not progress:
+            return {
+                'porcentaje_avance': 0,
+                'observaciones': 'Sin avance registrado',
+                'componentes_json': {},
+                'fecha_registro': None,
+            }
+        return {
+            'porcentaje_avance': progress.porcentaje_avance,
+            'observaciones': progress.observaciones,
+            'componentes_json': progress.componentes_json,
+            'fecha_registro': str(progress.fecha_registro),
+        }
+
+    def get_recent_academic_activity(self, student):
+        activities = []
+        for pub in Publication.objects.filter(student=student).order_by('-fecha_publicacion', '-id')[:3]:
+            activities.append({
+                'tipo': 'PUBLICACION',
+                'titulo': pub.titulo,
+                'fecha': str(pub.fecha_publicacion) if pub.fecha_publicacion else '',
+                'detalle': f"{pub.tipo} - {pub.revista_editorial}",
+            })
+        for ev in AcademicEvent.objects.filter(student=student).order_by('-fecha_presentacion', '-id')[:3]:
+            activities.append({
+                'tipo': 'EVENTO',
+                'titulo': ev.titulo_ponencia or ev.nombre_evento,
+                'fecha': str(ev.fecha_presentacion) if ev.fecha_presentacion else '',
+                'detalle': f"{ev.tipo_evento} - {ev.sede_lugar}",
+            })
+        for stay in ResearchStay.objects.filter(student=student).order_by('-fecha_inicio', '-id')[:3]:
+            activities.append({
+                'tipo': 'ESTANCIA',
+                'titulo': f"Estancia en {stay.institucion_receptora} ({stay.pais})",
+                'fecha': str(stay.fecha_inicio),
+                'detalle': stay.responsable_estancia,
+            })
+        return sorted(activities, key=lambda x: x['fecha'] or '', reverse=True)[:5]
+
+
+StudentRecordSerializer = StudentOverviewSerializer
+
 
 
 class StudentCreateSerializer(serializers.Serializer):

@@ -488,3 +488,28 @@ class SuperAdminApiTests(APITestCase):
         }
         response = self.client.post(f'/api/students/{self.student.id}/semesters/', payload, format='json')
         self.assertEqual(response.status_code, 403)
+
+    def test_hu06_student_overview_contains_all_six_categories(self):
+        coordinator = self.user_model.objects.create_user(
+            email='coord_hu06@test.com', password='password123', role=self.user_model.Role.PROGRAM_COORDINATOR
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {Token.objects.create(user=coordinator).key}')
+        response = self.client.get(f'/api/records/{self.student.id}/')
+        self.assertEqual(response.status_code, 200)
+        data = response.data
+        self.assertIn('student', data)
+        self.assertIn('current_semester', data)
+        self.assertIn('advisors', data)
+        self.assertIn('last_tutoring', data)
+        self.assertIn('open_agreements', data)
+        self.assertIn('thesis_progress', data)
+        self.assertIn('recent_academic_activity', data)
+
+    def test_hu06_academic_summary_canonical_endpoint(self):
+        res1 = self.client.get(f'/api/students/{self.student.id}/academic-summary/')
+        self.assertEqual(res1.status_code, 200)
+        res2 = self.client.get(f'/api/v1/students/{self.student.id}/overview/')
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res1.data['student']['matricula'], self.student.matricula)
+        self.assertEqual(res2.data['student']['matricula'], self.student.matricula)
+

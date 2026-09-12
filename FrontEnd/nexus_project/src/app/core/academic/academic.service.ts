@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { StudentRecord, TutoringSession, TutoringSessionData, Semester, CreateSemesterData } from './academic.models';
+import { StudentRecord, TutoringSession, TutoringSessionData, Semester, CreateSemesterData, StudentOverview } from './academic.models';
 
 const API = environment.apiUrl;
 
@@ -12,6 +12,10 @@ export class AcademicService {
 
   getStudentRecord(studentId: number): Observable<StudentRecord> {
     return this.http.get<StudentRecord>(`${API}/records/${studentId}/`);
+  }
+
+  getStudentOverview(studentId: number): Observable<StudentOverview> {
+    return this.http.get<StudentOverview>(`${API}/records/${studentId}/`);
   }
 
   createTutoringSession(data: TutoringSessionData): Observable<TutoringSession> {

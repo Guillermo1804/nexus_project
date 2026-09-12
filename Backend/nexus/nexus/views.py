@@ -217,7 +217,7 @@ class StudentRecordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
-        student = Student.objects.filter(pk=student_id).first()
+        student = Student.objects.filter(pk=student_id).first() or Student.objects.filter(user_id=student_id).first()
         if student is None:
             return Response({'detail': 'Expediente no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
