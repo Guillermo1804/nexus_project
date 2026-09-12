@@ -189,6 +189,9 @@ class StudentRecordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
+        if request.user.role == CustomUser.Role.SYSTEM_ADMIN:
+            return Response({'detail': 'No tiene permisos para consultar expedientes académicos.'}, status=status.HTTP_403_FORBIDDEN)
+
         student = Student.objects.filter(pk=student_id).first()
         if student is None:
             return Response({'detail': 'Expediente no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
