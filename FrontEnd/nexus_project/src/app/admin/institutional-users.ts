@@ -7,6 +7,29 @@ import { InstitutionalRole } from './admin.models';
   selector: 'app-institutional-users',
   imports: [FormsModule],
   templateUrl: './institutional-users.html',
+  styles: [`
+    .password-field-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-field-wrapper input {
+      width: 100%;
+      padding-right: 36px;
+    }
+    .btn-toggle-password {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #667085;
+      padding: 4px;
+    }
+  `],
 })
 export class InstitutionalUsers {
   private readonly admin = inject(AdminService);
@@ -15,6 +38,7 @@ export class InstitutionalUsers {
   protected message = '';
   protected error = '';
   protected saving = false;
+  protected showPassword = false;
 
   createUser(): void {
     this.message = '';
