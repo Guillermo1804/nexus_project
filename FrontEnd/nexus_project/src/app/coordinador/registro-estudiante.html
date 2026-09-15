@@ -1,0 +1,130 @@
+<main class="registro-shell">
+  <header>
+    <div>
+      <div class="brand-badge">
+        <svg class="nexus-brand-icon" viewBox="0 0 12 10" width="14" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.98125 3.0625l1.54583-3.0625 0.175 0 1.54584 3.0625-3.26667 0 0 0m1.19583 6.9125l-5.03125-6.0375 5.03125 0 0 6.0375 0 0m0.875 0l0-6.0375 5.03125 0-5.03125 6.0375 0 0m2.15834-6.9125l-1.51667-3.0625 3.00417 0 1.53125 3.0625-3.01875 0 0 0m-8.21042 0l1.53125-3.0625 3.00417 0-1.51667 3.0625-3.01875 0 0 0" fill="#494AD5"/>
+        </svg>
+        <span>N.E.X.U.S.</span>
+      </div>
+      <h1>Registrar estudiante</h1>
+    </div>
+
+    <a routerLink="/home">Volver al inicio</a>
+  </header>
+
+  <section class="registro-card">
+    <p>
+      Ingresa los datos del estudiante para crear su cuenta y expediente.
+    </p>
+
+    <form [formGroup]="formulario" (ngSubmit)="registrar()">
+
+      <label>
+        Nombre
+        <input
+          type="text"
+          formControlName="first_name"
+          (keydown)="bloquearNumeros($event)"
+          (input)="filtrarNumeros($event, 'first_name')"
+        >
+        @if (formulario.get('first_name')?.touched && formulario.get('first_name')?.hasError('required')) {
+          <small class="mensaje error">El nombre es obligatorio.</small>
+        }
+        @if (formulario.get('first_name')?.touched && formulario.get('first_name')?.hasError('pattern')) {
+          <small class="mensaje error">Solo se permiten letras en el nombre.</small>
+        }
+      </label>
+
+      <label>
+        Apellidos
+        <input
+          type="text"
+          formControlName="last_name"
+          (keydown)="bloquearNumeros($event)"
+          (input)="filtrarNumeros($event, 'last_name')"
+        >
+        @if (formulario.get('last_name')?.touched && formulario.get('last_name')?.hasError('required')) {
+          <small class="mensaje error">Los apellidos son obligatorios.</small>
+        }
+        @if (formulario.get('last_name')?.touched && formulario.get('last_name')?.hasError('pattern')) {
+          <small class="mensaje error">Solo se permiten letras en los apellidos.</small>
+        }
+      </label>
+
+      <label>
+        Correo institucional
+        <input type="email" formControlName="email">
+        @if (formulario.get('email')?.touched && formulario.get('email')?.hasError('email')) {
+          <small class="mensaje error">Ingresa un formato de correo válido.</small>
+        }
+      </label>
+
+      <label>
+        Contraseña temporal
+        <div class="password-field-wrapper">
+          <input [type]="showPassword ? 'text' : 'password'" formControlName="password">
+          <button
+            type="button"
+            class="btn-toggle-password"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            @if (showPassword) {
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            }
+          </button>
+        </div>
+      </label>
+
+      <label>
+        Matrícula
+        <input type="text" formControlName="matricula" maxlength="20">
+        @if (formulario.get('matricula')?.touched && (formulario.get('matricula')?.hasError('maxlength') || formulario.get('matricula')?.hasError('pattern'))) {
+          <small class="mensaje error">La matrícula debe contener hasta 20 caracteres alfanuméricos o guiones.</small>
+        }
+      </label>
+
+      <label>
+        Programa doctoral
+        <input type="text" formControlName="programa_doctoral">
+      </label>
+
+      <label>
+        Fecha de ingreso
+        <input type="date" formControlName="fecha_ingreso">
+      </label>
+
+      <label>
+        Cohorte
+        <input type="text" formControlName="cohorte">
+      </label>
+
+      @if (mensajeError) {
+        <p class="mensaje error">{{ mensajeError }}</p>
+      }
+
+      @if (mensajeExito) {
+        <div class="mensaje exito">
+          <p>{{ mensajeExito }}</p>
+          @if (nuevoEstudianteId) {
+            <a [routerLink]="['/expediente', nuevoEstudianteId]">Consultar expediente del estudiante</a>
+          }
+        </div>
+      }
+
+      <button type="submit" [disabled]="guardando">
+        {{ guardando ? 'Registrando...' : 'Registrar estudiante' }}
+      </button>
+
+    </form>
+  </section>
+</main>

@@ -1,0 +1,94 @@
+.committee-student-card {
+  background: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border, #E4E7EC);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.12);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .matricula-tag {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary, #6365EF);
+    background: var(--primary-subtle, #F5F6FF);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+
+    &.badge-active {
+      background: #E9FEF1;
+      color: #437E5C;
+      border: 1px solid #437E5C;
+    }
+
+    &.badge-inactive {
+      background: #F3F4F6;
+      color: #6B7280;
+      border: 1px solid #6B7280;
+    }
+  }
+}
+
+.student-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #101828);
+}
+
+.student-program {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #475467);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-light, #F2F4F7);
+  padding-top: 14px;
+  margin-top: 4px;
+
+  .cohorte-label {
+    font-size: 13px;
+    color: var(--text-muted, #667085);
+  }
+
+  .btn-expediente {
+    background: var(--primary, #6365EF);
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--primary-hover, #4E50DC);
+    }
+  }
+}

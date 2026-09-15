@@ -1,45 +1,15 @@
-# ==========================================
-# .gitignore - N.E.X.U.S. Project
-# ==========================================
-
-# ------------------------------------------
-# 1. Python & Django
-# ------------------------------------------
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-
-# Entornos virtuales
-.venv/
-env/
-venv/
-ENV/
-.env/
-env.bak/
-venv.bak/
-
-# Bases de datos locales SQLite
+.pytest_cache/
+Backend/venv/
+Backend/.venv/
 *.sqlite3
-*.sqlite3-journal
 *.db
 db.sqlite3
-
-# Archivos estáticos y multimedia recopilados / subidos
-staticfiles/
-static_root/
-media/
-media_root/
-
-# Logs y depuración
-*.log
-local_settings.py
-celerybeat-schedule
-celerybeat.pid
-
-# Pruebas y cobertura
-.pytest_cache/
+.zcode/
+FrontEnd/nexus_project/node_modules/
+FrontEnd/nexus_project/.angular/
+FrontEnd/nexus_project/dist/
 .coverage
 .coverage.*
 htmlcov/
@@ -143,6 +113,16 @@ Thumbs.db
 *.webm
 
 # Carpeta temporal de referencia / staging
-nexus/
+/nexus/
 temp/
 tmp/
+
+# ------------------------------------------
+# 6. Gobernanza multi-agente (repo privado aparte) y material de referencia
+# ------------------------------------------
+# El sistema de auditoría/orquestación vive en su propio repositorio privado,
+# montado como workspace/ y gitignoreado por el repo de producto.
+workspace/
+
+# Copia de referencia del sistema fuente (Syncify) usada para la adaptación
+referencia-syncify-workspace/

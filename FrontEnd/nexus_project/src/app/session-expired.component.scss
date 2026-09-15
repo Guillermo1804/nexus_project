@@ -1,0 +1,5 @@
+.modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 1.5rem; background: rgb(23 63 63 / 72%); }
+.modal { width: min(100%, 28rem); padding: 2rem; background: #fffdf8; border-top: 0.5rem solid #e9a23b; box-shadow: 10px 10px 0 #173f3f; }
+.eyebrow { color: #b75d32; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12rem; }
+h2 { color: #173f3f; font: 700 2rem Georgia, serif; }
+button { padding: 0.8rem 1rem; border: 0; background: #173f3f; color: #fffdf8; font-weight: 700; cursor: pointer; }

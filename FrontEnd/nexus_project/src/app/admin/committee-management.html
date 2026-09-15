@@ -1,0 +1,38 @@
+<main>
+  <div class="back-nav"><a routerLink="/home" class="back-link">← Volver al inicio</a></div>
+  <h1>Comités académicos</h1>
+  <p>Asigna integrantes al comité agrupado de cada estudiante.</p>
+  <form (ngSubmit)="createAssignment()">
+    <label>Participación
+      <select name="role" [(ngModel)]="form.role" (ngModelChange)="form.user = null">
+        <option value="ASESOR">Asesor</option><option value="COASESOR">Coasesor</option><option value="COMMITTEE_MEMBER">Miembro del comité</option>
+      </select>
+    </label>
+    <label>Cuenta institucional
+      <select name="user" [(ngModel)]="form.user" required [disabled]="loading">
+        <option [ngValue]="null">Selecciona una cuenta</option>
+        @for (user of compatibleUsers(); track user.id) { <option [ngValue]="user.id">{{ user.email }} ({{ getRoleLabel(user.role) }})</option> }
+      </select>
+    </label>
+    <label>Estudiante
+      <select name="student" [(ngModel)]="form.student" required [disabled]="loading">
+        <option [ngValue]="null">Selecciona un estudiante</option>
+        @for (student of students; track student.id) { <option [ngValue]="student.id">{{ student.matricula }} - {{ student.nombre_completo }}</option> }
+      </select>
+    </label>
+    <button type="submit" [disabled]="loading">Asignar membresía</button>
+  </form>
+  @if (loading) { <p>Cargando comités...</p> } @else {
+    <table><caption>Comités académicos</caption>
+      <thead><tr><th scope="col">Estudiante</th><th scope="col">Cuenta</th><th scope="col">Participación</th><th scope="col">Acción</th></tr></thead>
+      <tbody>
+        @for (committee of committees; track committee.id) {
+          @for (membership of committee.memberships; track membership.id) {
+            <tr><td>{{ committee.student_name }}</td><td>{{ membership.user_email }}</td><td>{{ getCommitteeRoleLabel(membership.role) }}</td><td><button type="button" (click)="remove(membership)">Eliminar</button></td></tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+  @if (error) { <p role="alert">{{ error }}</p> }
+</main>

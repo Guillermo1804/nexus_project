@@ -29,9 +29,8 @@ El sistema utiliza autenticación basada en tokens web JSON (JWT) provistos por 
 ### 2.1. Catálogo Oficial de Roles RBAC
 * `STUDENT`: Estudiante / Doctorando matriculado.
 * `TUTOR`: Tutor / Asesor Principal de tesis.
-* `COMMITTEE_MEMBER`: Coasesor / Miembro del Comité Tutorial.
+* `COMMITTEE_MEMBER`: Miembro del Comité Tutorial. Los cargos académicos `ASESOR`, `COASESOR` y `COMMITTEE_MEMBER` se expresan en las membresías del comité; asesor y coasesor usan cuentas institucionales con rol `TUTOR`.
 * `PROGRAM_COORDINATOR`: Coordinador del Programa de Posgrado.
-* `ACADEMIC_ADMIN`: Administrador Académico y de Control Escolar.
 * `SYSTEM_ADMIN`: Administrador del Sistema / Superusuario.
 
 ### 2.2. Encabezado de Solicitud
@@ -41,8 +40,8 @@ Authorization: Bearer <access_token>
 ```
 
 ### 2.3. Parámetros de Ciclo de Vida del Token
-- **Token de Acceso (`access`):** Vigencia de 8 horas.
-- **Token de Refresco (`refresh`):** Vigencia de 7 días con rotación automática (`ROTATE_REFRESH_TOKENS = True`).
+- **Token de Acceso (`access`):** Vigencia de **15 minutos**.
+- **Token de Refresco (`refresh`):** Vigencia de **7 días**, con rotación automática (`ROTATE_REFRESH_TOKENS = True`) e invalidación del token rotado mediante blacklist (`BLACKLIST_AFTER_ROTATION = True`).
 
 ### 2.4. Endpoints de Autenticación
 * `POST /api/v1/auth/login/`  
@@ -63,7 +62,8 @@ Authorization: Bearer <access_token>
         "email": "coordinador@nexus.edu",
         "first_name": "Coordinador",
         "last_name": "Académico",
-        "role": "PROGRAM_COORDINATOR"
+        "role": "PROGRAM_COORDINATOR",
+        "grammatical_gender": "MASCULINE"
       }
     }
     ```
@@ -207,6 +207,17 @@ Las consultas a colecciones de recursos (`GET /api/v1/{recurso}/`) implementan `
 | **Acuerdos** | `/api/v1/agreements/` | `GET`, `POST`, `PATCH`, `DELETE` | Acuerdos, compromisos y cambio de estado con auditoría |
 | **Tesis** | `/api/v1/thesis/` | `GET`, `POST`, `PUT` | Registro de avance porcentual y desglose JSON |
 | **Salida Académica** | `/api/v1/academic-output/` | `GET`, `POST`, `PUT`, `DELETE` | `publications/`, `events/`, `research-stays/`, `other-products/` |
-| **Evidencias** | `/api/v1/evidence/` | `GET`, `POST`, `DELETE` | `upload/` (Multipart hasta 15MB), metadatos y DOIs |
+| **Evidencias** | `/api/v1/evidence/` | `GET`, `POST`, `DELETE` | carga `multipart/form-data` (hasta **15 MiB**), metadatos y DOIs |
 | **Monitoreo** | `/api/v1/monitoring/` | `GET` | `timeline/`, `dashboard/`, `alerts/`, `supervision-alerts/` |
 | **Reportes** | `/api/v1/reporting/` | `GET` | `dossier/`, `dossier/pdf/`, `dossier/excel/` |
+
+
+---
+
+## 6. Decisiones operativas vigentes
+
+- La API pública vigente se expone **exclusivamente bajo `/api/v1/`**. No se documentan ni admiten prefijos alternativos.
+- La creación y modificación de semestres corresponde únicamente a `PROGRAM_COORDINATOR`; los demás actores autorizados pueden consultarlos.
+- `VENCIDO` es un estado **derivado** de `fecha_limite < hoy` mientras el acuerdo no esté `CONCLUIDO`; no es una transición manual ni debe persistirse como efecto de una lectura.
+- `matricula` admite como máximo 20 caracteres y `grammatical_gender` forma parte de la representación de usuario.
+- El comité se representa como un agregado por estudiante con `memberships`; sus cargos son `ASESOR`, `COASESOR` y `COMMITTEE_MEMBER`, con un máximo de un `COASESOR` por comité.

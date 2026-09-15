@@ -8,7 +8,7 @@
 
 ## 1. Fundamentación Arquitectónica
 
-El sistema N.E.X.U.S. se rige bajo una arquitectura de **Monolito Modular de Alta Cohesión y Bajo Acoplamiento**. Para garantizar la estabilidad del modelo de datos relacional y asegurar la interoperabilidad sin colisiones entre los módulos, la implementación del Product Backlog (**HU-01 a HU-28**) debe seguir estrictamente la **Secuencia Canónica de Dependencias de Dominio**.
+El sistema N.E.X.U.S. se rige bajo una arquitectura de **una única aplicación Django `nexus`, organizada como monolito modular de alta cohesión y bajo acoplamiento mediante dominios conceptuales**. Para garantizar la estabilidad del modelo de datos relacional y asegurar la interoperabilidad sin colisiones entre los módulos, la implementación del Product Backlog (**HU-01 a HU-28**) debe seguir estrictamente la **Secuencia Canónica de Dependencias de Dominio**.
 
 Ningún módulo de nivel superior (supervisión activa, línea de tiempo longitudinal, reportabilidad o exportación documental) puede consumirse sin que sus entidades proveedoras de datos hayan formalizado y publicado sus contratos de API REST bajo el estándar `/api/v1/`.
 
@@ -55,7 +55,7 @@ Ningún módulo de nivel superior (supervisión activa, línea de tiempo longitu
                                         v
 +---------------------------------------------------------------------------------+
 |                      NIVEL 3: REPOSITORIO DE EVIDENCIAS                         |
-|      HU-21 / HU-22: Carga Documental (15MB) y Validación Enlaces/DOI (evidence)  |
+|      HU-21 / HU-22: Carga Documental (15 MiB) y Validación Enlaces/DOI (evidence)  |
 +---------------------------------------+-----------------------------------------+
                                         |
                                         v
@@ -101,7 +101,7 @@ Ningún módulo de nivel superior (supervisión activa, línea de tiempo longitu
 | **HU-18** | Sprint 4 [E1] | Registrar ponencias y congresos | `academic_output` | `HU-03`, `HU-21` | `GET/POST /api/v1/academic-output/events/` |
 | **HU-19** | Sprint 4 [E1] | Registrar estancias de investigación doctorales | `academic_output` | `HU-03`, `HU-21` | `GET/POST /api/v1/academic-output/research-stays/` |
 | **HU-20** | Sprint 4 [E1] | Registrar otros productos: patentes, software y bases de datos | `academic_output` | `HU-03`, `HU-21` | `GET/POST /api/v1/academic-output/other-products/` |
-| **HU-21** | Sprint 3 [E2] | Cargar evidencias documentales (Archivos locales hasta 15MB) | `evidence` | `HU-01`, `HU-03` | `POST /api/v1/evidence/upload/` (Multipart/form-data) |
+| **HU-21** | Sprint 3 [E2] | Cargar evidencias documentales (Archivos locales hasta 15 MiB) | `evidence` | `HU-01`, `HU-03` | `POST /api/v1/evidence/upload/` (Multipart/form-data) |
 | **HU-22** | Sprint 3 [E2] | Registrar y validar identificadores persistentes DOI / URL | `evidence` | `HU-01`, `HU-03` | `POST /api/v1/evidence/` (`tipo='ENLACE_DOI'`) |
 | **HU-23** | Sprint 3 [E3] | Línea de tiempo longitudinal multi-nodo (Hito MVP) | `monitoring` | `HU-07`, `HU-11`, `HU-15`, `HU-21` | `GET /api/v1/monitoring/timeline/?student={id}` |
 | **HU-24** | Sprint 4 [E3] | Dashboard ejecutivo del coordinador | `monitoring` | `HU-04`, `HU-07`, `HU-15`, `HU-17` | `GET /api/v1/monitoring/dashboard/` |
@@ -125,3 +125,13 @@ $$\text{HU-01 (Auth)} \longrightarrow \text{HU-03 (Students)} \longrightarrow \t
    Los productos académicos y acuerdos referencian evidencias documentales mediante clave foránea nulable (`evidencia = models.ForeignKey(Evidence, null=True, on_delete=models.SET_NULL)`), permitiendo adjuntar archivos antes o después del registro.
 3. **Punto de Convergencia MVP (`HU-23`):**  
    La Línea de Tiempo Longitudinal consolida cronológicamente las tutorías (`HU-07`), acuerdos (`HU-11`), avances de tesis (`HU-15`) y evidencias (`HU-21`), validando la integración transversal del sistema en Sprint 3.
+
+
+---
+
+## 5. Convenciones de implementación e integración vigentes
+
+1. Los nombres `identity`, `students`, `tutoring`, `agreements`, `thesis`, `academic_output`, `evidence`, `monitoring` y `reporting` representan **dominios conceptuales dentro de la app Django única `nexus`**, no aplicaciones Django separadas. Los módulos de HU futuras permanecen especificados aunque aún no estén implementados.
+2. Las tablas propias usan el prefijo Django de la app única: `nexus_*`.
+3. El frontend se gestiona exclusivamente con **pnpm**.
+4. El flujo Git es `HU-*` → PR a `Development` → validación integrada → PR a `main`; `main` no recibe ramas HU directamente.

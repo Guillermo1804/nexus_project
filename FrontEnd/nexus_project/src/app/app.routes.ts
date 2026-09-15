@@ -1,85 +1,57 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { inject } from '@angular/core';
-import { AuthService } from './core/services/auth.service';
-import { Router } from '@angular/router';
+import { authGuard, permissionGuard, roleGuard } from './core/auth/auth.guard';
+import { RoleManagement } from './admin/role-management';
+import { InstitutionalUsers } from './admin/institutional-users';
+import { CommitteeManagement } from './admin/committee-management';
+import { AuditManagement } from './admin/audit-management';
+import { Home } from './home/home';
+import { Login } from './login/login';
+import { RegistroEstudiante } from './coordinador/registro-estudiante';
+import { StudentOverviewComponent } from './expediente/student-overview';
 
 export const routes: Routes = [
+  { path: 'login', component: Login },
+  { path: 'home', component: Home, canActivate: [authGuard] },
   {
-    path: 'login',
-    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
+    path: 'expediente/:id',
+    component: StudentOverviewComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
   },
   {
-    path: '',
-    canActivate: [authGuard],
-    loadComponent: () => import('./shared/components/app-shell/app-shell.component').then(m => m.AppShellComponent),
-    children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        canActivate: [
-          () => {
-            const authService = inject(AuthService);
-            const router = inject(Router);
-            const role = authService.currentUser()?.role;
-            const studentId = authService.getStudentId();
-
-            if (role === 'COORDINADOR' || role === 'ADMIN') {
-              return router.createUrlTree(['/dashboard']);
-            } else if (role === 'ESTUDIANTE') {
-              return router.createUrlTree(['/students', studentId || 'me']);
-            } else if (role === 'ASESOR') {
-              return router.createUrlTree(['/dashboard']);
-            }
-            return router.createUrlTree(['/students']);
-          }
-        ],
-        children: []
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      },
-      {
-        path: 'students',
-        loadComponent: () => import('./features/students-list/students-list.component').then(m => m.StudentsListComponent)
-      },
-      {
-        path: 'students/:id',
-        loadComponent: () => import('./features/student-overview/student-overview.component').then(m => m.StudentOverviewComponent)
-      },
-      {
-        path: 'students/:id/dossier',
-        loadComponent: () => import('./features/reporting/full-dossier-report/full-dossier-report.component').then(m => m.FullDossierReportComponent)
-      },
-      {
-        path: 'reporting/dossier/:id',
-        loadComponent: () => import('./features/reporting/full-dossier-report/full-dossier-report.component').then(m => m.FullDossierReportComponent)
-      },
-      {
-        path: 'tutoring',
-        loadComponent: () => import('./features/student-overview/student-overview.component').then(m => m.StudentOverviewComponent)
-      },
-      {
-        path: 'agreements',
-        loadComponent: () => import('./features/agreements/agreements-list/agreements-list.component').then(m => m.AgreementsListComponent)
-      },
-      {
-        path: 'academic-output',
-        loadComponent: () => import('./features/academic-output/academic-output.component').then(m => m.AcademicOutputComponent)
-      },
-      {
-        path: 'reports',
-        loadComponent: () => import('./features/reporting/full-dossier-report/full-dossier-report.component').then(m => m.FullDossierReportComponent)
-      },
-      {
-        path: 'reports/:id',
-        loadComponent: () => import('./features/reporting/full-dossier-report/full-dossier-report.component').then(m => m.FullDossierReportComponent)
-      }
-    ]
+    path: 'admin/roles',
+    component: RoleManagement,
+    canActivate: [authGuard, roleGuard, permissionGuard],
+    data: { requiredPermission: 'users.role.assign', allowedRoles: ['SYSTEM_ADMIN'] },
   },
   {
-    path: '**',
-    redirectTo: ''
-  }
+    path: 'admin/users',
+    component: InstitutionalUsers,
+    canActivate: [authGuard, roleGuard, permissionGuard],
+    data: { requiredPermission: 'users.role.assign', allowedRoles: ['SYSTEM_ADMIN'] },
+  },
+  {
+    path: 'admin/audit',
+    component: AuditManagement,
+    canActivate: [authGuard, roleGuard, permissionGuard],
+    data: { requiredPermission: 'users.role.assign', allowedRoles: ['SYSTEM_ADMIN'] },
+  },
+  {
+    path: 'coordinator/committee',
+    component: CommitteeManagement,
+    canActivate: [authGuard, roleGuard, permissionGuard],
+    data: { requiredPermission: 'committee.manage', allowedRoles: ['PROGRAM_COORDINATOR'] },
+  },
+  {
+    path: 'admin/committee',
+    redirectTo: 'coordinator/committee',
+  },
+  {
+    path: 'coordinator/students/new',
+    component: RegistroEstudiante,
+    canActivate: [authGuard, roleGuard, permissionGuard],
+    data: { requiredPermission: 'students.create', allowedRoles: ['PROGRAM_COORDINATOR'] },
+  },
+  { path: '', pathMatch: 'full', redirectTo: 'login' },
+  { path: '**', redirectTo: 'login' },
 ];

@@ -1,0 +1,123 @@
+<main class="home-shell">
+  <header>
+    <div>
+      <div class="brand-badge">
+        <svg class="nexus-brand-icon" viewBox="0 0 12 10" width="14" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.98125 3.0625l1.54583-3.0625 0.175 0 1.54584 3.0625-3.26667 0 0 0m1.19583 6.9125l-5.03125-6.0375 5.03125 0 0 6.0375 0 0m0.875 0l0-6.0375 5.03125 0-5.03125 6.0375 0 0m2.15834-6.9125l-1.51667-3.0625 3.00417 0 1.53125 3.0625-3.01875 0 0 0m-8.21042 0l1.53125-3.0625 3.00417 0-1.51667 3.0625-3.01875 0 0 0" fill="currentColor"/>
+        </svg>
+        <span>N.E.X.U.S.</span>
+      </div>
+      <h1>Inicio</h1>
+    </div>
+    <button class="logout-btn" type="button" (click)="logout()" [disabled]="isLeaving">
+      {{ isLeaving ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+    </button>
+  </header>
+
+  @if (auth.user(); as user) {
+    <section aria-label="Informacion de sesion" class="user-card">
+      <p>{{ getWelcomeText() }}</p>
+      <p class="role">Rol: {{ getRoleLabel(user.role) }}</p>
+
+      <div class="actions-row">
+        @if (user.role === 'STUDENT' && auth.user()) {
+          <a [routerLink]="['/expediente', auth.user()!.id]" class="btn-action">Mi expediente académico</a>
+        }
+
+        @if (auth.hasPermission('students.create')) {
+          <a routerLink="/coordinator/students/new" class="btn-action">+ Registrar estudiante</a>
+        }
+
+        @if (auth.hasPermission('committee.manage')) {
+          <a routerLink="/coordinator/committee" class="btn-action">Asociaciones académicas</a>
+        }
+
+        @if (auth.hasPermission('users.role.assign')) {
+          <a routerLink="/admin/roles" class="btn-action">Administrar roles</a>
+          <a routerLink="/admin/users" class="btn-action">Cuentas institucionales</a>
+          <a routerLink="/admin/audit" class="btn-action">Historial administrativo</a>
+        }
+      </div>
+    </section>
+
+    @if (auth.hasPermission('academic.read.global')) {
+      <section class="students-section">
+        <div class="section-header">
+          <h2>Padrón de Estudiantes de Posgrado</h2>
+          <span class="count-badge">{{ totalEstudiantes }} registrados</span>
+        </div>
+
+        @if (cargandoEstudiantes) {
+          <p class="loading-hint">Cargando padrón de estudiantes...</p>
+        } @else if (errorEstudiantes) {
+          <div class="error-card" role="alert"><p>{{ errorEstudiantes }}</p><button type="button" (click)="cargarEstudiantes(paginaEstudiantes)">Reintentar</button></div>
+        } @else if (estudiantes.length === 0) {
+          <div class="empty-card">
+            <p>No hay estudiantes registrados actualmente.</p>
+            <a routerLink="/coordinator/students/new">+ Registrar primer estudiante</a>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="students-table">
+              <caption>Padrón de estudiantes de posgrado</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Matrícula</th>
+                  <th scope="col">Nombre completo</th>
+                  <th scope="col">Programa doctoral</th>
+                  <th scope="col">Cohorte</th>
+                  <th scope="col">Estatus</th>
+                  <th scope="col">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (est of estudiantes; track est.id) {
+                  <tr>
+                    <td class="mono-cell">{{ est.matricula }}</td>
+                    <td class="name-cell">{{ est.nombre_completo }}</td>
+                    <td>{{ est.programa_doctoral }}</td>
+                    <td>{{ est.cohorte }}</td>
+                    <td>
+                      <span class="badge" [class.badge-active]="est.estatus_activo" [class.badge-inactive]="!est.estatus_activo">
+                        {{ est.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}
+                      </span>
+                    </td>
+                    <td>
+                      <a [routerLink]="['/expediente', est.id]" class="btn-view-expediente">
+                        Ver expediente
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <nav class="paginator" aria-label="Paginación del padrón"><button type="button" (click)="cargarEstudiantes(paginaEstudiantes - 1)" [disabled]="paginaEstudiantes === 1">Anterior</button><span>Página {{ paginaEstudiantes }}</span><button type="button" (click)="cargarEstudiantes(paginaEstudiantes + 1)" [disabled]="!siguientePagina">Siguiente</button></nav>
+        }
+      </section>
+    }
+
+    @if (user.role === 'TUTOR' || user.role === 'COMMITTEE_MEMBER' || auth.hasPermission('records.read.assigned')) {
+      <section class="students-section committee-section">
+        <div class="section-header">
+          <h2>Estudiantes Asignados (Comité Tutorial)</h2>
+          <span class="count-badge">{{ studentService.students().length }} asignados</span>
+        </div>
+
+        @if (studentService.loading()) {
+          <p class="loading-hint">Cargando estudiantes asignados a tu comité...</p>
+        } @else if (studentService.students().length === 0) {
+          <div class="empty-card">
+            <p>No tienes estudiantes asignados a tu comité tutorial actualmente.</p>
+          </div>
+        } @else {
+          <div class="committee-cards-grid">
+            @for (est of studentService.students(); track est.id) {
+              <app-academic-committee-card [student]="est" />
+            }
+          </div>
+        }
+      </section>
+    }
+  }
+</main>
