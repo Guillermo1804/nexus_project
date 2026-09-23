@@ -7,6 +7,7 @@ import { AcademicService } from '../core/academic/academic.service';
 @Component({
   selector: 'app-tutoring-form',
   imports: [ReactiveFormsModule],
+    styleUrl: './tutoring-form.scss',
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="semester-form" aria-label="Registrar tutoría">
       <div class="form-row">
