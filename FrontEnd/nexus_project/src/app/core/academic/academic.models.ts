@@ -24,6 +24,15 @@ export interface TutoringSession extends TutoringSessionData {
   created_by: number;
 }
 
+export interface SemesterTutoringSession {
+  id: number;
+  fecha_sesion: string;
+  modalidad: string;
+  resumen: string;
+  proxima_reunion_fecha?: string | null;
+  proxima_reunion_notas?: string;
+}
+
 export interface Semester {
   id: number;
   student: number;
@@ -33,6 +42,7 @@ export interface Semester {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  tutoring_sessions: SemesterTutoringSession[];
 }
 
 export interface CreateSemesterData {

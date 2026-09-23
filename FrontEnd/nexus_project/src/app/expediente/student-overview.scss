@@ -559,3 +559,55 @@ $badge-overdue-text: #A14D98;
 .error-msg { color: var(--danger-text); margin-top: .5rem; }
 .success-msg { color: var(--badge-active-text); margin-top: .5rem; }
 caption { text-align: left; padding: .5rem; font-weight: 600; }
+
+.semester-with-tutoring {
+  display: block;
+}
+
+.semester-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.semester-tutoring {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.semester-tutoring-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.semester-tutoring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.semester-tutoring-item {
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.tutoring-session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tutoring-session-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+
+.tutoring-next-meeting {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+}

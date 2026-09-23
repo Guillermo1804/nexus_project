@@ -260,22 +260,109 @@
           }
 
           @if (overview.semesters && overview.semesters.length > 0) {
-            <ul class="semesters-list">
-              @for (sem of overview.semesters; track sem.id) {
-                <li class="semester-list-item">
-                  <div class="sem-item-info">
-                    <span class="sem-num">Semestre {{ sem.numero }}</span>
-                    <span class="sem-period">{{ sem.fecha_inicio }} - {{ sem.fecha_fin }}</span>
-                  </div>
-                  @if (sem.is_active) {
-                    <span class="badge badge-active">ACTIVO</span>
-                  }
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="empty-state">No hay semestres registrados</p>
+  <ul class="semesters-list">
+
+    @for (sem of overview.semesters; track sem.id) {
+
+      <li class="semester-list-item semester-with-tutoring">
+
+        <div class="semester-header">
+
+          <div class="sem-item-info">
+            <span class="sem-num">
+              Semestre {{ sem.numero }}
+            </span>
+
+            <span class="sem-period">
+              {{ sem.fecha_inicio }} - {{ sem.fecha_fin }}
+            </span>
+          </div>
+
+          @if (sem.is_active) {
+            <span class="badge badge-active">
+              ACTIVO
+            </span>
           }
+
+        </div>
+
+        <div class="semester-tutoring">
+
+          <h3 class="semester-tutoring-title">
+            Tutorías
+          </h3>
+
+          @if (
+            sem.tutoring_sessions &&
+            sem.tutoring_sessions.length > 0
+          ) {
+
+            <div class="semester-tutoring-list">
+
+              @for (
+                tutoria of sem.tutoring_sessions;
+                track tutoria.id
+              ) {
+
+                <div class="semester-tutoring-item">
+
+                  <div class="tutoring-session-header">
+
+                    <strong>
+                      {{ tutoria.fecha_sesion }}
+                    </strong>
+
+                    <span class="badge badge-info">
+                      {{ tutoria.modalidad }}
+                    </span>
+
+                  </div>
+
+                  <p class="tutoring-session-summary">
+                    {{ tutoria.resumen }}
+                  </p>
+
+                  @if (tutoria.proxima_reunion_fecha) {
+
+                    <p class="tutoring-next-meeting">
+                      <strong>
+                        Próxima reunión:
+                      </strong>
+
+                      {{ tutoria.proxima_reunion_fecha }}
+                    </p>
+
+                  }
+
+                </div>
+
+              }
+
+            </div>
+
+          } @else {
+
+            <p class="empty-state">
+              Sin tutorías registradas en este semestre.
+            </p>
+
+          }
+
+        </div>
+
+      </li>
+
+    }
+
+  </ul>
+
+} @else {
+
+  <p class="empty-state">
+    No hay semestres registrados
+  </p>
+
+}
         </article>
       </aside>
     </div>

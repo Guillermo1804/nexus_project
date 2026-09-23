@@ -25,7 +25,7 @@ import { AcademicService } from '../core/academic/academic.service';
       </div>
       @if (error) { <p class="error-msg" role="alert" aria-live="assertive">{{ error }}</p> }
       <div class="form-actions"><button type="button" class="btn-cancel" (click)="cancelled.emit()">Cancelar</button>
-        <button type="submit" class="btn-submit" [disabled]="saving">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
+        <button type="submit" class="btn-submit" [disabled]="saving || form.invalid">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
     </form>
   `,
 })
