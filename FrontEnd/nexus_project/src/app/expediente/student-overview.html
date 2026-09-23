@@ -187,9 +187,9 @@
         </article>
 
         <!-- 6. Tarjeta Última Tutoría -->
-        <article class="card tutoring-card">
+        <article class="card tutoring-card" [class.tutoring-card--registering]="mostrarFormTutoria">
           <div class="card-header-row">
-            <h2 class="card-title">Última Tutoría</h2>
+            <h2 class="card-title">{{ mostrarFormTutoria ? 'Registrar tutoría' : 'Última Tutoría' }}</h2>
             @if (auth.hasPermission('tutoring.create')) {
               <button
                 type="button"
