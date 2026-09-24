@@ -24,6 +24,28 @@ export interface TutoringSession extends TutoringSessionData {
   created_by: number;
 }
 
+export type RolParticipanteTutoria =
+  | 'ESTUDIANTE'
+  | 'ASESOR_PRINCIPAL'
+  | 'COASESOR'
+  | 'MIEMBRO_COMITE';
+
+export interface ParticipanteTutoria {
+  id: number;
+  session: number;
+  user: number;
+  rol_en_sesion: RolParticipanteTutoria;
+  asistencia: boolean;
+  notas: string;
+}
+
+export interface DatosParticipanteTutoria {
+  user: number;
+  rol_en_sesion: RolParticipanteTutoria;
+  asistencia: boolean;
+  notas?: string;
+}
+
 export interface SemesterTutoringSession {
   id: number;
   fecha_sesion: string;
@@ -61,6 +83,7 @@ export interface StudentOverview {
   estatus_activo: boolean;
   student: {
     id: number;
+    usuario_id: number;
     matricula: string;
     nombre_completo: string;
     programa_doctoral: string;

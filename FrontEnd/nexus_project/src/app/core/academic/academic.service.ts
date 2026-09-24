@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PaginatedResponse } from '../../shared/pagination';
-import { StudentRecord, TutoringSession, TutoringSessionData, Semester, CreateSemesterData, StudentOverview, Agreement } from './academic.models';
+import { StudentRecord, TutoringSession, TutoringSessionData, Semester, CreateSemesterData, StudentOverview, Agreement, ParticipanteTutoria, DatosParticipanteTutoria } from './academic.models';
 
 const API = environment.apiUrl;
 
@@ -21,6 +21,14 @@ export class AcademicService {
 
   createTutoringSession(data: TutoringSessionData): Observable<TutoringSession> {
     return this.http.post<TutoringSession>(`${API}/tutoring-sessions/`, data);
+  }
+
+  getParticipantesTutoria(tutoriaId: number): Observable<ParticipanteTutoria[]> {
+  return this.http.get<ParticipanteTutoria[]>(`${API}/tutoring-sessions/${tutoriaId}/participants/`);
+  }
+
+  registrarParticipanteTutoria(tutoriaId: number, datos: DatosParticipanteTutoria): Observable<ParticipanteTutoria> {
+  return this.http.post<ParticipanteTutoria>(`${API}/tutoring-sessions/${tutoriaId}/participants/`, datos);
   }
 
   getAgreements(filters: { page?: number; student?: number; estado?: string; vencido?: boolean } = {}): Observable<PaginatedResponse<Agreement>> {

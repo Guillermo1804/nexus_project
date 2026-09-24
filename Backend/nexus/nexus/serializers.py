@@ -184,6 +184,7 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
     def get_student(self, student):
         return {
             'id': student.id,
+            'usuario_id': student.user_id,
             'matricula': student.matricula,
             'nombre_completo': student.nombre_completo,
             'programa_doctoral': student.programa_doctoral,

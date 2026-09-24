@@ -7,10 +7,11 @@ import { StudentOverview } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
+import { TutoringConditionsComponent } from './tutoring-conditions';
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, RouterLink, SemesterFormComponent, TutoringFormComponent],
+  imports: [CommonModule, RouterLink, SemesterFormComponent, TutoringFormComponent, TutoringConditionsComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -25,6 +26,7 @@ export class StudentOverviewComponent implements OnInit {
   protected mostrarFormSemestre = false;
   protected mostrarFormTutoria = false;
   protected exitoTutoria = '';
+  protected tutoriaCondicionesId: number | null = null;
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
@@ -49,4 +51,6 @@ export class StudentOverviewComponent implements OnInit {
 
   semestreGuardado(): void { this.mostrarFormSemestre = false; this.cargarExpediente(); }
   tutoriaGuardada(): void { this.mostrarFormTutoria = false; this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
+
+  alternarCondicionesTutoria(tutoriaId: number): void { this.tutoriaCondicionesId = this.tutoriaCondicionesId === tutoriaId ? null : tutoriaId;}
 }

@@ -334,6 +334,28 @@
 
                   }
 
+                  <button
+                    type="button"
+                    class="btn-condiciones-tutoria"
+                    (click)="alternarCondicionesTutoria(tutoria.id)"
+                    [attr.aria-expanded]="tutoriaCondicionesId === tutoria.id"
+                  >
+                    {{
+                      tutoriaCondicionesId === tutoria.id
+                        ? 'Cerrar condiciones'
+                        : 'Condiciones de tutoría'
+                    }}
+                  </button>
+
+                  @if (tutoriaCondicionesId === tutoria.id) {
+                    <app-tutoring-conditions
+                      [tutoriaId]="tutoria.id"
+                      [estudiante]="overview.student"
+                      [asesores]="overview.advisors"
+                      (cerrado)="tutoriaCondicionesId = null"
+                    />
+                  }
+
                 </div>
 
               }
