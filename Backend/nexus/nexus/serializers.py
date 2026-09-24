@@ -564,12 +564,7 @@ class SemesterSerializer(serializers.ModelSerializer):
                 'El número de semestre debe estar entre 1 y 6.'
             )
         return value
-
-    def validate_numero(self, value):
-        if not (1 <= value <= 6):
-            raise serializers.ValidationError('El número de semestre debe estar entre 1 y 6.')
-        return value
-
+    
     def validate(self, attrs):
         fecha_inicio = attrs.get('fecha_inicio') or (self.instance.fecha_inicio if self.instance else None)
         fecha_fin = attrs.get('fecha_fin') or (self.instance.fecha_fin if self.instance else None)
