@@ -238,7 +238,7 @@ class StudentRecordView(APIView):
             students = students.filter(allowed) if allowed else students.none()
 
         student = students.select_related('user').prefetch_related(
-            Prefetch('semesters', queryset=Semester.objects.order_by('numero')),
+            Prefetch('semesters',queryset=Semester.objects.prefetch_related('tutoring_sessions').order_by('numero'),),
             Prefetch('academic_committee__memberships', queryset=CommitteeMembership.objects.select_related('user')),
             Prefetch('tutoring_sessions', queryset=TutoringSession.objects.order_by('-fecha_sesion', '-id')),
             Prefetch(

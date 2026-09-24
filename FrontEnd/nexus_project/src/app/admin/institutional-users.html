@@ -4,7 +4,7 @@
   </div>
   <h1>Cuentas institucionales</h1>
   <p>Crea cuentas para asesores, miembros del comité, coordinadores y administradores académicos.</p>
-  <form (ngSubmit)="createUser()">
+  <form #userForm="ngForm" (ngSubmit)="createUser()">
     <label>Nombre <input name="first_name" [(ngModel)]="form.first_name" (keydown)="bloquearNumeros($event)" (input)="filtrarNumeros($event, 'first_name')" pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$" title="Solo se permiten letras y espacios" required></label>
     <label>Apellidos <input name="last_name" [(ngModel)]="form.last_name" (keydown)="bloquearNumeros($event)" (input)="filtrarNumeros($event, 'last_name')" pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$" title="Solo se permiten letras y espacios" required></label>
     <label>Correo institucional <input name="email" type="email" [(ngModel)]="form.email" required></label>
@@ -36,8 +36,9 @@
         @for (role of roles; track role) { <option [value]="role">{{ getRoleLabel(role) }}</option> }
       </select>
     </label>
-    <button type="submit" [disabled]="saving">{{ saving ? 'Creando...' : 'Crear cuenta' }}</button>
-  </form>
+    <button type="submit" [disabled]="saving || userForm.invalid">
+      {{ saving ? 'Creando...' : 'Crear cuenta' }}
+    </button>  </form>
   @if (message) { <p role="status">{{ message }}</p> }
   @if (error) { <p role="alert">{{ error }}</p> }
 </main>
