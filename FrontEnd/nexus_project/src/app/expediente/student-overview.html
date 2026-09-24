@@ -336,7 +336,7 @@
 
                   <button
                     type="button"
-                    class="btn-condiciones-tutoria"
+                    class="btn-togggle-sem"
                     (click)="alternarCondicionesTutoria(tutoria.id)"
                     [attr.aria-expanded]="tutoriaCondicionesId === tutoria.id"
                   >
@@ -352,7 +352,6 @@
                       [tutoriaId]="tutoria.id"
                       [estudiante]="overview.student"
                       [asesores]="overview.advisors"
-                      (cerrado)="tutoriaCondicionesId = null"
                     />
                   }
 
