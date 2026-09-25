@@ -124,6 +124,13 @@ export class TutoringConditionsComponent implements OnInit {
         asistencia: false,
       });
     }
+    this.participantes = this.participantes.filter(
+      (participante, indice, lista) =>
+        indice === lista.findIndex(
+          item => item.usuarioId === participante.usuarioId
+        )
+    );
+
     this.cargarParticipantes();
   }
 
