@@ -2,6 +2,7 @@ import { Component, Input, OnInit, inject} from '@angular/core';
 import { RolParticipanteTutoria, StudentOverview } from '../core/academic/academic.models';
 import { finalize, forkJoin } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
+import { AuthService } from '../core/auth/auth.service';
 
 interface ParticipanteCondicion {
   participanteId: number | null;
@@ -28,7 +29,7 @@ interface ParticipanteCondicion {
           <input
             type="checkbox"
             [checked]="participante.asistencia"
-            [disabled]="cargando || guardando || participante.participanteId !== null"
+            [disabled]="cargando || guardando || participante.participanteId !== null || !auth.hasPermission('tutoring.create')"
             (change)="cambiarAsistencia(participante, $event)"
           />
           <span>{{ participante.nombreCompleto }}</span>
@@ -48,7 +49,7 @@ interface ParticipanteCondicion {
         <p role="status">{{ mensaje }}</p>
       }
 
-      @if (!cargando && !error && !condicionesRegistradas) {
+      @if (auth.hasPermission('tutoring.create') && !cargando && !error && !condicionesRegistradas) {
         <button
           type="button"
           [disabled]="guardando"
@@ -62,6 +63,7 @@ interface ParticipanteCondicion {
 })
 export class TutoringConditionsComponent implements OnInit {
   private readonly academicService = inject(AcademicService);
+  protected readonly auth = inject(AuthService);
   @Input({ required: true }) tutoriaId!: number;
   @Input({ required: true }) estudiante!: StudentOverview['student'];
   @Input({ required: true }) asesores!: StudentOverview['advisors'];
