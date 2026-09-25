@@ -612,6 +612,36 @@ caption { text-align: left; padding: .5rem; font-weight: 600; }
   font-size: 0.75rem;
 }
 
+.btn-tutoring-conditions {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.8rem;
+
+  color: $primary;
+  background: #eeeeff;
+
+  border: 1px solid #dedfff;
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background: #e0e0fa;
+    border-color: #c9caff;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
 .tutoring-card {
   transition:
     box-shadow 0.2s ease,

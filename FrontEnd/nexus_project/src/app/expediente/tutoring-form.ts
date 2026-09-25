@@ -19,7 +19,35 @@ import { AcademicService } from '../core/academic/academic.service';
           <option value="PRESENCIAL">Presencial</option><option value="VIRTUAL">Virtual</option><option value="HIBRIDA">Híbrida</option>
         </select></div>
       </div>
-      <div class="field field-full"><label for="tut-resumen">Resumen de la sesión</label><input id="tut-resumen" formControlName="resumen" /></div>
+      <div class="field field-full">
+
+        <label for="tut-resumen">
+          Resumen de la sesión
+          <span class="required-mark">*</span>
+          <span class="required-text">Obligatorio</span>
+        </label>
+
+        <textarea
+          id="tut-resumen"
+          formControlName="resumen"
+          rows="3"
+          placeholder="Describe brevemente los temas tratados"
+          [class.input-invalid]="
+            form.controls.resumen.invalid &&
+            form.controls.resumen.touched
+          "
+        ></textarea>
+
+        @if (
+          form.controls.resumen.invalid &&
+          form.controls.resumen.touched
+        ) {
+          <span class="field-error">
+            El resumen de la sesión es obligatorio.
+          </span>
+        }
+
+      </div>
       <div class="form-row">
         <div class="field"><label for="tut-prox-fecha">Próxima reunión (opcional)</label><input id="tut-prox-fecha" type="date" formControlName="proxima_reunion_fecha" /></div>
         <div class="field"><label for="tut-prox-notas">Notas próxima reunión (opcional)</label><input id="tut-prox-notas" formControlName="proxima_reunion_notas" /></div>
