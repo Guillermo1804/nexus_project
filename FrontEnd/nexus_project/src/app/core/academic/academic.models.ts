@@ -24,6 +24,7 @@ export interface TutoringSession extends TutoringSessionData {
   created_by: number;
 }
 
+<<<<<<< HEAD
 export interface TutoringObservation {
   id: number;
   session: number;
@@ -37,6 +38,15 @@ export interface TutoringObservation {
 export interface CreateTutoringObservationData {
   tema_revisado: string;
   observaciones_detalladas: string;
+=======
+export interface SemesterTutoringSession {
+  id: number;
+  fecha_sesion: string;
+  modalidad: string;
+  resumen: string;
+  proxima_reunion_fecha?: string | null;
+  proxima_reunion_notas?: string;
+>>>>>>> origin/HU-07-registrar-sesion-tutoria
 }
 
 export interface Semester {
@@ -48,6 +58,7 @@ export interface Semester {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  tutoring_sessions: SemesterTutoringSession[];
 }
 
 export interface CreateSemesterData {

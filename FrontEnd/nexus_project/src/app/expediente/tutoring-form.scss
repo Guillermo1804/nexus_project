@@ -1,0 +1,106 @@
+.semester-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  margin-bottom: 0.85rem;
+  background: #f8f8ff;
+  border: 1px solid #e4e4f5;
+  border-radius: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.field label {
+  color: #34206f;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.5rem;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.8rem;
+  background: #ffffff;
+  border: 1px solid #cfd2df;
+  border-radius: 6px;
+  outline: none;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.15rem;
+}
+
+.btn-cancel,
+.btn-submit {
+  appearance: none;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    opacity 0.2s;
+}
+
+.btn-cancel {
+  color: #6558e8;
+  background: #eeeeff;
+  border: 1px solid #eeeeff;
+}
+
+.btn-cancel:hover {
+  background: #e0e0fa;
+  border-color: #e0e0fa;
+}
+
+.btn-submit {
+  color: #ffffff;
+  background: #6558e8;
+  border: 1px solid #6558e8;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #5548d9;
+  border-color: #5548d9;
+}
+
+.btn-submit:disabled {
+  color: #77748f;
+  background: #e5e4f0;
+  border-color: #e5e4f0;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.error-msg {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  color: #b42318;
+  font-size: 0.75rem;
+  background: #fff1f0;
+  border-radius: 6px;
+}
