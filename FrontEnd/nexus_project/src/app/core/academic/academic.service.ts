@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PaginatedResponse } from '../../shared/pagination';
+<<<<<<< HEAD
 import {
   StudentRecord,
   TutoringSession,
@@ -19,6 +20,9 @@ import {
   TutoringObservation,
   CreateTutoringObservationData,
 } from './academic.models';
+=======
+import { StudentRecord, TutoringSession, TutoringSessionData, Semester, CreateSemesterData, StudentOverview, Agreement, ParticipanteTutoria, DatosParticipanteTutoria } from './academic.models';
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
 
 const API = environment.apiUrl;
 
@@ -38,6 +42,7 @@ export class AcademicService {
     return this.http.post<TutoringSession>(`${API}/tutoring-sessions/`, data);
   }
 
+<<<<<<< HEAD
   getTutoringSessions(page = 1): Observable<PaginatedResponse<TutoringSession>> {
     return this.http.get<PaginatedResponse<TutoringSession>>(`${API}/tutoring-sessions/?page=${page}`);
   }
@@ -71,6 +76,18 @@ export class AcademicService {
         .filter(([, value]) => value !== undefined && value !== null && value !== '')
         .map(([key, value]) => [key, String(value)]),
     );
+=======
+  getParticipantesTutoria(tutoriaId: number): Observable<ParticipanteTutoria[]> {
+  return this.http.get<ParticipanteTutoria[]>(`${API}/tutoring-sessions/${tutoriaId}/participants/`);
+  }
+
+  registrarParticipanteTutoria(tutoriaId: number, datos: DatosParticipanteTutoria): Observable<ParticipanteTutoria> {
+  return this.http.post<ParticipanteTutoria>(`${API}/tutoring-sessions/${tutoriaId}/participants/`, datos);
+  }
+
+  getAgreements(filters: { page?: number; student?: number; estado?: string; vencido?: boolean } = {}): Observable<PaginatedResponse<Agreement>> {
+    const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]));
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
     return this.http.get<PaginatedResponse<Agreement>>(`${API}/agreements/?${query}`);
   }
 
@@ -89,6 +106,7 @@ export class AcademicService {
   createSemester(studentId: number, data: CreateSemesterData): Observable<Semester> {
     return this.http.post<Semester>(`${API}/students/${studentId}/semesters/`, data);
   }
+<<<<<<< HEAD
 
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {
     const form = new FormData();
@@ -99,4 +117,6 @@ export class AcademicService {
     form.append('archivo_adjunto', data.archivo_adjunto);
     return this.http.post<Evidence>(`${API}/evidence/`, form);
   }
+=======
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
 }

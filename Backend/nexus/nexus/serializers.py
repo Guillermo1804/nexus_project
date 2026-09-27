@@ -239,7 +239,11 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
     def get_student(self, student):
         return {
             'id': student.id,
+<<<<<<< HEAD
             'user_id': student.user_id,
+=======
+            'usuario_id': student.user_id,
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
             'matricula': student.matricula,
             'nombre_completo': student.nombre_completo,
             'programa_doctoral': student.programa_doctoral,
@@ -638,13 +642,7 @@ class SemesterSerializer(serializers.ModelSerializer):
                 'El número de semestre debe estar entre 1 y 6.'
             )
         return value
-        read_only_fields = ('id', 'student', 'created_at', 'updated_at')
-
-    def validate_numero(self, value):
-        if not (1 <= value <= 6):
-            raise serializers.ValidationError('El número de semestre debe estar entre 1 y 6.')
-        return value
-
+    
     def validate(self, attrs):
         fecha_inicio = attrs.get('fecha_inicio') or (self.instance.fecha_inicio if self.instance else None)
         fecha_fin = attrs.get('fecha_fin') or (self.instance.fecha_fin if self.instance else None)

@@ -29,18 +29,67 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   box-sizing: border-box;
   width: 100%;
   min-height: 2.1rem;
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.6rem;
+
   color: #1f2937;
   font: inherit;
   font-size: 0.8rem;
+
   background: #ffffff;
   border: 1px solid #cfd2df;
   border-radius: 6px;
   outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.field textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #6558e8;
+  box-shadow: 0 0 0 3px rgb(101 88 232 / 12%);
+}
+
+.required-mark {
+  margin-left: 0.15rem;
+  color: #d92d20;
+  font-weight: 800;
+}
+
+.required-text {
+  margin-left: 0.35rem;
+  color: #8a86a3;
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.field textarea.input-invalid {
+  border-color: #d92d20;
+  background: #fffafa;
+}
+
+.field textarea.input-invalid:focus {
+  border-color: #d92d20;
+  box-shadow: 0 0 0 3px rgb(217 45 32 / 10%);
+}
+
+.field-error {
+  margin-top: 0.15rem;
+  color: #b42318;
+  font-size: 0.68rem;
+  font-weight: 600;
 }
 
 .form-actions {

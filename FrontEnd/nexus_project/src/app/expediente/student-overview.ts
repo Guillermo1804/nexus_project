@@ -7,6 +7,7 @@ import { StudentOverview } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
+<<<<<<< HEAD
 import { TutoringObservationsComponent } from './tutoring-observations';
 import { TutoringAgreementsComponent, ResponsibleOption } from './tutoring-agreements';
 import { EvidenceUploadComponent } from './evidence-upload';
@@ -22,6 +23,13 @@ import { EvidenceUploadComponent } from './evidence-upload';
     TutoringAgreementsComponent,
     EvidenceUploadComponent,
   ],
+=======
+import { TutoringConditionsComponent } from './tutoring-conditions';
+
+@Component({
+  selector: 'app-student-overview',
+  imports: [CommonModule, RouterLink, SemesterFormComponent, TutoringFormComponent, TutoringConditionsComponent],
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -36,9 +44,13 @@ export class StudentOverviewComponent implements OnInit {
   protected mostrarFormSemestre = false;
   protected mostrarFormTutoria = false;
   protected exitoTutoria = '';
+<<<<<<< HEAD
   protected actualizandoAcuerdoId: number | null = null;
   protected errorEstado = '';
   protected exitoEstado = '';
+=======
+  protected tutoriaCondicionesId: number | null = null;
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
@@ -131,4 +143,6 @@ export class StudentOverviewComponent implements OnInit {
 
   semestreGuardado(): void { this.mostrarFormSemestre = false; this.cargarExpediente(); }
   tutoriaGuardada(): void { this.mostrarFormTutoria = false; this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
+
+  alternarCondicionesTutoria(tutoriaId: number): void { this.tutoriaCondicionesId = this.tutoriaCondicionesId === tutoriaId ? null : tutoriaId;}
 }

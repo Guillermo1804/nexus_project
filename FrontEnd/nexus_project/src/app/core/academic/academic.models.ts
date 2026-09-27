@@ -25,6 +25,7 @@ export interface TutoringSession extends TutoringSessionData {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export interface TutoringObservation {
   id: number;
   session: number;
@@ -39,6 +40,30 @@ export interface CreateTutoringObservationData {
   tema_revisado: string;
   observaciones_detalladas: string;
 =======
+=======
+export type RolParticipanteTutoria =
+  | 'ESTUDIANTE'
+  | 'ASESOR_PRINCIPAL'
+  | 'COASESOR'
+  | 'MIEMBRO_COMITE';
+
+export interface ParticipanteTutoria {
+  id: number;
+  session: number;
+  user: number;
+  rol_en_sesion: RolParticipanteTutoria;
+  asistencia: boolean;
+  notas: string;
+}
+
+export interface DatosParticipanteTutoria {
+  user: number;
+  rol_en_sesion: RolParticipanteTutoria;
+  asistencia: boolean;
+  notas?: string;
+}
+
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
 export interface SemesterTutoringSession {
   id: number;
   fecha_sesion: string;
@@ -77,7 +102,11 @@ export interface StudentOverview {
   estatus_activo: boolean;
   student: {
     id: number;
+<<<<<<< HEAD
     user_id: number | null;
+=======
+    usuario_id: number;
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
     matricula: string;
     nombre_completo: string;
     programa_doctoral: string;
@@ -145,6 +174,7 @@ export interface Agreement {
   is_vencido: boolean;
 }
 
+<<<<<<< HEAD
 export interface AgreementFilters {
   page?: number;
   page_size?: number;
@@ -192,3 +222,6 @@ export interface Evidence {
 }
 
 export type AcademicRole = UserRole;
+=======
+export type AcademicRole = UserRole;
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
