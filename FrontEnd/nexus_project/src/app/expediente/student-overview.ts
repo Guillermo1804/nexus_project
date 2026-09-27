@@ -10,6 +10,7 @@ import { TutoringFormComponent } from './tutoring-form';
 import { TutoringObservationsComponent } from './tutoring-observations';
 import { TutoringAgreementsComponent, ResponsibleOption } from './tutoring-agreements';
 import { EvidenceUploadComponent } from './evidence-upload';
+import { TutoringConditionsComponent } from './tutoring-conditions';
 
 @Component({
   selector: 'app-student-overview',
@@ -21,6 +22,7 @@ import { EvidenceUploadComponent } from './evidence-upload';
     TutoringObservationsComponent,
     TutoringAgreementsComponent,
     EvidenceUploadComponent,
+    TutoringConditionsComponent,
   ],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
@@ -39,6 +41,7 @@ export class StudentOverviewComponent implements OnInit {
   protected actualizandoAcuerdoId: number | null = null;
   protected errorEstado = '';
   protected exitoEstado = '';
+  protected tutoriaCondicionesId: number | null = null;
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
@@ -131,4 +134,6 @@ export class StudentOverviewComponent implements OnInit {
 
   semestreGuardado(): void { this.mostrarFormSemestre = false; this.cargarExpediente(); }
   tutoriaGuardada(): void { this.mostrarFormTutoria = false; this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
+
+  alternarCondicionesTutoria(tutoriaId: number): void { this.tutoriaCondicionesId = this.tutoriaCondicionesId === tutoriaId ? null : tutoriaId;}
 }

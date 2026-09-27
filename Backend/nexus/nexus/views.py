@@ -240,7 +240,7 @@ class StudentRecordView(APIView):
             students = students.filter(allowed) if allowed else students.none()
 
         student = students.select_related('user').prefetch_related(
-            Prefetch('semesters', queryset=Semester.objects.order_by('numero')),
+            Prefetch('semesters',queryset=Semester.objects.prefetch_related('tutoring_sessions').order_by('numero'),),
             Prefetch('academic_committee__memberships', queryset=CommitteeMembership.objects.select_related('user')),
             Prefetch('tutoring_sessions', queryset=TutoringSession.objects.order_by('-fecha_sesion', '-id')),
             Prefetch(
@@ -308,14 +308,25 @@ def can_access_student(user, student, write=False):
 class TutoringSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [CanCreateTutoring]
     pagination_class = NexusPagination
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     def get_serializer_class(self):
         return TutoringSessionCreateSerializer if self.action in ('create', 'update', 'partial_update') else TutoringSessionSerializer
 
     def get_queryset(self):
         user = self.request.user
+        if 'academic.read.global' in permissions_for_user(user):
+            return TutoringSession.objects.all().order_by(
+                '-fecha_sesion',
+                '-id',
+            )
+
         return TutoringSession.objects.filter(
-            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+            Q(student__user=user) |
+            Q(student__academic_committee__memberships__user=user)
         ).distinct().order_by('-fecha_sesion', '-id')
 
     def perform_create(self, serializer):

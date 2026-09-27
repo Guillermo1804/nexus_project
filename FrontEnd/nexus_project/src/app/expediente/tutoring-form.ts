@@ -7,6 +7,7 @@ import { AcademicService } from '../core/academic/academic.service';
 @Component({
   selector: 'app-tutoring-form',
   imports: [ReactiveFormsModule],
+    styleUrl: './tutoring-form.scss',
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="semester-form" aria-label="Registrar tutoría">
       <div class="form-row">
@@ -18,14 +19,42 @@ import { AcademicService } from '../core/academic/academic.service';
           <option value="PRESENCIAL">Presencial</option><option value="VIRTUAL">Virtual</option><option value="HIBRIDA">Híbrida</option>
         </select></div>
       </div>
-      <div class="field field-full"><label for="tut-resumen">Resumen de la sesión</label><input id="tut-resumen" formControlName="resumen" /></div>
+      <div class="field field-full">
+
+        <label for="tut-resumen">
+          Resumen de la sesión
+          <span class="required-mark">*</span>
+          <span class="required-text">Obligatorio</span>
+        </label>
+
+        <textarea
+          id="tut-resumen"
+          formControlName="resumen"
+          rows="3"
+          placeholder="Describe brevemente los temas tratados"
+          [class.input-invalid]="
+            form.controls.resumen.invalid &&
+            form.controls.resumen.touched
+          "
+        ></textarea>
+
+        @if (
+          form.controls.resumen.invalid &&
+          form.controls.resumen.touched
+        ) {
+          <span class="field-error">
+            El resumen de la sesión es obligatorio.
+          </span>
+        }
+
+      </div>
       <div class="form-row">
         <div class="field"><label for="tut-prox-fecha">Próxima reunión (opcional)</label><input id="tut-prox-fecha" type="date" formControlName="proxima_reunion_fecha" /></div>
         <div class="field"><label for="tut-prox-notas">Notas próxima reunión (opcional)</label><input id="tut-prox-notas" formControlName="proxima_reunion_notas" /></div>
       </div>
       @if (error) { <p class="error-msg" role="alert" aria-live="assertive">{{ error }}</p> }
       <div class="form-actions"><button type="button" class="btn-cancel" (click)="cancelled.emit()">Cancelar</button>
-        <button type="submit" class="btn-submit" [disabled]="saving">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
+        <button type="submit" class="btn-submit" [disabled]="saving || form.invalid">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
     </form>
   `,
 })

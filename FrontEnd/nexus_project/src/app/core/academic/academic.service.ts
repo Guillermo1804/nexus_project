@@ -18,6 +18,8 @@ import {
   EvidenceUploadData,
   TutoringObservation,
   CreateTutoringObservationData,
+  ParticipanteTutoria,
+  DatosParticipanteTutoria,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -74,6 +76,14 @@ export class AcademicService {
     return this.http.get<PaginatedResponse<Agreement>>(`${API}/agreements/?${query}`);
   }
 
+  getParticipantesTutoria(tutoriaId: number): Observable<ParticipanteTutoria[]> {
+    return this.http.get<ParticipanteTutoria[]>(`${API}/tutoring-sessions/${tutoriaId}/participants/`);
+  }
+
+  registrarParticipanteTutoria(tutoriaId: number, datos: DatosParticipanteTutoria): Observable<ParticipanteTutoria> {
+    return this.http.post<ParticipanteTutoria>(`${API}/tutoring-sessions/${tutoriaId}/participants/`, datos);
+  }
+
   getAgreementAuditLog(agreementId: number): Observable<AgreementAuditEntry[]> {
     return this.http.get<AgreementAuditEntry[]>(`${API}/agreements/${agreementId}/audit-log/`);
   }
@@ -89,7 +99,6 @@ export class AcademicService {
   createSemester(studentId: number, data: CreateSemesterData): Observable<Semester> {
     return this.http.post<Semester>(`${API}/students/${studentId}/semesters/`, data);
   }
-
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {
     const form = new FormData();
     form.append('student', String(data.student));

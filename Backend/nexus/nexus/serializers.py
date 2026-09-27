@@ -239,7 +239,11 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
     def get_student(self, student):
         return {
             'id': student.id,
+<<<<<<< HEAD
             'user_id': student.user_id,
+=======
+            'usuario_id': student.user_id,
+>>>>>>> origin/HU-08-registrar-asistencia-participantes
             'matricula': student.matricula,
             'nombre_completo': student.nombre_completo,
             'programa_doctoral': student.programa_doctoral,
@@ -590,6 +594,8 @@ class LoginSerializer(serializers.Serializer):
 
 
 class SemesterSerializer(serializers.ModelSerializer):
+    tutoring_sessions = serializers.SerializerMethodField()
+
     class Meta:
         model = Semester
         fields = (
@@ -601,14 +607,42 @@ class SemesterSerializer(serializers.ModelSerializer):
             'is_active',
             'created_at',
             'updated_at',
+            'tutoring_sessions',
         )
-        read_only_fields = ('id', 'student', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id',
+            'student',
+            'created_at',
+            'updated_at',
+            'tutoring_sessions',
+        )
+
+    def get_tutoring_sessions(self, semester):
+        sessions = semester.tutoring_sessions.all().order_by('-fecha_sesion', '-id')
+
+        return [
+            {
+                'id': session.id,
+                'fecha_sesion': str(session.fecha_sesion),
+                'modalidad': session.modalidad,
+                'resumen': session.resumen,
+                'proxima_reunion_fecha': (
+                    str(session.proxima_reunion_fecha)
+                    if session.proxima_reunion_fecha
+                    else None
+                ),
+                'proxima_reunion_notas': session.proxima_reunion_notas,
+            }
+            for session in sessions
+        ]
 
     def validate_numero(self, value):
         if not (1 <= value <= 6):
-            raise serializers.ValidationError('El número de semestre debe estar entre 1 y 6.')
+            raise serializers.ValidationError(
+                'El número de semestre debe estar entre 1 y 6.'
+            )
         return value
-
+    
     def validate(self, attrs):
         fecha_inicio = attrs.get('fecha_inicio') or (self.instance.fecha_inicio if self.instance else None)
         fecha_fin = attrs.get('fecha_fin') or (self.instance.fecha_fin if self.instance else None)
