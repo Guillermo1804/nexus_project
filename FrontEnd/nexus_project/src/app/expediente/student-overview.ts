@@ -134,6 +134,7 @@ export class StudentOverviewComponent implements OnInit {
 
   semestreGuardado(): void { this.mostrarFormSemestre = false; this.cargarExpediente(); }
   tutoriaGuardada(): void { this.mostrarFormTutoria = false; this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
+  proximaReunionGuardada(): void { this.cargarExpediente(); }
 
   alternarCondicionesTutoria(tutoriaId: number): void { this.tutoriaCondicionesId = this.tutoriaCondicionesId === tutoriaId ? null : tutoriaId;}
 }

@@ -68,10 +68,6 @@ const localDateString = (): string => {
         }
 
       </div>
-      <div class="form-row">
-        <div class="field"><label for="tut-prox-fecha">Próxima reunión (opcional)</label><input id="tut-prox-fecha" type="date" formControlName="proxima_reunion_fecha" aria-describedby="tut-prox-fecha-error" />@if (form.controls.proxima_reunion_fecha.invalid && form.controls.proxima_reunion_fecha.touched) { <span id="tut-prox-fecha-error" class="field-error">Indica la fecha de la próxima reunión si registras notas.</span> }</div>
-        <div class="field"><label for="tut-prox-notas">Notas próxima reunión (opcional)</label><input id="tut-prox-notas" formControlName="proxima_reunion_notas" /></div>
-      </div>
       @if (error) { <p class="error-msg" role="alert" aria-live="assertive">{{ error }}</p> }
       <div class="form-actions"><button type="button" class="btn-cancel" (click)="cancelled.emit()">Cancelar</button>
         <button type="submit" class="btn-submit" [disabled]="saving || form.invalid">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
@@ -92,7 +88,6 @@ export class TutoringFormComponent {
   protected readonly form = this.fb.nonNullable.group({
     semester: [0, Validators.required], fecha_sesion: [this.today, [Validators.required, notPastDateValidator(this.today)]],
     modalidad: ['PRESENCIAL' as 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA', Validators.required], resumen: ['', [Validators.required, Validators.maxLength(2000), significantTextValidator]],
-    proxima_reunion_fecha: [''], proxima_reunion_notas: [''],
   });
 
   ngOnInit(): void { this.form.patchValue({ semester: this.currentSemesterId || this.semesters[0]?.id || 0 }); }
@@ -118,19 +113,16 @@ export class TutoringFormComponent {
       this.focusFirstInvalid();
       return;
     }
-    if (value.proxima_reunion_notas && !value.proxima_reunion_fecha) {
-      this.form.controls.proxima_reunion_fecha.setErrors({ requiredForNotes: true });
-      this.form.controls.proxima_reunion_fecha.markAsTouched();
-      this.error = 'Indica la fecha de la próxima reunión para registrar notas.';
-      this.focusFirstInvalid();
-      return;
-    }
     this.saving = true; this.error = '';
-    this.service.createTutoringSession({ student: this.studentId, semester: Number(value.semester), fecha_sesion: value.fecha_sesion,
-      modalidad: value.modalidad, resumen: value.resumen, proxima_reunion_fecha: value.proxima_reunion_fecha || undefined,
-      proxima_reunion_notas: value.proxima_reunion_notas || undefined }).pipe(finalize(() => this.saving = false)).subscribe({
+    this.service.createTutoringSession({
+      student: this.studentId,
+      semester: Number(value.semester),
+      fecha_sesion: value.fecha_sesion,
+      modalidad: value.modalidad,
+      resumen: value.resumen,
+    }).pipe(finalize(() => this.saving = false)).subscribe({
       next: () => this.saved.emit(),
-      error: err => this.error = err.error?.detail || err.error?.resumen?.[0] || err.error?.fecha_sesion?.[0] || err.error?.semester?.[0] || err.error?.proxima_reunion_fecha?.[0] || 'Error al registrar la sesión de tutoría.',
+      error: err => this.error = err.error?.detail || err.error?.resumen?.[0] || err.error?.fecha_sesion?.[0] || err.error?.semester?.[0] || 'Error al registrar la sesión de tutoría.',
     });
   }
 

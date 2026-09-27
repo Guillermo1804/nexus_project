@@ -155,7 +155,7 @@ class TutoringSession(models.Model):
 	modalidad = models.CharField(max_length=20, choices=Modality.choices, default=Modality.IN_PERSON)
 	resumen = models.TextField()
 	proxima_reunion_fecha = models.DateField(null=True, blank=True)
-	proxima_reunion_notas = models.TextField(blank=True, default='')
+	proxima_reunion_notas = models.CharField(max_length=500, blank=True, default='')
 	created_by = models.ForeignKey(CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name='registered_tutoring_sessions')
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)

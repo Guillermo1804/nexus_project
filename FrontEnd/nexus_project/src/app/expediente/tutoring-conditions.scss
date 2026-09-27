@@ -107,3 +107,76 @@ p[role="status"] {
   background: #ecfdf3;
   border-radius: 6px;
 }
+
+.next-meeting-section {
+  margin-top: 0.5rem;
+  padding-top: 0.8rem;
+  background: #ffffff;
+  border-color: #d9d6f5;
+}
+
+.next-meeting-section h5 {
+  margin: 0;
+  color: #34206f;
+  font-size: 0.82rem;
+}
+
+.next-meeting-form,
+.next-meeting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.next-meeting-field > label {
+  display: block;
+  padding: 0;
+  color: #1f2937;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: default;
+}
+
+.next-meeting-field input,
+.next-meeting-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.78rem;
+  background: #ffffff;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+}
+
+.next-meeting-field textarea {
+  resize: vertical;
+}
+
+.next-meeting-field input[aria-invalid="true"],
+.next-meeting-field textarea[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.next-meeting-field small,
+.character-counter {
+  color: #667085;
+  font-size: 0.7rem;
+}
+
+.character-counter {
+  align-self: flex-end;
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 0.72rem;
+}
+
+.next-meeting-actions {
+  display: flex;
+  justify-content: flex-end;
+}

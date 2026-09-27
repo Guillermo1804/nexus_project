@@ -56,6 +56,18 @@ describe('AcademicService - Semesters (HU-05)', () => {
     req.flush({ id: 1, ...data });
   });
 
+  it('actualiza la próxima reunión mediante PATCH (HU-10)', () => {
+    const data = {
+      proxima_reunion_fecha: '2026-10-20',
+      proxima_reunion_notas: 'Preparar avances del marco teórico.',
+    };
+    service.updateNextMeeting(12, data).subscribe();
+    const req = httpMock.expectOne('http://localhost:8000/api/v1/tutoring-sessions/12/');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(data);
+    req.flush({ id: 12, ...data });
+  });
+
   it('combina filtros en el endpoint v1 paginado de acuerdos (HU-14)', () => {
     service.getAgreements({
       page: 2,

@@ -52,25 +52,21 @@ describe('TutoringFormComponent (HU-07)', () => {
     expect(createTutoringSession).not.toHaveBeenCalled();
   });
 
-  it('exige fecha de próxima reunión cuando se registran notas', () => {
-    component.form.patchValue({ fecha_sesion: '2099-02-01', resumen: 'Resumen valido', proxima_reunion_notas: 'Llevar avances' });
-
-    component['submit']();
-
-    expect(component.form.controls.proxima_reunion_fecha.hasError('requiredForNotes')).toBeTrue();
-    expect(component['error']).toContain('Indica la fecha');
-    expect(createTutoringSession).not.toHaveBeenCalled();
+  it('no muestra campos de HU-10 en el registro de tutoría', () => {
+    expect(fixture.nativeElement.querySelector('#tut-prox-fecha')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#tut-prox-notas')).toBeNull();
   });
 
-  it('envia una sesion valida al servicio', () => {
+  it('envia una sesion valida sin campos de próxima reunión', () => {
     component.form.patchValue({ fecha_sesion: '2099-02-01', resumen: 'Resumen valido' });
     component.submit();
 
-    expect(createTutoringSession).toHaveBeenCalledWith(jasmine.objectContaining({
+    expect(createTutoringSession).toHaveBeenCalledWith({
       student: 10,
       semester: 2,
       fecha_sesion: '2099-02-01',
+      modalidad: 'PRESENCIAL',
       resumen: 'Resumen valido',
-    }));
+    });
   });
 });

@@ -24,6 +24,11 @@ export interface TutoringSession extends TutoringSessionData {
   created_by: number;
 }
 
+export interface UpdateNextMeetingData {
+  proxima_reunion_fecha: string | null;
+  proxima_reunion_notas: string;
+}
+
 export interface TutoringObservation {
   id: number;
   session: number;

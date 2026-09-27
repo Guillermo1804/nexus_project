@@ -445,10 +445,10 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
         semester = attrs.get('semester', self.instance.semester if self.instance else None)
         if semester.student_id != student.id:
             raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
-        if not semester.is_active:
+        if (self.instance is None or 'semester' in attrs) and not semester.is_active:
             raise serializers.ValidationError({'semester': 'El semestre no esta activo.'})
         fecha_sesion = attrs.get('fecha_sesion', self.instance.fecha_sesion if self.instance else None)
-        if fecha_sesion < timezone.localdate():
+        if (self.instance is None or 'fecha_sesion' in attrs) and fecha_sesion < timezone.localdate():
             raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser anterior a hoy.'})
         if fecha_sesion < semester.fecha_inicio:
             raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser anterior al inicio del semestre.'})
@@ -460,6 +460,8 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'resumen': 'El resumen no puede superar 2000 caracteres.'})
         proxima_fecha = attrs.get('proxima_reunion_fecha', self.instance.proxima_reunion_fecha if self.instance else None)
         proxima_notas = attrs.get('proxima_reunion_notas', self.instance.proxima_reunion_notas if self.instance else '')
+        if proxima_fecha and proxima_fecha <= timezone.localdate():
+            raise serializers.ValidationError({'proxima_reunion_fecha': 'La próxima reunión debe tener una fecha futura.'})
         if proxima_fecha and proxima_fecha <= fecha_sesion:
             raise serializers.ValidationError({'proxima_reunion_fecha': 'La próxima reunión debe ser posterior a la sesión.'})
         if proxima_notas and not proxima_fecha:

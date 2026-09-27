@@ -389,6 +389,10 @@
                       [tutoriaId]="tutoria.id"
                       [estudiante]="overview.student"
                       [asesores]="overview.advisors"
+                      [fechaSesion]="tutoria.fecha_sesion"
+                      [proximaReunionFecha]="tutoria.proxima_reunion_fecha ?? null"
+                      [proximaReunionNotas]="tutoria.proxima_reunion_notas ?? ''"
+                      (nextMeetingSaved)="proximaReunionGuardada()"
                     />
                   }
 

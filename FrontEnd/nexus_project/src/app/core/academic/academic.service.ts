@@ -20,6 +20,7 @@ import {
   CreateTutoringObservationData,
   ParticipanteTutoria,
   DatosParticipanteTutoria,
+  UpdateNextMeetingData,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -38,6 +39,10 @@ export class AcademicService {
 
   createTutoringSession(data: TutoringSessionData): Observable<TutoringSession> {
     return this.http.post<TutoringSession>(`${API}/tutoring-sessions/`, data);
+  }
+
+  updateNextMeeting(sessionId: number, data: UpdateNextMeetingData): Observable<TutoringSession> {
+    return this.http.patch<TutoringSession>(`${API}/tutoring-sessions/${sessionId}/`, data);
   }
 
   getTutoringSessions(page = 1): Observable<PaginatedResponse<TutoringSession>> {
