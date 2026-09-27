@@ -91,7 +91,8 @@ export class StudentOverviewComponent implements OnInit {
     return estado.replaceAll('_', ' ');
   }
 
-  protected puedeActualizarAcuerdo(acuerdo: { responsable: number; estado: string }): boolean {
+  protected puedeActualizarAcuerdo(acuerdo: { responsable: number; estado: string; is_vencido: boolean }): boolean {
+    if (acuerdo.is_vencido) return false;
     const userId = this.auth.user()?.id;
     if (!userId || acuerdo.responsable !== userId) return false;
     return this.siguienteEstado(acuerdo.estado) != null;
@@ -102,7 +103,7 @@ export class StudentOverviewComponent implements OnInit {
     return next ? `Pasar a ${this.etiquetaEstado(next)}` : '';
   }
 
-  protected actualizarEstadoAcuerdo(acuerdo: { id: number; responsable: number; estado: string }): void {
+  protected actualizarEstadoAcuerdo(acuerdo: { id: number; responsable: number; estado: string; is_vencido: boolean }): void {
     const next = this.siguienteEstado(acuerdo.estado);
     if (!next || !this.puedeActualizarAcuerdo(acuerdo) || this.actualizandoAcuerdoId != null) return;
 

@@ -463,6 +463,25 @@ $badge-overdue-text: #A14D98;
   }
 }
 
+.btn-concluded-agreements {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid $primary;
+  border-radius: 6px;
+  color: $primary;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: $primary;
+  }
+}
+
 .sem-form {
   display: flex;
   flex-direction: column;

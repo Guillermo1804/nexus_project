@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import {
@@ -28,6 +28,7 @@ interface ResponsableOption {
 export class AgreementsListComponent implements OnInit {
   private readonly academic = inject(AcademicService);
   private readonly studentsApi = inject(StudentService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly auth = inject(AuthService);
 
   protected agreements: Agreement[] = [];
@@ -55,6 +56,9 @@ export class AgreementsListComponent implements OnInit {
   protected auditAgreement: Agreement | null = null;
 
   ngOnInit(): void {
+    const queryParams = this.route.snapshot.queryParamMap;
+    this.filtroStudent = queryParams.get('student') ?? '';
+    this.filtroEstado = queryParams.get('estado') ?? '';
     this.cargarEstudiantes();
     this.cargarAcuerdos();
   }

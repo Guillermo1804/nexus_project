@@ -149,9 +149,101 @@
               <p class="error-msg" role="alert">{{ errorEstado }}</p>
             }
           }
+          <a
+            routerLink="/acuerdos"
+            [queryParams]="{ student: studentId, estado: 'CONCLUIDO' }"
+            class="btn-concluded-agreements"
+          >
+            Ver historial de acuerdos concluidos
+          </a>
         </article>
 
-        <!-- 4. Tarjeta Actividad Académica Reciente -->
+        <!-- 4. Tarjeta Semestres Registrados (HU-05) -->
+        <article class="card semesters-card semesters-card-primary">
+          <div class="card-header-row">
+            <h2 class="card-title">Semestres Registrados</h2>
+            @if (auth.hasPermission('semesters.manage')) {
+              <button
+                type="button"
+                class="btn-toggle-sem"
+                (click)="mostrarFormSemestre = !mostrarFormSemestre"
+                [attr.aria-expanded]="mostrarFormSemestre" aria-controls="semester-form"
+              >
+                {{ mostrarFormSemestre ? 'Cancelar' : '+ Agregar' }}
+              </button>
+            }
+          </div>
+
+          @if (mostrarFormSemestre && auth.hasPermission('semesters.manage')) {
+            <app-semester-form id="semester-form" [studentId]="studentId" (saved)="semestreGuardado()" />
+          }
+
+          @if (overview.semesters && overview.semesters.length > 0) {
+            <ul class="semesters-list">
+              @for (sem of overview.semesters; track sem.id) {
+                <li class="semester-list-item semester-with-tutoring">
+                  <div class="semester-header">
+                    <div class="sem-item-info">
+                      <span class="sem-num">Semestre {{ sem.numero }}</span>
+                      <span class="sem-period">{{ sem.fecha_inicio }} - {{ sem.fecha_fin }}</span>
+                    </div>
+                    @if (sem.is_active) {
+                      <span class="badge badge-active">ACTIVO</span>
+                    }
+                  </div>
+
+                  <div class="semester-tutoring">
+                    <h3 class="semester-tutoring-title">Tutorías</h3>
+                    @if (sem.tutoring_sessions && sem.tutoring_sessions.length > 0) {
+                      <div class="semester-tutoring-list">
+                        @for (tutoria of sem.tutoring_sessions; track tutoria.id) {
+                          <div class="semester-tutoring-item">
+                            <div class="tutoring-session-header">
+                              <strong>{{ tutoria.fecha_sesion }}</strong>
+                              <span class="badge badge-info">{{ tutoria.modalidad }}</span>
+                            </div>
+                            <p class="tutoring-session-summary">{{ tutoria.resumen }}</p>
+                            @if (tutoria.proxima_reunion_fecha) {
+                              <p class="tutoring-next-meeting">
+                                <strong>Próxima reunión:</strong>
+                                {{ tutoria.proxima_reunion_fecha }}
+                              </p>
+                            }
+                            <button
+                              type="button"
+                              class="btn-tutoring-conditions"
+                              (click)="alternarCondicionesTutoria(tutoria.id)"
+                              [attr.aria-expanded]="tutoriaCondicionesId === tutoria.id"
+                            >
+                              {{ tutoriaCondicionesId === tutoria.id ? 'Cerrar condiciones' : 'Condiciones de tutoría' }}
+                            </button>
+                            @if (tutoriaCondicionesId === tutoria.id) {
+                              <app-tutoring-conditions
+                                [tutoriaId]="tutoria.id"
+                                [estudiante]="overview.student"
+                                [asesores]="overview.advisors"
+                                [fechaSesion]="tutoria.fecha_sesion"
+                                [proximaReunionFecha]="tutoria.proxima_reunion_fecha ?? null"
+                                [proximaReunionNotas]="tutoria.proxima_reunion_notas ?? ''"
+                                (nextMeetingSaved)="proximaReunionGuardada()"
+                              />
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="empty-state">Sin tutorías registradas en este semestre.</p>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty-state">No hay semestres registrados</p>
+          }
+        </article>
+
+        <!-- 5. Tarjeta Actividad Académica Reciente -->
         <article class="card recent-activity-card">
           <h2 class="card-title">Actividad Académica Reciente</h2>
           @if (overview.recent_academic_activity.length === 0) {
@@ -276,156 +368,6 @@
           <app-evidence-upload [studentId]="studentId" [semesters]="overview.semesters" />
         </article>
 
-        <!-- 7. Tarjeta Semestres Registrados (HU-05) -->
-        <article class="card semesters-card">
-          <div class="card-header-row">
-            <h2 class="card-title">Semestres Registrados</h2>
-            @if (auth.hasPermission('semesters.manage')) {
-              <button
-                type="button"
-                class="btn-toggle-sem"
-                (click)="mostrarFormSemestre = !mostrarFormSemestre"
-                [attr.aria-expanded]="mostrarFormSemestre" aria-controls="semester-form"
-              >
-                {{ mostrarFormSemestre ? 'Cancelar' : '+ Agregar' }}
-              </button>
-            }
-          </div>
-
-          @if (mostrarFormSemestre && auth.hasPermission('semesters.manage')) {
-            <app-semester-form id="semester-form" [studentId]="studentId" (saved)="semestreGuardado()" />
-          }
-
-          @if (overview.semesters && overview.semesters.length > 0) {
-  <ul class="semesters-list">
-
-    @for (sem of overview.semesters; track sem.id) {
-
-      <li class="semester-list-item semester-with-tutoring">
-
-        <div class="semester-header">
-
-          <div class="sem-item-info">
-            <span class="sem-num">
-              Semestre {{ sem.numero }}
-            </span>
-
-            <span class="sem-period">
-              {{ sem.fecha_inicio }} - {{ sem.fecha_fin }}
-            </span>
-          </div>
-
-          @if (sem.is_active) {
-            <span class="badge badge-active">
-              ACTIVO
-            </span>
-          }
-
-        </div>
-
-        <div class="semester-tutoring">
-
-          <h3 class="semester-tutoring-title">
-            Tutorías
-          </h3>
-
-          @if (
-            sem.tutoring_sessions &&
-            sem.tutoring_sessions.length > 0
-          ) {
-
-            <div class="semester-tutoring-list">
-
-              @for (
-                tutoria of sem.tutoring_sessions;
-                track tutoria.id
-              ) {
-
-                <div class="semester-tutoring-item">
-
-                  <div class="tutoring-session-header">
-
-                    <strong>
-                      {{ tutoria.fecha_sesion }}
-                    </strong>
-
-                    <span class="badge badge-info">
-                      {{ tutoria.modalidad }}
-                    </span>
-
-                  </div>
-
-                  <p class="tutoring-session-summary">
-                    {{ tutoria.resumen }}
-                  </p>
-
-                  @if (tutoria.proxima_reunion_fecha) {
-
-                    <p class="tutoring-next-meeting">
-                      <strong>
-                        Próxima reunión:
-                      </strong>
-
-                      {{ tutoria.proxima_reunion_fecha }}
-                    </p>
-
-                  }
-
-                  <button
-                    type="button"
-                    class="btn-tutoring-conditions"
-                    (click)="alternarCondicionesTutoria(tutoria.id)"
-                    [attr.aria-expanded]="tutoriaCondicionesId === tutoria.id"
-                  >
-                    {{
-                      tutoriaCondicionesId === tutoria.id
-                        ? 'Cerrar condiciones'
-                        : 'Condiciones de tutoría'
-                    }}
-                  </button>
-
-                  @if (tutoriaCondicionesId === tutoria.id) {
-                    <app-tutoring-conditions
-                      [tutoriaId]="tutoria.id"
-                      [estudiante]="overview.student"
-                      [asesores]="overview.advisors"
-                      [fechaSesion]="tutoria.fecha_sesion"
-                      [proximaReunionFecha]="tutoria.proxima_reunion_fecha ?? null"
-                      [proximaReunionNotas]="tutoria.proxima_reunion_notas ?? ''"
-                      (nextMeetingSaved)="proximaReunionGuardada()"
-                    />
-                  }
-
-                </div>
-
-              }
-
-            </div>
-
-          } @else {
-
-            <p class="empty-state">
-              Sin tutorías registradas en este semestre.
-            </p>
-
-          }
-
-        </div>
-
-      </li>
-
-    }
-
-  </ul>
-
-} @else {
-
-  <p class="empty-state">
-    No hay semestres registrados
-  </p>
-
-}
-        </article>
       </aside>
     </div>
   }
