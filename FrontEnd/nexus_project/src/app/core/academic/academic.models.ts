@@ -79,7 +79,7 @@ export interface Semester {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  tutoring_sessions: SemesterTutoringSession[];
+  tutoring_sessions?: SemesterTutoringSession[];
 }
 
 export interface CreateSemesterData {
@@ -99,7 +99,6 @@ export interface StudentOverview {
   student: {
     id: number;
     user_id: number | null;
-    usuario_id: number | null;
     matricula: string;
     nombre_completo: string;
     programa_doctoral: string;

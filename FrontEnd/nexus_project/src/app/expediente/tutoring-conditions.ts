@@ -83,7 +83,7 @@ export class TutoringConditionsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const estudianteUsuarioId = this.estudiante.usuario_id ?? this.estudiante.user_id;
+    const estudianteUsuarioId = this.estudiante.user_id;
     this.participantes = estudianteUsuarioId == null ? [] : [
       {
         participanteId: null,

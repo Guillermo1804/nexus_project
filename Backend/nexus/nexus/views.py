@@ -308,6 +308,18 @@ def can_access_student(user, student, write=False):
 class TutoringSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [CanCreateTutoring]
     pagination_class = NexusPagination
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        response_data = TutoringSessionSerializer(
+            serializer.instance,
+            context=self.get_serializer_context(),
+        ).data
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_permissions(self):
         if self.request.method == 'GET':
             return [IsAuthenticated()]

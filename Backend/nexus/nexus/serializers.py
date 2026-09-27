@@ -239,11 +239,7 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
     def get_student(self, student):
         return {
             'id': student.id,
-<<<<<<< HEAD
             'user_id': student.user_id,
-=======
-            'usuario_id': student.user_id,
->>>>>>> origin/HU-08-registrar-asistencia-participantes
             'matricula': student.matricula,
             'nombre_completo': student.nombre_completo,
             'programa_doctoral': student.programa_doctoral,
@@ -448,8 +444,20 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
         student = attrs.get('student', self.instance.student if self.instance else None)
         semester = attrs.get('semester', self.instance.semester if self.instance else None)
         if semester.student_id != student.id:
-            raise serializers.ValidationError('El semestre no pertenece al estudiante.')
+            raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
+        if not semester.is_active:
+            raise serializers.ValidationError({'semester': 'El semestre no esta activo.'})
         fecha_sesion = attrs.get('fecha_sesion', self.instance.fecha_sesion if self.instance else None)
+        if fecha_sesion > timezone.localdate():
+            raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser futura.'})
+        if fecha_sesion < semester.fecha_inicio:
+            raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser anterior al inicio del semestre.'})
+        resumen = attrs.get('resumen', self.instance.resumen if self.instance else None)
+        resumen_significativo = ' '.join(resumen.split()) if resumen is not None else ''
+        if len(resumen_significativo) < 10:
+            raise serializers.ValidationError({'resumen': 'El resumen debe contener al menos 10 caracteres significativos.'})
+        if len(resumen) > 2000:
+            raise serializers.ValidationError({'resumen': 'El resumen no puede superar 2000 caracteres.'})
         proxima_fecha = attrs.get('proxima_reunion_fecha', self.instance.proxima_reunion_fecha if self.instance else None)
         proxima_notas = attrs.get('proxima_reunion_notas', self.instance.proxima_reunion_notas if self.instance else '')
         if proxima_fecha and proxima_fecha <= fecha_sesion:
@@ -557,6 +565,9 @@ class TutoringParticipantSerializer(serializers.ModelSerializer):
 
 class TutoringSessionSerializer(serializers.ModelSerializer):
     participants = TutoringParticipantSerializer(many=True, read_only=True)
+    observations = TutoringObservationSerializer(many=True, read_only=True)
+    agreements = AgreementSerializer(many=True, read_only=True)
+
     class Meta:
         model = TutoringSession
         fields = (
@@ -569,8 +580,12 @@ class TutoringSessionSerializer(serializers.ModelSerializer):
             'proxima_reunion_fecha',
             'proxima_reunion_notas',
             'created_by',
+            'created_at',
             'participants',
+            'observations',
+            'agreements',
         )
+        read_only_fields = fields
 
 
 class LoginSerializer(serializers.Serializer):
