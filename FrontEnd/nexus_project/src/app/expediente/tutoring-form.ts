@@ -7,6 +7,7 @@ import { AcademicService } from '../core/academic/academic.service';
 @Component({
   selector: 'app-tutoring-form',
   imports: [ReactiveFormsModule],
+    styleUrl: './tutoring-form.scss',
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="semester-form" aria-label="Registrar tutoría">
       <div class="form-row">
@@ -25,7 +26,7 @@ import { AcademicService } from '../core/academic/academic.service';
       </div>
       @if (error) { <p class="error-msg" role="alert" aria-live="assertive">{{ error }}</p> }
       <div class="form-actions"><button type="button" class="btn-cancel" (click)="cancelled.emit()">Cancelar</button>
-        <button type="submit" class="btn-submit" [disabled]="saving">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
+        <button type="submit" class="btn-submit" [disabled]="saving || form.invalid">{{ saving ? 'Registrando...' : 'Registrar tutoría' }}</button></div>
     </form>
   `,
 })
