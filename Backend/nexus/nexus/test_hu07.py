@@ -13,11 +13,15 @@ class TutoringSessionHu07Tests(APITestCase):
         users = get_user_model()
         self.tutor = users.objects.create_user(email='hu07-tutor@test.edu', password='x', role=users.Role.TUTOR)
         self.other = users.objects.create_user(email='hu07-other@test.edu', password='x', role=users.Role.TUTOR)
+        self.coordinator = users.objects.create_user(
+            email='hu07-coordinator@test.edu', password='x', role=users.Role.PROGRAM_COORDINATOR,
+        )
         self.student = Student.objects.create(matricula='HU07', nombre_completo='HU 07', cohorte='2026')
-        self.semester = Semester.objects.create(student=self.student, numero=1, fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 30))
+        self.session_date = timezone.localdate()
+        self.semester = Semester.objects.create(student=self.student, numero=1, fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 12, 31))
         CommitteeMembership.objects.create(committee=AcademicCommittee.objects.create(student=self.student), user=self.tutor, role=CommitteeMembership.Role.ADVISOR)
         self.url = '/api/v1/tutoring-sessions/'
-        self.payload = {'student': self.student.id, 'semester': self.semester.id, 'fecha_sesion': '2026-02-01', 'modalidad': 'PRESENCIAL', 'resumen': 'Seguimiento'}
+        self.payload = {'student': self.student.id, 'semester': self.semester.id, 'fecha_sesion': self.session_date.isoformat(), 'modalidad': 'PRESENCIAL', 'resumen': 'Seguimiento'}
 
     def auth(self, user):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(user)}')
@@ -52,7 +56,7 @@ class TutoringSessionHu07Tests(APITestCase):
     def test_rejects_invalid_session_date_and_summary(self):
         self.auth(self.tutor)
         cases = (
-            {'fecha_sesion': (timezone.localdate() + timedelta(days=1)).isoformat()},
+            {'fecha_sesion': (timezone.localdate() - timedelta(days=1)).isoformat()},
             {'fecha_sesion': '2025-12-31'},
             {'resumen': 'corto'},
             {'resumen': 'x' * 2001},
@@ -78,7 +82,7 @@ class TutoringSessionHu07Tests(APITestCase):
 
     def test_unassigned_tutor_cannot_list_create_or_mutate_sessions(self):
         self.auth(self.tutor)
-        session = TutoringSession.objects.create(created_by=self.tutor, **{**self.payload, 'student': self.student, 'semester': self.semester, 'fecha_sesion': date(2026, 2, 1)})
+        session = TutoringSession.objects.create(created_by=self.tutor, **{**self.payload, 'student': self.student, 'semester': self.semester})
         self.auth(self.other)
         self.assertEqual(self.client.get(self.url).data['results'], [])
         self.assertEqual(self.client.post(self.url, self.payload, format='json').status_code, 403)
@@ -86,9 +90,15 @@ class TutoringSessionHu07Tests(APITestCase):
             with self.subTest(method=method):
                 self.assertEqual(getattr(self.client, method)(f'{self.url}{session.id}/', {}, format='json').status_code, 404)
 
+    def test_program_coordinator_can_create_for_any_student(self):
+        self.auth(self.coordinator)
+        response = self.client.post(self.url, self.payload, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['created_by'], self.coordinator.id)
+
     def test_nested_actions_exist_only_below_canonical_v1_session_url(self):
         self.auth(self.tutor)
-        session = TutoringSession.objects.create(created_by=self.tutor, student=self.student, semester=self.semester, fecha_sesion=date(2026, 2, 1), modalidad='VIRTUAL', resumen='R')
+        session = TutoringSession.objects.create(created_by=self.tutor, student=self.student, semester=self.semester, fecha_sesion=self.session_date, modalidad='VIRTUAL', resumen='R')
         for action in ('participants', 'observations', 'agreements'):
             self.assertEqual(self.client.get(f'{self.url}{session.id}/{action}/').status_code, 200)
         self.assertEqual(self.client.get(f'/api/tutoring-sessions/{session.id}/participants/').status_code, 404)

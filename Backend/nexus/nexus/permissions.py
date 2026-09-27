@@ -9,6 +9,7 @@ ROLE_PERMISSIONS = {
     CustomUser.Role.COMMITTEE_MEMBER: {'records.read.assigned', 'tutoring.create'},
     CustomUser.Role.PROGRAM_COORDINATOR: {
         'academic.read.global',
+        'tutoring.create',
         'students.create',
         'semesters.manage',
         'records.read.assigned',

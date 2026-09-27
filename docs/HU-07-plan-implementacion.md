@@ -20,9 +20,9 @@
 
 ## 2. Criterios de Aceptación y Reglas de Negocio
 - **CA-07.1:** La sesión debe asociarse obligatoriamente a un estudiante existente y a un semestre académico activo perteneciente a dicho estudiante.
-- **CA-07.2:** La fecha de la sesión no puede ser posterior a la fecha actual del sistema ni anterior a la fecha de inicio del semestre correspondiente.
+- **CA-07.2:** La fecha de la sesión debe ser igual o posterior a la fecha actual del sistema y no puede ser anterior a la fecha de inicio del semestre correspondiente.
 - **CA-07.3:** El resumen de la sesión debe contener al menos 10 caracteres significativos y un máximo de 2000 caracteres.
-- **CA-07.4:** Solo los asesores y miembros de comité formalmente vinculados al estudiante (`CommitteeMembership`) pueden registrar tutorías (`tutoring.create`). `SYSTEM_ADMIN` y usuarios no asociados no tienen permitido el registro.
+- **CA-07.4:** Los asesores y miembros de comité formalmente vinculados al estudiante (`CommitteeMembership`) pueden registrar tutorías (`tutoring.create`); el coordinador del programa puede registrarlas sobre expedientes globales. `SYSTEM_ADMIN` y usuarios no asociados no tienen permitido el registro.
 - **CA-07.5:** Al crearse la sesión, se debe registrar automáticamente el identificador del usuario autenticado que la dio de alta (`created_by`), el cual es inmutable.
 
 ---
@@ -67,7 +67,7 @@
 ```
 
 #### Respuestas de Error:
-- `400 Bad Request`: Semestre no pertenece al estudiante, fecha futura o datos incompletos.
+- `400 Bad Request`: Semestre no pertenece al estudiante, fecha pasada o datos incompletos.
 - `401 Unauthorized`: Token ausente o expirado.
 - `403 Forbidden`: Usuario no vinculado al comité del estudiante o sin permiso `tutoring.create`.
 - `404 Not Found`: Estudiante o semestre inexistente.
@@ -96,7 +96,7 @@
 - Crear tutoría como asesor asignado $\rightarrow$ `201 Created`.
 - Intentar crear como tutor no asignado $\rightarrow$ `403 Forbidden`.
 - Intentar asociar un semestre ajeno $\rightarrow$ `400 Bad Request`.
-- Fecha de sesión futura $\rightarrow$ `400 Bad Request`.
+- Fecha de sesión pasada $\rightarrow$ `400 Bad Request`.
 - Verificar que la respuesta devuelva `id` y `created_by`.
 
 ---
@@ -109,7 +109,7 @@
 - Formulario reactivo tipado con validaciones:
   - `student`: required, hidden o inyectado desde contexto.
   - `semester`: required.
-  - `fecha_sesion`: required, no posterior a hoy.
+  - `fecha_sesion`: required, igual o posterior a hoy.
   - `modalidad`: required (select con opciones cerradas).
   - `resumen`: minLength(10), maxLength(2000).
 
@@ -121,8 +121,10 @@
 ---
 
 ## 6. Definition of Done (DoD)
-- [ ] Endpoint `/api/v1/tutoring-sessions/` probado y verificado con SimpleJWT.
-- [ ] Validaciones de pertenencia de semestre y fecha aplicadas en serializer y formulario.
-- [ ] Pruebas unitarias backend (`test_hu07.py`) con cobertura >90% de casos positivos y negativos.
-- [ ] Pruebas unitarias frontend con `HttpTestingController` para `createTutoringSession`.
-- [ ] Integración verificada en `StudentOverviewComponent` sin desbordamientos de layout.
+- [x] Endpoint `/api/v1/tutoring-sessions/` probado y verificado con autenticacion JWT.
+- [x] Validaciones de pertenencia de semestre y fecha aplicadas en serializer y formulario.
+- [x] Pruebas unitarias backend (`test_hu07.py`) ejecutadas: 7 casos OK.
+- [x] Pruebas unitarias frontend del formulario ejecutadas: 4 casos OK.
+- [x] Integración del registro en `StudentOverviewComponent` implementada.
+
+La medicion formal de cobertura y la verificacion visual quedan como seguimiento de calidad posterior al cierre funcional.

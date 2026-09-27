@@ -343,7 +343,10 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         student = serializer.validated_data['student']
-        if not can_access_student(self.request.user, student):
+        if (
+            'academic.read.global' not in permissions_for_user(self.request.user)
+            and not can_access_student(self.request.user, student)
+        ):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied('No puede registrar tutorías para este estudiante.')
         serializer.save()

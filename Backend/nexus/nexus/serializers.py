@@ -448,8 +448,8 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
         if not semester.is_active:
             raise serializers.ValidationError({'semester': 'El semestre no esta activo.'})
         fecha_sesion = attrs.get('fecha_sesion', self.instance.fecha_sesion if self.instance else None)
-        if fecha_sesion > timezone.localdate():
-            raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser futura.'})
+        if fecha_sesion < timezone.localdate():
+            raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser anterior a hoy.'})
         if fecha_sesion < semester.fecha_inicio:
             raise serializers.ValidationError({'fecha_sesion': 'La fecha de la sesion no puede ser anterior al inicio del semestre.'})
         resumen = attrs.get('resumen', self.instance.resumen if self.instance else None)

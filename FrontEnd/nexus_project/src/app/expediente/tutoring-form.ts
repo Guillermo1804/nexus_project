@@ -10,9 +10,16 @@ const significantTextValidator: ValidatorFn = (control: AbstractControl): Valida
   return significantLength >= 10 ? null : { significantMinLength: true };
 };
 
-const notFutureDateValidator = (today: string): ValidatorFn => (control: AbstractControl): ValidationErrors | null => {
+const notPastDateValidator = (today: string): ValidatorFn => (control: AbstractControl): ValidationErrors | null => {
   const value = String(control.value ?? '');
-  return value && value <= today ? null : { futureDate: true };
+  return value && value >= today ? null : { pastDate: true };
+};
+
+const localDateString = (): string => {
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 };
 
 @Component({
@@ -25,7 +32,7 @@ const notFutureDateValidator = (today: string): ValidatorFn => (control: Abstrac
         <div class="field"><label for="tut-semestre">Semestre</label><select id="tut-semestre" formControlName="semester" [attr.aria-invalid]="form.controls.semester.invalid && form.controls.semester.touched" aria-describedby="tut-semestre-error">
           @for (semester of semesters; track semester.id) { <option [value]="semester.id">Semestre {{ semester.numero }}</option> }
         </select>@if (form.controls.semester.invalid && form.controls.semester.touched) { <span id="tut-semestre-error" class="field-error">Selecciona un semestre activo.</span> }</div>
-        <div class="field"><label for="tut-fecha">Fecha de sesión</label><input id="tut-fecha" type="date" formControlName="fecha_sesion" [attr.max]="today" [attr.aria-invalid]="form.controls.fecha_sesion.invalid && form.controls.fecha_sesion.touched" aria-describedby="tut-fecha-error" />@if (form.controls.fecha_sesion.invalid && form.controls.fecha_sesion.touched) { <span id="tut-fecha-error" class="field-error">La fecha debe ser válida y no futura.</span> }</div>
+        <div class="field"><label for="tut-fecha">Fecha de sesión</label><input id="tut-fecha" type="date" formControlName="fecha_sesion" [attr.min]="today" [attr.aria-invalid]="form.controls.fecha_sesion.invalid && form.controls.fecha_sesion.touched" aria-describedby="tut-fecha-error" />@if (form.controls.fecha_sesion.invalid && form.controls.fecha_sesion.touched) { <span id="tut-fecha-error" class="field-error">La fecha debe ser hoy o posterior.</span> }</div>
         <div class="field"><label for="tut-modalidad">Modalidad</label><select id="tut-modalidad" formControlName="modalidad" [attr.aria-invalid]="form.controls.modalidad.invalid && form.controls.modalidad.touched">
           <option value="PRESENCIAL">Presencial</option><option value="VIRTUAL">Virtual</option><option value="HIBRIDA">Híbrida</option>
         </select></div>
@@ -62,7 +69,7 @@ const notFutureDateValidator = (today: string): ValidatorFn => (control: Abstrac
 
       </div>
       <div class="form-row">
-        <div class="field"><label for="tut-prox-fecha">Próxima reunión (opcional)</label><input id="tut-prox-fecha" type="date" formControlName="proxima_reunion_fecha" /></div>
+        <div class="field"><label for="tut-prox-fecha">Próxima reunión (opcional)</label><input id="tut-prox-fecha" type="date" formControlName="proxima_reunion_fecha" aria-describedby="tut-prox-fecha-error" />@if (form.controls.proxima_reunion_fecha.invalid && form.controls.proxima_reunion_fecha.touched) { <span id="tut-prox-fecha-error" class="field-error">Indica la fecha de la próxima reunión si registras notas.</span> }</div>
         <div class="field"><label for="tut-prox-notas">Notas próxima reunión (opcional)</label><input id="tut-prox-notas" formControlName="proxima_reunion_notas" /></div>
       </div>
       @if (error) { <p class="error-msg" role="alert" aria-live="assertive">{{ error }}</p> }
@@ -81,9 +88,9 @@ export class TutoringFormComponent {
   private readonly fb = inject(FormBuilder);
   protected saving = false;
   protected error = '';
-  protected readonly today = new Date().toISOString().split('T')[0];
+  protected readonly today = localDateString();
   protected readonly form = this.fb.nonNullable.group({
-    semester: [0, Validators.required], fecha_sesion: [this.today, [Validators.required, notFutureDateValidator(this.today)]],
+    semester: [0, Validators.required], fecha_sesion: [this.today, [Validators.required, notPastDateValidator(this.today)]],
     modalidad: ['PRESENCIAL' as 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA', Validators.required], resumen: ['', [Validators.required, Validators.maxLength(2000), significantTextValidator]],
     proxima_reunion_fecha: [''], proxima_reunion_notas: [''],
   });
@@ -111,12 +118,19 @@ export class TutoringFormComponent {
       this.focusFirstInvalid();
       return;
     }
+    if (value.proxima_reunion_notas && !value.proxima_reunion_fecha) {
+      this.form.controls.proxima_reunion_fecha.setErrors({ requiredForNotes: true });
+      this.form.controls.proxima_reunion_fecha.markAsTouched();
+      this.error = 'Indica la fecha de la próxima reunión para registrar notas.';
+      this.focusFirstInvalid();
+      return;
+    }
     this.saving = true; this.error = '';
     this.service.createTutoringSession({ student: this.studentId, semester: Number(value.semester), fecha_sesion: value.fecha_sesion,
       modalidad: value.modalidad, resumen: value.resumen, proxima_reunion_fecha: value.proxima_reunion_fecha || undefined,
       proxima_reunion_notas: value.proxima_reunion_notas || undefined }).pipe(finalize(() => this.saving = false)).subscribe({
       next: () => this.saved.emit(),
-      error: err => this.error = err.error?.detail || err.error?.resumen?.[0] || 'Error al registrar la sesión de tutoría.',
+      error: err => this.error = err.error?.detail || err.error?.resumen?.[0] || err.error?.fecha_sesion?.[0] || err.error?.semester?.[0] || err.error?.proxima_reunion_fecha?.[0] || 'Error al registrar la sesión de tutoría.',
     });
   }
 

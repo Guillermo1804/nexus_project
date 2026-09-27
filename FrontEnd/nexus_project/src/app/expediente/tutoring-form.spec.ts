@@ -6,6 +6,7 @@ import { TutoringFormComponent } from './tutoring-form';
 interface TestTutoringForm {
   form: any;
   submit: () => void;
+  error: string;
 }
 
 describe('TutoringFormComponent (HU-07)', () => {
@@ -43,22 +44,32 @@ describe('TutoringFormComponent (HU-07)', () => {
     expect(createTutoringSession).not.toHaveBeenCalled();
   });
 
-  it('rechaza una fecha anterior al inicio del semestre', () => {
+  it('rechaza una fecha de sesión pasada', () => {
     component.form.patchValue({ fecha_sesion: '2025-12-31', resumen: 'Resumen valido' });
     component.submit();
 
-    expect(component.form.controls.fecha_sesion.hasError('beforeSemester')).toBeTrue();
+    expect(component.form.controls.fecha_sesion.hasError('pastDate')).toBeTrue();
+    expect(createTutoringSession).not.toHaveBeenCalled();
+  });
+
+  it('exige fecha de próxima reunión cuando se registran notas', () => {
+    component.form.patchValue({ fecha_sesion: '2099-02-01', resumen: 'Resumen valido', proxima_reunion_notas: 'Llevar avances' });
+
+    component['submit']();
+
+    expect(component.form.controls.proxima_reunion_fecha.hasError('requiredForNotes')).toBeTrue();
+    expect(component['error']).toContain('Indica la fecha');
     expect(createTutoringSession).not.toHaveBeenCalled();
   });
 
   it('envia una sesion valida al servicio', () => {
-    component.form.patchValue({ fecha_sesion: '2026-02-01', resumen: 'Resumen valido' });
+    component.form.patchValue({ fecha_sesion: '2099-02-01', resumen: 'Resumen valido' });
     component.submit();
 
     expect(createTutoringSession).toHaveBeenCalledWith(jasmine.objectContaining({
       student: 10,
       semester: 2,
-      fecha_sesion: '2026-02-01',
+      fecha_sesion: '2099-02-01',
       resumen: 'Resumen valido',
     }));
   });
