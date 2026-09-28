@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import {
@@ -30,6 +31,7 @@ type DrawerMode = 'edit' | 'audit';
 export class AgreementsListComponent implements OnInit {
   private readonly academic = inject(AcademicService);
   private readonly studentsApi = inject(StudentService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly auth = inject(AuthService);
   private triggerElement: HTMLElement | null = null;
 
@@ -68,7 +70,11 @@ export class AgreementsListComponent implements OnInit {
   protected readonly statuses = ['PENDIENTE', 'EN_PROCESO', 'CONCLUIDO', 'VENCIDO'] as const;
 
   ngOnInit(): void {
+    const queryParams = this.route.snapshot.queryParamMap;
+    this.filtroStudent = queryParams.get('student') ?? '';
+    this.filtroEstado = queryParams.get('estado') ?? '';
     this.cargarEstudiantes();
+    this.onStudentChange();
     this.cargarAcuerdos();
   }
 
@@ -133,6 +139,7 @@ export class AgreementsListComponent implements OnInit {
   }
 
   protected abrirEdicion(a: Agreement, event?: Event): void {
+    if (a.is_vencido) return;
     this.openDrawer(a, 'edit', event);
   }
 
@@ -157,7 +164,7 @@ export class AgreementsListComponent implements OnInit {
   }
 
   protected isStatusEnabled(status: string): boolean {
-    return status === this.nextStatus() || status === this.selectedStatus;
+    return !this.drawerAgreement?.is_vencido && (status === this.nextStatus() || status === this.selectedStatus);
   }
 
   protected selectStatus(status: string): void {
@@ -165,7 +172,7 @@ export class AgreementsListComponent implements OnInit {
   }
 
   protected guardarCambios(): void {
-    if (!this.drawerAgreement || !this.selectedStatus || this.saving || this.saveDisabled) return;
+    if (!this.drawerAgreement || this.drawerAgreement.is_vencido || !this.selectedStatus || this.saving || this.saveDisabled) return;
 
     this.saving = true;
     this.saveError = '';
@@ -222,7 +229,7 @@ export class AgreementsListComponent implements OnInit {
   }
 
   private nextStatus(): EditableAgreementStatus | null {
-    if (!this.drawerAgreement) return null;
+    if (!this.drawerAgreement || this.drawerAgreement.is_vencido) return null;
     if (this.drawerAgreement.estado === 'PENDIENTE') return 'EN_PROCESO';
     if (this.drawerAgreement.estado === 'EN_PROCESO') return 'CONCLUIDO';
     return null;

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import { Agreement, Semester, SemesterTutoringSession, StudentOverview } from '../core/academic/academic.models';
@@ -17,7 +17,7 @@ type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semest
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -155,8 +155,8 @@ export class StudentOverviewComponent implements OnInit {
     });
   }
 
-  protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string }): boolean {
-    return this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
+  protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string; is_vencido: boolean }): boolean {
+    return !agreement.is_vencido && this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
   }
   protected siguienteEstado(estado: string): 'EN_PROCESO' | 'CONCLUIDO' | null {
     return estado === 'PENDIENTE' ? 'EN_PROCESO' : estado === 'EN_PROCESO' ? 'CONCLUIDO' : null;

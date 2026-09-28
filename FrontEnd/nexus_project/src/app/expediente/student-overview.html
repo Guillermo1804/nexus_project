@@ -51,6 +51,7 @@
                 }
               </div>
             } @else { <p class="empty-state">No hay acuerdos registrados en este semestre.</p> }
+            <a routerLink="/acuerdos" [queryParams]="{ student: studentId, estado: 'CONCLUIDO' }" class="text-action">Ver historial de acuerdos concluidos</a>
           </article>
 
           <article class="nexus-card content-card">
@@ -94,7 +95,7 @@
     }
 
     @if (modal === 'estado' && selectedAgreement; as agreement) {
-      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title"><header class="modal-header"><h2 id="status-modal-title">Actualizar Estado de Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="modal-form"><p class="agreement-description">{{ agreement.descripcion }}</p><div class="transition"><span class="status-pill">{{ etiquetaEstado(agreement.estado) }}</span><span>→</span><span class="status-pill next">{{ etiquetaEstado(siguienteEstado(agreement.estado) ?? '') }}</span></div><label>Comentario para la bitácora<textarea class="input-field" rows="3" [(ngModel)]="comentarioEstado" placeholder="Comentario opcional"></textarea></label>@if (!puedeActualizarAcuerdo(agreement)) { <p class="form-warning">Sólo el responsable puede actualizar el estado.</p> }@if (errorEstado) { <p class="form-error" role="alert">{{ errorEstado }}</p> }<footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button class="btn-primary" [disabled]="!puedeActualizarAcuerdo(agreement) || guardandoEstado" (click)="actualizarEstadoAcuerdo()">{{ guardandoEstado ? 'Guardando...' : 'Guardar' }}</button></footer></div></section></div>
+      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title"><header class="modal-header"><h2 id="status-modal-title">Actualizar Estado de Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="modal-form"><p class="agreement-description">{{ agreement.descripcion }}</p><div class="transition"><span class="status-pill">{{ etiquetaEstado(agreement.estado) }}</span><span>→</span><span class="status-pill next">{{ etiquetaEstado(siguienteEstado(agreement.estado) ?? '') }}</span></div><label>Comentario para la bitácora<textarea class="input-field" rows="3" [(ngModel)]="comentarioEstado" placeholder="Comentario opcional"></textarea></label>@if (!puedeActualizarAcuerdo(agreement)) { <p class="form-warning">{{ agreement.is_vencido ? 'Los acuerdos vencidos están cerrados y no permiten cambios.' : 'Sólo el responsable puede actualizar el estado.' }}</p> }@if (errorEstado) { <p class="form-error" role="alert">{{ errorEstado }}</p> }<footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button class="btn-primary" [disabled]="!puedeActualizarAcuerdo(agreement) || guardandoEstado" (click)="actualizarEstadoAcuerdo()">{{ guardandoEstado ? 'Guardando...' : 'Guardar' }}</button></footer></div></section></div>
     }
 
     @if (modal === 'avance') {

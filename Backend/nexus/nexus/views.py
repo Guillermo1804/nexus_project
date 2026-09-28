@@ -437,6 +437,11 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
         agreement = self.get_object()
         if agreement.responsable_id != request.user.id:
             return Response({'detail': 'Sólo el responsable puede actualizar el estado.'}, status=status.HTTP_403_FORBIDDEN)
+        if agreement.is_vencido:
+            return Response(
+                {'estado': ['Los acuerdos vencidos están cerrados y no permiten cambios.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = AgreementStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         new_status = serializer.validated_data['estado']

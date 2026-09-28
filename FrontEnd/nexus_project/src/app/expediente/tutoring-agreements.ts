@@ -59,7 +59,8 @@ export class TutoringAgreementsComponent implements OnChanges {
   }
 
   /** HU-13: solo el responsable puede avanzar el estado. */
-  protected puedeActualizarEstado(agreement: Pick<Agreement, 'responsable' | 'estado'>): boolean {
+  protected puedeActualizarEstado(agreement: Pick<Agreement, 'responsable' | 'estado' | 'is_vencido'>): boolean {
+    if (agreement.is_vencido) return false;
     const userId = this.auth.user()?.id;
     if (!userId || agreement.responsable !== userId) return false;
     return this.siguienteEstado(agreement.estado) != null;

@@ -3,6 +3,14 @@
 from django.db import migrations, models
 
 
+def normalize_legacy_activity_types(apps, schema_editor):
+    Evidence = apps.get_model('nexus', 'Evidence')
+    # Older versions accepted free text, including EVENTO.
+    Evidence.objects.using(schema_editor.connection.alias).exclude(
+        actividad_tipo__in=['TUTORIA', 'ACUERDO', 'TESIS', 'OTRO'],
+    ).update(actividad_tipo='OTRO')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +18,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(
+            normalize_legacy_activity_types,
+            migrations.RunPython.noop,
+        ),
         migrations.AddConstraint(
             model_name='evidence',
             constraint=models.CheckConstraint(condition=models.Q(('actividad_tipo__in', ['TUTORIA', 'ACUERDO', 'TESIS', 'OTRO'])), name='evidence_valid_activity_type'),
