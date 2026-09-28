@@ -21,6 +21,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     GlobalAcademicOverviewView,
+    AgreementAlertsView,
     AgreementViewSet,
     CommitteeAssignmentListCreateView,
     CommitteeAssignmentUpdateView,
@@ -69,4 +70,5 @@ urlpatterns = [
     path('api/v1/tutoring/', TutoringSessionViewSet.as_view({'post': 'create'}), name='legacy-tutoring-create'),
     path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
     path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
+    path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
 ]

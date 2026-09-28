@@ -13,6 +13,7 @@ import {
   Agreement,
   AgreementFilters,
   AgreementAuditEntry,
+  AgreementAlertsResponse,
   CreateSessionAgreementData,
   Evidence,
   EvidenceLinkData,
@@ -78,6 +79,11 @@ export class AcademicService {
 
   updateAgreementStatus(agreementId: number, estado: 'EN_PROCESO' | 'CONCLUIDO', comentario = ''): Observable<Agreement> {
     return this.http.patch<Agreement>(`${API}/agreements/${agreementId}/status/`, { estado, comentario });
+  }
+
+  getAgreementAlerts(studentId?: number): Observable<AgreementAlertsResponse> {
+    const query = studentId ? `?student=${studentId}` : '';
+    return this.http.get<AgreementAlertsResponse>(`${API}/monitoring/alerts/agreements/${query}`);
   }
 
   getAgreements(filters: AgreementFilters = {}): Observable<PaginatedResponse<Agreement>> {

@@ -18,6 +18,15 @@
 
     @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
 
+    @if (agreementAlerts && agreementAlerts.total_alertas > 0 && !alertsDismissed) {
+      <section class="agreement-alert-banner" role="region" aria-label="Alertas de compromisos académicos">
+        <span class="alert-icon" aria-hidden="true">!</span>
+        <div><strong>Atención a compromisos</strong><p><span class="critical-level">Crítico: {{ agreementAlerts.vencidos_count }} vencido{{ agreementAlerts.vencidos_count === 1 ? '' : 's' }}</span> · <span class="warning-level">Advertencia: {{ agreementAlerts.proximos_vencer_count }} por vencer</span></p></div>
+        <a [routerLink]="['/acuerdos']" [queryParams]="{ student: studentId, vencido: true }">Ver acuerdos vencidos</a>
+        <button type="button" (click)="dismissAlerts()" aria-label="Cerrar alertas">×</button>
+      </section>
+    }
+
     <div class="overview-tabs" role="tablist" aria-label="Vistas del expediente">
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'resumen'" [class.selected]="activeView === 'resumen'" (click)="selectView('resumen')">Resumen académico</button>
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'timeline'" [class.selected]="activeView === 'timeline'" (click)="selectView('timeline')">Línea de Tiempo</button>
@@ -51,7 +60,13 @@
                 @for (agreement of semesterAgreements; track agreement.id) {
                   <div class="table-row">
                     <strong>{{ agreement.descripcion }}</strong><span>{{ agreement.responsable_nombre }}</span><time>{{ agreement.fecha_limite | date:'dd MMM yyyy' }}</time>
-                    <span><span class="status-pill" [class.overdue]="agreement.is_vencido" [class.done]="agreement.estado === 'CONCLUIDO'">{{ etiquetaEstado(agreement.estado, agreement.is_vencido) }}</span></span>
+                    <span>
+                      @if (alertFor(agreement); as alert) {
+                        <span class="status-pill" [class.overdue]="alert.nivel === 'CRITICO'" [class.warning-alert]="alert.nivel === 'ADVERTENCIA'">{{ alert.nivel === 'CRITICO' ? 'CRÍTICO · VENCIDO' : 'ADVERTENCIA · PRÓXIMO' }}</span>
+                      } @else {
+                        <span class="status-pill" [class.overdue]="agreement.is_vencido" [class.done]="agreement.estado === 'CONCLUIDO'">{{ etiquetaEstado(agreement.estado, agreement.is_vencido) }}</span>
+                      }
+                    </span>
                     <span>@if (agreement.estado !== 'CONCLUIDO') { <button class="link-button" (click)="abrirEstado(agreement)">Actualizar Estado</button> }</span>
                   </div>
                 }

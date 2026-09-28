@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, finalize } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { AcademicService } from '../core/academic/academic.service';
 import { AuthService } from '../core/auth/auth.service';
 import { getRoleLabelByGender } from '../shared/presentation/role-labels';
 
@@ -11,9 +12,11 @@ import { getRoleLabelByGender } from '../shared/presentation/role-labels';
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
-export class AppShell {
+export class AppShell implements OnInit {
   protected readonly auth = inject(AuthService);
+  private readonly academic = inject(AcademicService);
   private readonly router = inject(Router);
+  protected readonly agreementAlertCount = signal(0);
   private readonly navigation = toSignal(
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
     { initialValue: null },
@@ -32,6 +35,14 @@ export class AppShell {
     if (url === '/admin/audit') return 'Auditoría';
     return 'Inicio';
   });
+
+  ngOnInit(): void {
+    if (!this.auth.isAuthenticated()) return;
+    this.academic.getAgreementAlerts().subscribe({
+      next: response => this.agreementAlertCount.set(response.total_alertas),
+      error: () => this.agreementAlertCount.set(0),
+    });
+  }
 
   protected userName(): string {
     const user = this.auth.user();

@@ -72,9 +72,9 @@ export class AgreementsListComponent implements OnInit {
   ngOnInit(): void {
     const queryParams = this.route.snapshot.queryParamMap;
     this.filtroStudent = queryParams.get('student') ?? '';
-    this.filtroEstado = queryParams.get('estado') ?? '';
+    this.filtroEstado = queryParams.get('vencido') === 'true' ? 'VENCIDO' : queryParams.get('estado') ?? '';
     this.cargarEstudiantes();
-    this.onStudentChange();
+    if (this.filtroStudent) this.onStudentChange();
     this.cargarAcuerdos();
   }
 

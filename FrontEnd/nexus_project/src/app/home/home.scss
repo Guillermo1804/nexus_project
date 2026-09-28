@@ -10,6 +10,25 @@
 .home-page > * { max-width: 1440px; margin-inline: auto; }
 
 .page-header { padding: 24px 28px; }
+.agreement-alert-banner {
+  align-items: center;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+}
+.agreement-alert-banner .alert-symbol { align-items: center; border: 2px solid var(--danger); border-radius: 50%; color: var(--danger); display: flex; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.agreement-alert-banner strong { color: var(--heading); }
+.agreement-alert-banner p { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 5px 0 0; }
+.agreement-alert-banner .level { font-size: 13px; font-weight: 700; }
+.agreement-alert-banner .critical { color: var(--danger); }
+.agreement-alert-banner .warning { color: var(--warning); }
+.agreement-alert-banner a { color: var(--brand); font-size: 13px; font-weight: 700; }
+.agreement-alert-banner button { background: transparent; border: 0; color: var(--text-muted); cursor: pointer; font-size: 24px; }
 .eyebrow { color: var(--brand); font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 8px; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { color: var(--heading); font-size: 26px; line-height: 1.2; margin-bottom: 8px; }
@@ -111,6 +130,9 @@ td:first-child .mono { color: var(--text-muted); font-size: 12px; font-weight: 7
   .kpi-grid, .filters, .assigned-grid { grid-template-columns: 1fr; }
   .alert-row { align-items: start; grid-template-columns: 1fr; }
   .registry-heading, .welcome-card { align-items: stretch; flex-direction: column; }
+  .agreement-alert-banner { align-items: start; grid-template-columns: auto 1fr auto; }
+  .agreement-alert-banner a { grid-column: 2; }
+  .agreement-alert-banner button { grid-column: 3; grid-row: 1; }
   .registry-heading .btn-primary, .welcome-card .btn-primary { justify-content: center; }
   .cohort-row { grid-template-columns: 76px minmax(80px, 1fr) 28px; gap: 8px; }
   .table-footer { flex-wrap: wrap; justify-content: center; }

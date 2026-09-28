@@ -28,6 +28,7 @@ from .models import (
     TutoringObservation,
     Evidence,
 )
+from .services.alert_service import agreement_alerts_for_user
 from .permissions import (
     CanAssignRoles,
     CanCreateTutoring,
@@ -424,6 +425,19 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         agreement = serializer.save(session=session, student=session.student, created_by=request.user)
         return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
+
+
+class AgreementAlertsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student_id = request.query_params.get('student')
+        if student_id is not None:
+            try:
+                student_id = int(student_id)
+            except (TypeError, ValueError):
+                return Response({'student': ['Debe ser un identificador válido.']}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(agreement_alerts_for_user(request.user, student_id=student_id))
 
 
 class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

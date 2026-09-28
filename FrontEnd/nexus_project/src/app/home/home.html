@@ -1,5 +1,19 @@
 <main class="home-page">
   @if (auth.user(); as user) {
+    @if (agreementAlerts && agreementAlerts.total_alertas > 0 && !alertsDismissed) {
+      <section class="agreement-alert-banner" role="region" aria-label="Alertas de compromisos académicos">
+        <span class="alert-symbol" aria-hidden="true">!</span>
+        <div>
+          <strong>Alertas de acuerdos</strong>
+          <p>
+            <span class="level critical">Crítico: {{ agreementAlerts.vencidos_count }} vencido{{ agreementAlerts.vencidos_count === 1 ? '' : 's' }}</span>
+            <span class="level warning">Advertencia: {{ agreementAlerts.proximos_vencer_count }} por vencer esta semana</span>
+          </p>
+        </div>
+        <a routerLink="/acuerdos" [queryParams]="{ vencido: true }">Ver acuerdos vencidos</a>
+        <button type="button" (click)="dismissAlerts()" aria-label="Cerrar alertas">×</button>
+      </section>
+    }
     @if (auth.hasPermission('academic.read.global')) {
       <section class="page-header nexus-card" aria-labelledby="dashboard-title">
         <p class="eyebrow">COORDINACIÓN ACADÉMICA</p>
