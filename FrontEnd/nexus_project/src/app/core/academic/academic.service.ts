@@ -15,6 +15,7 @@ import {
   AgreementAuditEntry,
   CreateSessionAgreementData,
   Evidence,
+  EvidenceLinkData,
   EvidenceUploadData,
   TutoringObservation,
   CreateTutoringObservationData,
@@ -118,7 +119,12 @@ export class AcademicService {
     form.append('actividad_tipo', data.actividad_tipo);
     if (data.actividad_id !== undefined) form.append('actividad_id', String(data.actividad_id));
     form.append('titulo', data.titulo);
+    if (data.descripcion) form.append('descripcion', data.descripcion);
     form.append('archivo_adjunto', data.archivo_adjunto);
     return this.http.post<Evidence>(`${API}/evidence/`, form);
+  }
+
+  linkEvidence(data: EvidenceLinkData): Observable<Evidence> {
+    return this.http.post<Evidence>(`${API}/evidence/`, data);
   }
 }

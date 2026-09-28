@@ -224,21 +224,34 @@ export interface CreateSessionAgreementData {
   fecha_limite: string;
 }
 
-export interface EvidenceUploadData {
+interface EvidenceBaseData {
   student: number;
   semester: number | null;
   actividad_tipo: string;
   actividad_id?: number;
   titulo: string;
+  descripcion?: string;
+}
+
+export interface EvidenceUploadData extends EvidenceBaseData {
   archivo_adjunto: File;
+}
+
+export interface EvidenceLinkData extends EvidenceBaseData {
+  tipo: 'ENLACE_DOI';
+  enlace_url: string;
 }
 
 export interface Evidence {
   id: number;
   student: number;
   semester: number | null;
+  tipo: 'ARCHIVO_LOCAL' | 'ENLACE_DOI';
   actividad_tipo: string;
   titulo: string;
+  descripcion: string;
+  archivo_adjunto: string | null;
+  enlace_url: string;
   mime_type: string;
   file_size_bytes: number;
 }
