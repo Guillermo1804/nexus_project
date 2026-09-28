@@ -101,6 +101,15 @@ describe('TutoringAgreementsComponent (HU-11 / HU-12)', () => {
       { id: 4, nombre_completo: 'Ana Morales', etiqueta: 'Estudiante' },
       { id: 2, nombre_completo: 'Roberto Gómez', etiqueta: 'Asesor' },
     ]);
+    authStub.user.set({
+      id: 2,
+      email: 'roberto.gomez@nexus.edu',
+      first_name: 'Roberto',
+      last_name: 'Gómez',
+      role: 'TUTOR',
+      roles: ['TUTOR'],
+      permissions: ['tutoring.create', 'records.read.assigned'],
+    });
     fixture.detectChanges();
   });
 

@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
-from .models import AcademicCommittee, CommitteeMembership, Evidence, Semester, Student
+from .models import AcademicCommittee, CommitteeMembership, Evidence, Semester, Student, TutoringSession
 from .tests import jwt_for
 
 
@@ -55,6 +55,25 @@ class EvidenceUploadHu21Tests(APITestCase):
         data = self.payload(); data['semester'] = semester.id
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.student_user)}')
         self.assertEqual(self.client.post('/api/v1/evidence/', data, format='multipart').status_code, 400)
+
+    def test_rejects_activity_from_another_student(self):
+        other = Student.objects.create(matricula='HU21C', nombre_completo='Other', cohorte='2026')
+        semester = Semester.objects.create(student=other, numero=1, fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 30))
+        session = TutoringSession.objects.create(student=other, semester=semester, fecha_sesion=date(2026, 2, 1), resumen='Sesión de otro estudiante')
+        data = self.payload(); data.update(actividad_tipo='TUTORIA', actividad_id=session.id)
+        response = self.client.post('/api/v1/evidence/', data, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('no pertenece al alumno', str(response.data['actividad_id']))
+
+    def test_rejects_nonexistent_activity(self):
+        data = self.payload(); data['actividad_id'] = 999999
+        response = self.client.post('/api/v1/evidence/', data, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('no existe', str(response.data['actividad_id']))
+
+    def test_accepts_other_without_activity_id(self):
+        data = self.payload(); data['actividad_tipo'] = 'OTRO'
+        self.assertEqual(self.client.post('/api/v1/evidence/', data, format='multipart').status_code, 201)
 
     def test_committee_member_can_upload(self):
         committee_user = Evidence._meta.get_field('created_by').related_model.objects.create_user(email='tutor21@example.com', password='x', role='TUTOR')

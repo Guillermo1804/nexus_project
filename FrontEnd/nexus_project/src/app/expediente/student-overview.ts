@@ -86,6 +86,7 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected get semesterSessions(): SemesterTutoringSession[] { return this.selectedSemester?.tutoring_sessions ?? []; }
+  protected get tutoringSessions(): SemesterTutoringSession[] { return this.overview?.semesters.flatMap(semester => semester.tutoring_sessions ?? []) ?? []; }
   protected get semesterAgreements(): Agreement[] {
     const semester = this.selectedSemester;
     if (!semester) return [];

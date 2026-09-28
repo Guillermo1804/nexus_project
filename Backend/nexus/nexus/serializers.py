@@ -114,6 +114,18 @@ class EvidenceSerializer(serializers.ModelSerializer):
         student = attrs.get('student')
         if semester and semester.student_id != student.id:
             raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
+
+        activity_id = attrs.get('actividad_id')
+        activity_type = attrs.get('actividad_tipo')
+        activity_models = {
+            Evidence.ActivityType.TUTORING: (TutoringSession, 'La sesión de tutoría especificada'),
+            Evidence.ActivityType.AGREEMENT: (Agreement, 'El acuerdo especificado'),
+            Evidence.ActivityType.THESIS: (ThesisProgress, 'El registro de avance de tesis'),
+        }
+        if activity_id is not None and activity_type in activity_models:
+            model, label = activity_models[activity_type]
+            if not model.objects.filter(id=activity_id, student=student).exists():
+                raise serializers.ValidationError({'actividad_id': f'{label} no existe o no pertenece al alumno.'})
         return attrs
 
     def create(self, validated_data):
@@ -366,6 +378,7 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
         if not progress:
             return None
         return {
+            'id': progress.id,
             'porcentaje_avance': progress.porcentaje_avance,
             'observaciones': progress.observaciones,
             'componentes_json': progress.componentes_json,
