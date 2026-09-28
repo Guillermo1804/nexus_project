@@ -1,11 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import { AcademicService } from '../core/academic/academic.service';
 import { EvidenceUploadComponent, MAX_EVIDENCE_BYTES } from './evidence-upload';
 
 describe('EvidenceUploadComponent', () => {
   let fixture: ComponentFixture<EvidenceUploadComponent>;
+  let academic: jasmine.SpyObj<AcademicService>;
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [EvidenceUploadComponent, HttpClientTestingModule] }).compileComponents();
+    academic = jasmine.createSpyObj<AcademicService>('AcademicService', ['uploadEvidence', 'linkEvidence']);
+    await TestBed.configureTestingModule({
+      imports: [EvidenceUploadComponent, HttpClientTestingModule],
+      providers: [{ provide: AcademicService, useValue: academic }],
+    }).compileComponents();
     fixture = TestBed.createComponent(EvidenceUploadComponent);
     fixture.componentRef.setInput('studentId', 1);
   });
@@ -30,5 +37,35 @@ describe('EvidenceUploadComponent', () => {
     expect(input.labels?.[0].textContent).toContain('máximo 15 MiB');
     expect(input.accept).toContain('.pdf');
     expect(input.required).toBeTrue();
+  });
+
+  it('validates DOI and safe URL links', () => {
+    const component = fixture.componentInstance;
+    component.link = '10.1000/182';
+    expect(component.linkKind).toBe('DOI');
+    expect(component.testLinkHref).toBe('https://doi.org/10.1000/182');
+    component.link = 'https://example.org/evidence';
+    expect(component.linkKind).toBe('URL');
+    component.link = 'javascript:alert(1)';
+    expect(component.linkKind).toBeNull();
+  });
+
+  it('submits link evidence as ENLACE_DOI and emits saved', () => {
+    academic.linkEvidence.and.returnValue(of({} as any));
+    const component = fixture.componentInstance;
+    component.title = 'Repositorio';
+    component.semesterId = 2;
+    component.link = '10.1000/182';
+    spyOn(component.saved, 'emit');
+
+    component.submitLink();
+
+    expect(academic.linkEvidence).toHaveBeenCalledWith(jasmine.objectContaining({
+      student: 1,
+      semester: 2,
+      tipo: 'ENLACE_DOI',
+      enlace_url: '10.1000/182',
+    }));
+    expect(component.saved.emit).toHaveBeenCalled();
   });
 });

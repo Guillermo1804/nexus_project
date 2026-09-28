@@ -1,5 +1,8 @@
+import re
+
 from django.contrib.auth import authenticate, password_validation
-from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import RegexValidator, URLValidator
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
@@ -91,9 +94,23 @@ class EvidenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evidence
         fields = ('id', 'student', 'semester', 'tipo', 'actividad_tipo', 'actividad_id', 'titulo',
-                  'descripcion', 'archivo_adjunto', 'mime_type', 'file_size_bytes', 'fecha_carga',
+                  'descripcion', 'archivo_adjunto', 'enlace_url', 'mime_type', 'file_size_bytes', 'fecha_carga',
                   'created_by', 'created_at')
-        read_only_fields = ('id', 'tipo', 'mime_type', 'file_size_bytes', 'fecha_carga', 'created_by', 'created_at')
+        read_only_fields = ('id', 'mime_type', 'file_size_bytes', 'fecha_carga', 'created_by', 'created_at')
+        extra_kwargs = {'tipo': {'required': False}}
+
+    def validate_enlace_url(self, value):
+        value = value.strip()
+        if not value:
+            return value
+        try:
+            URLValidator(schemes=['http', 'https'])(value)
+        except DjangoValidationError:
+            if not re.fullmatch(r'10\.\d{4,9}/[-._;()/:A-Za-z0-9]+', value):
+                raise serializers.ValidationError(
+                    'Proporcione una URL válida (http/https) o un DOI estándar (ej. 10.1000/182).'
+                )
+        return value
 
     def validate_archivo_adjunto(self, upload):
         if upload.size > MAX_EVIDENCE_BYTES:
@@ -110,6 +127,20 @@ class EvidenceSerializer(serializers.ModelSerializer):
         return upload
 
     def validate(self, attrs):
+        evidence_type = attrs.get('tipo', Evidence.EvidenceType.LOCAL_FILE)
+        upload = attrs.get('archivo_adjunto')
+        link = attrs.get('enlace_url', '')
+        if evidence_type == Evidence.EvidenceType.DOI_LINK:
+            if not link:
+                raise serializers.ValidationError({'enlace_url': 'El enlace es obligatorio para una evidencia digital.'})
+            if upload:
+                raise serializers.ValidationError({'archivo_adjunto': 'Una evidencia digital no puede incluir un archivo.'})
+        else:
+            if not upload:
+                raise serializers.ValidationError({'archivo_adjunto': 'El archivo es obligatorio para una evidencia local.'})
+            if link:
+                raise serializers.ValidationError({'enlace_url': 'Una evidencia local no puede incluir un enlace.'})
+
         semester = attrs.get('semester')
         student = attrs.get('student')
         if semester and semester.student_id != student.id:
@@ -129,18 +160,20 @@ class EvidenceSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        upload = validated_data['archivo_adjunto']
+        evidence_type = validated_data.get('tipo', Evidence.EvidenceType.LOCAL_FILE)
+        upload = validated_data.get('archivo_adjunto')
         evidence = Evidence(
-            tipo=Evidence.EvidenceType.LOCAL_FILE,
-            mime_type=upload.verified_mime_type,
-            file_size_bytes=upload.size,
+            tipo=evidence_type,
+            mime_type=upload.verified_mime_type if upload else '',
+            file_size_bytes=upload.size if upload else 0,
             created_by=self.context['request'].user,
-            **validated_data,
+            **{key: value for key, value in validated_data.items() if key != 'tipo'},
         )
         try:
             evidence.save()
         except Exception:
-            evidence.archivo_adjunto.delete(save=False)
+            if evidence.archivo_adjunto:
+                evidence.archivo_adjunto.delete(save=False)
             raise
         return evidence
 
