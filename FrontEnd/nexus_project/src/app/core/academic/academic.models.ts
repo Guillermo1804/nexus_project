@@ -209,6 +209,26 @@ export interface AgreementFilters {
   fecha_hasta?: string;
 }
 
+export interface AgreementAlert {
+  agreement_id: number;
+  student_id: number;
+  student_nombre: string;
+  descripcion: string;
+  responsable_nombre: string;
+  fecha_limite: string;
+  nivel: 'CRITICO' | 'ADVERTENCIA';
+  dias_retraso?: number;
+  dias_restantes?: number;
+  mensaje: string;
+}
+
+export interface AgreementAlertsResponse {
+  total_alertas: number;
+  vencidos_count: number;
+  proximos_vencer_count: number;
+  alertas: AgreementAlert[];
+}
+
 export interface AgreementAuditEntry {
   id: number;
   user: number | null;

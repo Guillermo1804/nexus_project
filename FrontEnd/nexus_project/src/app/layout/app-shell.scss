@@ -35,6 +35,20 @@
 }
 .nav-list a:hover { background: var(--surface-warm); color: var(--heading); }
 .nav-list a.active { background: var(--surface-soft); color: var(--brand); }
+.agreements-link { align-items: center; display: flex; justify-content: space-between; }
+.alert-count {
+  align-items: center;
+  background: var(--danger);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 20px;
+  min-width: 20px;
+  padding: 2px 6px;
+}
 .nav-group {
   color: var(--text-muted);
   font-size: 11px;

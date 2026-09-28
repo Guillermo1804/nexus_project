@@ -138,6 +138,25 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .input-field:focus { border-color: var(--brand); outline: 3px solid rgba(73, 74, 213, .12); }
 .mono { font-family: 'Liberation Mono', monospace; }
 
+.agreement-alert-banner {
+  align-items: center;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin-top: 18px;
+  padding: 15px 18px;
+}
+.agreement-alert-banner strong { color: var(--heading); }
+.agreement-alert-banner p { color: var(--text-secondary); font-size: 13px; margin: 4px 0 0; }
+.agreement-alert-banner .critical-level { color: var(--danger); font-weight: 700; }
+.agreement-alert-banner .warning-level { color: var(--warning); font-weight: 700; }
+.agreement-alert-banner a { color: var(--brand); font-size: 13px; font-weight: 700; }
+.agreement-alert-banner > button { background: transparent; border: 0; color: var(--text-muted); cursor: pointer; font-size: 24px; }
+.status-pill.warning-alert { background: var(--warning-bg); color: var(--warning); }
+
 .modal-backdrop {
   backdrop-filter: blur(3.5px);
   background: rgba(48, 48, 56, .16);
@@ -169,6 +188,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .brand-badge .nexus-brand-icon { display: inline-block; flex-shrink: 0; }
+
+@media (max-width: 680px) {
+  .agreement-alert-banner { align-items: start; grid-template-columns: auto 1fr auto; }
+  .agreement-alert-banner a { grid-column: 2; }
+  .agreement-alert-banner > button { grid-column: 3; grid-row: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

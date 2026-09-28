@@ -172,6 +172,13 @@ function flushTutoringSideRequests(http: HttpTestingController, preferredSession
   });
 
   http
+    .match((req) => req.urlWithParams.includes('/monitoring/alerts/agreements/?student='))
+    .forEach((req) => {
+      expect(req.request.method).toBe('GET');
+      req.flush({ total_alertas: 0, vencidos_count: 0, proximos_vencer_count: 0, alertas: [] });
+    });
+
+  http
     .match((req) => req.urlWithParams.includes('/api/v1/agreements/?student='))
     .forEach((req) => {
       expect(req.request.method).toBe('GET');

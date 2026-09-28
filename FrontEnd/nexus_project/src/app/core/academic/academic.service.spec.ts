@@ -214,4 +214,30 @@ describe('AcademicService - Semesters (HU-05)', () => {
     expect(req.request.body).toEqual(newSem);
     req.flush(createdSem);
   });
+
+  it('consulta las alertas de acuerdos de HU-25', () => {
+    service.getAgreementAlerts(10).subscribe((response) => {
+      expect(response.total_alertas).toBe(1);
+      expect(response.alertas[0].nivel).toBe('CRITICO');
+    });
+
+    const req = httpMock.expectOne('http://localhost:8000/api/v1/monitoring/alerts/agreements/?student=10');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      total_alertas: 1,
+      vencidos_count: 1,
+      proximos_vencer_count: 0,
+      alertas: [{
+        agreement_id: 1,
+        student_id: 10,
+        student_nombre: 'Ana Pérez',
+        descripcion: 'Entregar capítulo',
+        responsable_nombre: 'Ana Pérez',
+        fecha_limite: '2026-09-20',
+        nivel: 'CRITICO',
+        dias_retraso: 3,
+        mensaje: 'Acuerdo vencido hace 3 días.',
+      }],
+    });
+  });
 });

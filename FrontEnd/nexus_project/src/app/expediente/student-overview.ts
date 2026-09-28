@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, Semester, SemesterTutoringSession, StudentOverview, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineResponse } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -19,7 +19,7 @@ type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semest
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -47,6 +47,8 @@ export class StudentOverviewComponent implements OnInit {
   protected timeline: TimelineResponse | null = null;
   protected timelineLoading = false;
   protected timelineError = '';
+  protected agreementAlerts: AgreementAlertsResponse | null = null;
+  protected alertsDismissed = false;
   private timelineLoaded = false;
   private tutoringActionHandled = false;
 
@@ -67,7 +69,8 @@ export class StudentOverviewComponent implements OnInit {
         const selectedExists = data.semesters.some(s => s.id === this.selectedSemesterId);
         if (!selectedExists) this.selectedSemesterId = data.current_semester?.id ?? data.semesters.at(-1)?.id ?? null;
         this.cargarAcuerdos();
-        if (!this.tutoringActionHandled && this.route.snapshot.queryParamMap.get('accion') === 'tutoria' && this.canCreateTutoring) {
+        this.cargarAlertas();
+        if (!this.tutoringActionHandled && this.route.snapshot.queryParamMap?.get('accion') === 'tutoria' && this.canCreateTutoring) {
           this.tutoringActionHandled = true;
           this.modal = 'tutoria';
         }
@@ -85,6 +88,18 @@ export class StudentOverviewComponent implements OnInit {
       next: data => this.agreements = data.results,
       error: () => this.agreements = this.overview?.open_agreements.map(a => ({ ...a, student: this.studentId, session: null })) as Agreement[] ?? [],
     });
+  }
+
+  private cargarAlertas(): void {
+    this.academicService.getAgreementAlerts(this.studentId).subscribe({
+      next: response => this.agreementAlerts = response,
+      error: () => this.agreementAlerts = null,
+    });
+  }
+
+  protected dismissAlerts(): void { this.alertsDismissed = true; }
+  protected alertFor(agreement: Agreement): AgreementAlert | undefined {
+    return this.agreementAlerts?.alertas.find(alert => alert.agreement_id === agreement.id);
   }
 
   protected get selectedSemester(): Semester | null {

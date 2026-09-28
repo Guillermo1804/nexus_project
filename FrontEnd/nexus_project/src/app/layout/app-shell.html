@@ -9,7 +9,12 @@
 
     <nav class="nav-list">
       <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-      <a routerLink="/acuerdos" routerLinkActive="active">Acuerdos</a>
+      <a routerLink="/acuerdos" routerLinkActive="active" class="agreements-link">
+        <span>Acuerdos</span>
+        @if (agreementAlertCount() > 0) {
+          <span class="alert-count" aria-label="{{ agreementAlertCount() }} alertas de acuerdos">{{ agreementAlertCount() }}</span>
+        }
+      </a>
 
       @if (auth.hasPermission('students.create')) {
         <a routerLink="/coordinator/students/new" routerLinkActive="active">Registrar estudiante</a>

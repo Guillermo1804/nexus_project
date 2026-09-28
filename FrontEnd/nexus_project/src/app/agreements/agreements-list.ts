@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
@@ -29,6 +30,7 @@ type DrawerMode = 'edit' | 'audit';
 })
 export class AgreementsListComponent implements OnInit {
   private readonly academic = inject(AcademicService);
+  private readonly router = inject(Router);
   private readonly studentsApi = inject(StudentService);
   protected readonly auth = inject(AuthService);
   private triggerElement: HTMLElement | null = null;
@@ -68,7 +70,12 @@ export class AgreementsListComponent implements OnInit {
   protected readonly statuses = ['PENDIENTE', 'EN_PROCESO', 'CONCLUIDO', 'VENCIDO'] as const;
 
   ngOnInit(): void {
+    const query = new URLSearchParams(this.router.url.split('?')[1] ?? '');
+    const student = query.get('student');
+    if (student && Number.isInteger(Number(student)) && Number(student) > 0) this.filtroStudent = student;
+    if (query.get('vencido') === 'true') this.filtroEstado = 'VENCIDO';
     this.cargarEstudiantes();
+    if (this.filtroStudent) this.onStudentChange();
     this.cargarAcuerdos();
   }
 

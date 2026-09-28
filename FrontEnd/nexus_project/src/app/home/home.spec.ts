@@ -19,6 +19,7 @@ describe('Home Component', () => {
   };
 
   const academicStub = {
+    getAgreementAlerts: () => of({ total_alertas: 0, vencidos_count: 0, proximos_vencer_count: 0, alertas: [] }),
     getGlobalOverview: () => of({ count: 0, next: null, previous: null, results: [] }),
     getTutoringSessions: () => of({ count: 0, next: null, previous: null, results: [] }),
     getAgreements: () => of({ count: 0, next: null, previous: null, results: [] }),

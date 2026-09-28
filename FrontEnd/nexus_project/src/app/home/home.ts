@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, forkJoin, of, switchMap } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { StudentRecord, TutoringSession } from '../core/academic/academic.models';
+import { AgreementAlertsResponse, StudentRecord, TutoringSession } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { StudentService } from '../core/students/student.service';
 import { PaginatedResponse } from '../shared/pagination';
@@ -36,6 +36,8 @@ export class Home implements OnInit {
   protected overdueAgreements = 0;
   protected loadingDashboard = false;
   protected dashboardError = '';
+  protected agreementAlerts: AgreementAlertsResponse | null = null;
+  protected alertsDismissed = false;
 
   protected programFilter = '';
   protected cohortFilter = '';
@@ -45,6 +47,10 @@ export class Home implements OnInit {
   protected readonly pageSize = 10;
 
   ngOnInit(): void {
+    this.academicService.getAgreementAlerts().subscribe({
+      next: response => this.agreementAlerts = response,
+      error: () => this.agreementAlerts = null,
+    });
     if (this.auth.hasPermission('academic.read.global')) {
       this.loadDashboard();
       return;
@@ -54,6 +60,10 @@ export class Home implements OnInit {
     if (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || this.auth.hasPermission('records.read.assigned')) {
       this.studentService.loadStudents();
     }
+  }
+
+  protected dismissAlerts(): void {
+    this.alertsDismissed = true;
   }
 
   protected getWelcomeText(): string {
