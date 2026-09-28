@@ -1,0 +1,16 @@
+.thesis-form { background: var(--surface-warm); }
+.form-body { display: grid; gap: 18px; padding: 24px; }
+label { display: grid; gap: 7px; color: var(--heading); font-size: 13px; font-weight: 700; }
+.input-field { width: 100%; resize: vertical; }
+.percentage-input { display: flex; align-items: center; gap: 8px; max-width: 150px; }
+.percentage-input span { color: var(--brand); font-size: 18px; }
+.progress-track { height: 10px; border-radius: 999px; background: #e4e1ed; overflow: hidden; }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width .15s ease; }
+fieldset { display: grid; gap: 18px; margin: 0; padding: 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+legend { padding: 0 7px; color: var(--heading); font-size: 14px; font-weight: 700; }
+.slider-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.slider-row output { color: var(--brand); font-variant-numeric: tabular-nums; }
+.slider-row input { grid-column: 1 / -1; width: 100%; accent-color: var(--brand); cursor: pointer; }
+.field-error, .form-error { margin: -10px 0 0; color: var(--danger); font-size: 13px; }
+.form-error { margin: 0; padding: 10px; border-radius: 8px; background: var(--danger-bg); }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); }

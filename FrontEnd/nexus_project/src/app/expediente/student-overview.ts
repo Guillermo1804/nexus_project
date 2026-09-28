@@ -12,12 +12,13 @@ import { TutoringObservationsComponent } from './tutoring-observations';
 import { ResponsibleOption } from './tutoring-agreements';
 import { EvidenceUploadComponent } from './evidence-upload';
 import { TutoringConditionsComponent } from './tutoring-conditions';
+import { ThesisProgressFormComponent } from './thesis-progress-form';
 
 type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semestre' | 'condiciones' | null;
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent],
+  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -102,6 +103,7 @@ export class StudentOverviewComponent implements OnInit {
   }
   protected get canCreateAgreement(): boolean { return this.canAccessStudent && this.canCreateTutoring; }
   protected get canUploadEvidence(): boolean { return this.canAccessStudent; }
+  protected get canRegisterThesisProgress(): boolean { return this.canAccessStudent; }
   protected get initials(): string {
     return (this.overview?.nombre_completo ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }
@@ -199,5 +201,6 @@ export class StudentOverviewComponent implements OnInit {
   protected tutoriaGuardada(): void { this.cerrarModal(); this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
   protected semestreGuardado(): void { this.cerrarModal(); this.cargarExpediente(); }
   protected evidenciaGuardada(): void { this.cerrarModal(); }
+  protected avanceGuardado(): void { this.cerrarModal(); this.cargarExpediente(); }
   protected proximaReunionGuardada(): void { this.cargarExpediente(); }
 }

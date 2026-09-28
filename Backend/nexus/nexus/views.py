@@ -1,4 +1,5 @@
 from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -54,6 +55,7 @@ from .serializers import (
     AgreementStatusSerializer,
     UserSerializer,
     EvidenceSerializer,
+    ThesisProgressSerializer,
 )
 
 
@@ -454,6 +456,31 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
     @action(detail=True, methods=['get'], url_path='audit-log')
     def audit_log(self, request, pk=None):
         return Response(AgreementAuditLogSerializer(self.get_object().audit_logs.select_related('user'), many=True).data)
+
+
+class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ThesisProgressSerializer
+    queryset = ThesisProgress.objects.select_related('student', 'semester', 'registrado_por')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar avances para este estudiante.')
+        serializer.save(registrado_por=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest(self, request):
+        from rest_framework.exceptions import PermissionDenied
+        student_id = request.query_params.get('student')
+        student = Student.objects.filter(pk=student_id).first() if student_id else None
+        if student is None:
+            return Response({'student': 'Debe indicar un estudiante válido.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not can_access_student(request.user, student):
+            raise PermissionDenied('No puede consultar avances para este estudiante.')
+        progress = self.get_queryset().filter(student=student).order_by('-created_at', '-id').first()
+        return Response(self.get_serializer(progress).data if progress else None)
 
 
 class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):

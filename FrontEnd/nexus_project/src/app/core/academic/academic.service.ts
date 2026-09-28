@@ -21,6 +21,8 @@ import {
   ParticipanteTutoria,
   DatosParticipanteTutoria,
   UpdateNextMeetingData,
+  ThesisProgress,
+  CreateThesisProgressData,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -104,6 +106,11 @@ export class AcademicService {
   createSemester(studentId: number, data: CreateSemesterData): Observable<Semester> {
     return this.http.post<Semester>(`${API}/students/${studentId}/semesters/`, data);
   }
+
+  createThesisProgress(data: CreateThesisProgressData): Observable<ThesisProgress> {
+    return this.http.post<ThesisProgress>(`${API}/thesis/`, data);
+  }
+
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {
     const form = new FormData();
     form.append('student', String(data.student));

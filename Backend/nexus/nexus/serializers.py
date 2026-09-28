@@ -41,6 +41,52 @@ EVIDENCE_SIGNATURES = {
 }
 
 
+class ThesisProgressSerializer(serializers.ModelSerializer):
+    registrado_por_nombre = serializers.SerializerMethodField()
+    fecha_registro = serializers.SerializerMethodField()
+    porcentaje_avance = serializers.IntegerField(min_value=0, max_value=100)
+
+    class Meta:
+        model = ThesisProgress
+        fields = (
+            'id', 'student', 'semester', 'porcentaje_avance', 'observaciones',
+            'componentes_json', 'registrado_por', 'registrado_por_nombre',
+            'fecha_registro', 'created_at',
+        )
+        read_only_fields = ('id', 'registrado_por', 'registrado_por_nombre', 'created_at')
+        extra_kwargs = {'semester': {'required': False}}
+
+    def get_registrado_por_nombre(self, progress):
+        if not progress.registrado_por:
+            return ''
+        return f'{progress.registrado_por.first_name} {progress.registrado_por.last_name}'.strip() or progress.registrado_por.email
+
+    def get_fecha_registro(self, progress):
+        return progress.fecha_registro.date().isoformat() if hasattr(progress.fecha_registro, 'date') else str(progress.fecha_registro)
+
+    def validate_componentes_json(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Los componentes deben ser un objeto.')
+        for key, percentage in value.items():
+            if not isinstance(key, str) or isinstance(percentage, bool) or not isinstance(percentage, int):
+                raise serializers.ValidationError('Cada componente debe tener un porcentaje entero entre 0 y 100.')
+            if not 0 <= percentage <= 100:
+                raise serializers.ValidationError('Cada componente debe tener un porcentaje entero entre 0 y 100.')
+        return value
+
+    def validate(self, attrs):
+        student = attrs.get('student')
+        semester = attrs.get('semester')
+        if student and semester is None:
+            semester = student.semesters.filter(is_active=True).order_by('-numero', '-id').first()
+            if semester is None:
+                raise serializers.ValidationError({'semester': 'El estudiante no tiene un semestre activo.'})
+            attrs['semester'] = semester
+        if student and semester and semester.student_id != student.id:
+            raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
+        return attrs
+
+
 class EvidenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evidence
