@@ -94,6 +94,30 @@ export interface CreateSemesterData {
   is_active?: boolean;
 }
 
+export type ThesisComponentKey = 'protocolo' | 'marco_teorico' | 'metodologia' | 'recoleccion_datos' | 'analisis_resultados' | 'redaccion_capitulos';
+export type ThesisComponents = Record<ThesisComponentKey, number>;
+
+export interface ThesisProgress {
+  id: number;
+  student: number;
+  semester: number;
+  porcentaje_avance: number;
+  observaciones: string;
+  componentes_json: Partial<ThesisComponents>;
+  registrado_por: number | null;
+  registrado_por_nombre: string;
+  fecha_registro: string;
+  created_at: string;
+}
+
+export interface CreateThesisProgressData {
+  student: number;
+  semester: number;
+  porcentaje_avance: number;
+  observaciones: string;
+  componentes_json: ThesisComponents;
+}
+
 export interface StudentOverview {
   id: number;
   matricula: string;

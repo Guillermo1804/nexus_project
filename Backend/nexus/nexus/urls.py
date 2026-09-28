@@ -38,6 +38,7 @@ from .views import (
     UserRoleListView,
     UserRoleUpdateView,
     EvidenceViewSet,
+    ThesisProgressViewSet,
 )
 
 router = DefaultRouter()
@@ -45,6 +46,7 @@ router.register(r'students', StudentViewSet, basename='students')
 router.register(r'tutoring-sessions', TutoringSessionViewSet, basename='tutoring-sessions')
 router.register(r'agreements', AgreementViewSet, basename='agreements')
 router.register(r'evidence', EvidenceViewSet, basename='evidence')
+router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
