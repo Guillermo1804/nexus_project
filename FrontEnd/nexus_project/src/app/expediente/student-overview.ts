@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, Semester, SemesterTutoringSession, StudentOverview } from '../core/academic/academic.models';
+import { Agreement, Semester, SemesterTutoringSession, StudentOverview, TimelineResponse } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -13,12 +13,13 @@ import { ResponsibleOption } from './tutoring-agreements';
 import { EvidenceUploadComponent } from './evidence-upload';
 import { TutoringConditionsComponent } from './tutoring-conditions';
 import { ThesisProgressFormComponent } from './thesis-progress-form';
+import { TimelineComponent } from '../shared/timeline';
 
 type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semestre' | 'condiciones' | null;
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent],
+  imports: [CommonModule, FormsModule, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -42,6 +43,11 @@ export class StudentOverviewComponent implements OnInit {
   protected guardandoAcuerdo = false;
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
+  protected activeView: 'resumen' | 'timeline' = 'resumen';
+  protected timeline: TimelineResponse | null = null;
+  protected timelineLoading = false;
+  protected timelineError = '';
+  private timelineLoaded = false;
   private tutoringActionHandled = false;
 
   ngOnInit(): void {
@@ -110,6 +116,20 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected selectSemester(id: number): void { this.selectedSemesterId = id; }
+  protected selectView(view: 'resumen' | 'timeline'): void {
+    this.activeView = view;
+    if (view === 'timeline' && !this.timelineLoaded) this.loadTimeline();
+  }
+  protected loadTimeline(): void {
+    if (this.timelineLoading) return;
+    this.timelineLoading = true; this.timelineError = '';
+    this.academicService.getTimeline(this.studentId).pipe(finalize(() => this.timelineLoading = false)).subscribe({
+      next: data => { this.timeline = data; this.timelineLoaded = true; },
+      error: err => this.timelineError = err.status === 404
+        ? 'La trayectoria no existe o no tiene permisos para consultarla.'
+        : 'No fue posible cargar la línea de tiempo.',
+    });
+  }
   protected isCurrentSemester(semester: Semester): boolean { return semester.id === this.overview?.current_semester?.id; }
   protected semesterStatus(semester: Semester): string { return semester.is_active ? 'EN CURSO' : 'CONCLUIDO'; }
 

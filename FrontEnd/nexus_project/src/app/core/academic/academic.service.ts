@@ -24,6 +24,7 @@ import {
   UpdateNextMeetingData,
   ThesisProgress,
   CreateThesisProgressData,
+  TimelineResponse,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -38,6 +39,10 @@ export class AcademicService {
 
   getStudentOverview(studentId: number): Observable<StudentOverview> {
     return this.http.get<StudentOverview>(`${API}/students/${studentId}/overview/`);
+  }
+
+  getTimeline(studentId: number): Observable<TimelineResponse> {
+    return this.http.get<TimelineResponse>(`${API}/monitoring/timeline/?student=${studentId}`);
   }
 
   createTutoringSession(data: TutoringSessionData): Observable<TutoringSession> {

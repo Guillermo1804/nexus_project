@@ -36,6 +36,7 @@ from .permissions import (
     CanReadGlobalAcademics,
     permissions_for_user,
 )
+from .services import TimelineService
 from .serializers import (
     LoginSerializer,
     InstitutionalUserCreateSerializer,
@@ -304,7 +305,34 @@ class StudentViewSet(
 def can_access_student(user, student, write=False):
     if student.user_id == user.id:
         return not write or user.role == CustomUser.Role.STUDENT
+    if not write and 'academic.read.global' in permissions_for_user(user):
+        return True
     return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
+
+
+class TimelineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student_id = request.query_params.get('student')
+        if not student_id:
+            return Response({'student': ['Este parámetro es obligatorio.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = Student.objects.filter(pk=student_id).first()
+        except (TypeError, ValueError):
+            student = None
+        if student is None or not can_access_student(request.user, student):
+            return Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'student': {
+                'id': student.id,
+                'matricula': student.matricula,
+                'nombre_completo': student.nombre_completo,
+            },
+            'semestres': TimelineService(student).build(),
+        })
 
 
 class TutoringSessionViewSet(viewsets.ModelViewSet):
