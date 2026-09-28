@@ -18,6 +18,12 @@
 
     @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
 
+    <div class="overview-tabs" role="tablist" aria-label="Vistas del expediente">
+      <button type="button" role="tab" [attr.aria-selected]="activeView === 'resumen'" [class.selected]="activeView === 'resumen'" (click)="selectView('resumen')">Resumen académico</button>
+      <button type="button" role="tab" [attr.aria-selected]="activeView === 'timeline'" [class.selected]="activeView === 'timeline'" (click)="selectView('timeline')">Línea de Tiempo</button>
+    </div>
+
+    @if (activeView === 'resumen') {
     <div class="semester-tabs" role="tablist" aria-label="Semestres">
       @for (semester of overview.semesters; track semester.id) {
         <button type="button" role="tab" [attr.aria-selected]="selectedSemesterId === semester.id" [class.selected]="selectedSemesterId === semester.id" (click)="selectSemester(semester.id)">
@@ -85,6 +91,17 @@
         @if (canUploadEvidence) { <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button> }
       </aside>
     </div>
+    } @else {
+      <section class="nexus-card timeline-panel" role="tabpanel">
+        @if (timelineLoading) {
+          <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando trayectoria...</p></div>
+        } @else if (timelineError) {
+          <div class="timeline-state" role="alert"><p>{{ timelineError }}</p><button class="btn-secondary" (click)="loadTimeline()">Reintentar</button></div>
+        } @else if (timeline) {
+          <app-timeline [semesters]="timeline.semestres" />
+        }
+      </section>
+    }
 
     @if (modal === 'tutoria') {
       <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel tutoring-modal" role="dialog" aria-modal="true" aria-labelledby="tutoring-modal-title"><header class="modal-header"><div class="modal-title"><span class="modal-icon">▣</span><div><h2 id="tutoring-modal-title">Registro de Sesión de Tutoría Formal</h2><span class="mono">{{ overview.matricula }}</span></div></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="committee-note"><h3>COMITÉ TUTORAL (ASISTENCIA)</h3><div class="committee-modal-list">@for (member of committeeMembers(); track member.id) { <div><strong>{{ member.nombre_completo }}</strong><span>{{ member.etiqueta }}</span></div> }</div><p>La asistencia del comité se registra automáticamente.</p></div><app-tutoring-form [studentId]="studentId" [semesters]="overview.semesters" [currentSemesterId]="overview.current_semester?.id ?? null" (saved)="tutoriaGuardada()" (cancelled)="cerrarModal()" /></section></div>

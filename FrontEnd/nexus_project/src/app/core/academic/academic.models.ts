@@ -256,4 +256,34 @@ export interface Evidence {
   file_size_bytes: number;
 }
 
+export type TimelineEventType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'EVIDENCIA';
+
+export interface TimelineEvent {
+  id: string;
+  tipo: TimelineEventType;
+  fecha: string;
+  titulo: string;
+  descripcion: string;
+  actor?: string;
+  estado?: string;
+  estado_efectivo?: string;
+  fecha_limite?: string;
+  porcentaje?: number;
+  archivo_url?: string;
+  enlace_url?: string;
+  metadata: Record<string, string | number | null>;
+}
+
+export interface TimelineSemester {
+  id: number;
+  numero: number;
+  activo: boolean;
+  eventos: TimelineEvent[];
+}
+
+export interface TimelineResponse {
+  student: Pick<StudentRecord, 'id' | 'matricula' | 'nombre_completo'>;
+  semestres: TimelineSemester[];
+}
+
 export type AcademicRole = UserRole;
