@@ -25,7 +25,7 @@ describe('AgreementsListComponent (HU-14)', () => {
   const academicStub = {
     getAgreements: jasmine.createSpy('getAgreements').and.returnValue(
       of({
-        count: 1,
+        count: 2,
         next: null,
         previous: null,
         results: [
@@ -43,6 +43,21 @@ describe('AgreementsListComponent (HU-14)', () => {
             fecha_limite: '2026-08-30',
             estado: 'PENDIENTE',
             is_vencido: true,
+          },
+          {
+            id: 86,
+            student: 4,
+            student_nombre: 'Diego Fuentes',
+            student_matricula: 'DOC250002',
+            session: 12,
+            semester: 3,
+            semester_numero: 2,
+            descripcion: 'Entregar capítulo 4',
+            responsable: 15,
+            responsable_nombre: 'Diego Fuentes',
+            fecha_limite: '2099-10-30',
+            estado: 'PENDIENTE',
+            is_vencido: false,
           },
         ],
       }),
@@ -91,7 +106,7 @@ describe('AgreementsListComponent (HU-14)', () => {
   });
 
   it('abre la edición y guarda únicamente la siguiente transición', () => {
-    const agreement = component['agreements'][0];
+    const agreement = component['agreements'][1];
     component['abrirEdicion'](agreement);
 
     expect(component['isStatusEnabled']('EN_PROCESO')).toBeTrue();
@@ -101,7 +116,15 @@ describe('AgreementsListComponent (HU-14)', () => {
     component['comentario'] = 'Inicio de avance';
     component['guardarCambios']();
 
-    expect(academicStub.updateAgreementStatus).toHaveBeenCalledWith(85, 'EN_PROCESO', 'Inicio de avance');
+    expect(academicStub.updateAgreementStatus).toHaveBeenCalledWith(86, 'EN_PROCESO', 'Inicio de avance');
+  });
+
+  it('bloquea la edición de acuerdos vencidos', () => {
+    academicStub.getAgreementAuditLog.calls.reset();
+    component['abrirEdicion'](component['agreements'][0]);
+
+    expect(component['drawerAgreement']).toBeNull();
+    expect(academicStub.getAgreementAuditLog).not.toHaveBeenCalled();
   });
 
   it('aplica filtros combinados al endpoint', () => {

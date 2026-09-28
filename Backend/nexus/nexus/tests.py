@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -6,6 +6,7 @@ from django.core.management import call_command
 from django.db import IntegrityError, connection
 from django.db.utils import OperationalError
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIRequestFactory
 
@@ -467,17 +468,20 @@ class ScopeAuthorizationApiTests(APITestCase):
             nombre_completo='Luis Gomez',
             cohorte='2026',
         )
+        self.session_date = timezone.localdate() + timedelta(days=1)
+        semester_start = self.session_date - timedelta(days=30)
+        semester_end = self.session_date + timedelta(days=180)
         self.semester = Semester.objects.create(
             student=self.student,
             numero=1,
-            fecha_inicio=date(2026, 1, 1),
-            fecha_fin=date(2026, 6, 30),
+            fecha_inicio=semester_start,
+            fecha_fin=semester_end,
         )
         self.other_semester = Semester.objects.create(
             student=self.other_student,
             numero=1,
-            fecha_inicio=date(2026, 1, 1),
-            fecha_fin=date(2026, 6, 30),
+            fecha_inicio=semester_start,
+            fecha_fin=semester_end,
         )
 
     def authenticate(self, user):
@@ -519,7 +523,7 @@ class ScopeAuthorizationApiTests(APITestCase):
         payload = {
             'student': self.student.id,
             'semester': self.semester.id,
-            'fecha_sesion': '2026-02-15',
+            'fecha_sesion': self.session_date.isoformat(),
             'modalidad': 'VIRTUAL',
             'resumen': 'Seguimiento del avance.',
         }
@@ -538,7 +542,7 @@ class ScopeAuthorizationApiTests(APITestCase):
         response = self.client.post('/api/v1/tutoring/', {
             'student': self.student.id,
             'semester': self.other_semester.id,
-            'fecha_sesion': '2026-02-15',
+            'fecha_sesion': self.session_date.isoformat(),
             'modalidad': 'VIRTUAL',
             'resumen': 'Seguimiento.',
         }, format='json')
@@ -906,14 +910,18 @@ class SuperAdminApiTests(APITestCase):
         unassigned_tutor = self.user_model.objects.create_user(
             email='unassigned@test.com', password='password123', role=self.user_model.Role.TUTOR
         )
+        session_date = timezone.localdate() + timedelta(days=1)
         sem = Semester.objects.create(
-            student=self.student, numero=1, fecha_inicio='2025-01-15', fecha_fin='2025-06-30'
+            student=self.student,
+            numero=1,
+            fecha_inicio=session_date - timedelta(days=30),
+            fecha_fin=session_date + timedelta(days=180),
         )
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(unassigned_tutor)}')
         response = self.client.post('/api/v1/tutoring/', {
             'student': self.student.id,
             'semester': sem.id,
-            'fecha_sesion': '2025-02-01',
+            'fecha_sesion': session_date.isoformat(),
             'modalidad': 'PRESENCIAL',
             'resumen': 'Sesion no autorizada',
         }, format='json')
@@ -924,14 +932,18 @@ class SuperAdminApiTests(APITestCase):
             email='assigned@test.com', password='password123', role=self.user_model.Role.TUTOR
         )
         CommitteeMembership.objects.create(committee=AcademicCommittee.objects.create(student=self.student), user=assigned_tutor, role=CommitteeMembership.Role.ADVISOR)
+        session_date = timezone.localdate() + timedelta(days=1)
         sem = Semester.objects.create(
-            student=self.student, numero=1, fecha_inicio='2025-01-15', fecha_fin='2025-06-30'
+            student=self.student,
+            numero=1,
+            fecha_inicio=session_date - timedelta(days=30),
+            fecha_fin=session_date + timedelta(days=180),
         )
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(assigned_tutor)}')
         response = self.client.post('/api/v1/tutoring/', {
             'student': self.student.id,
             'semester': sem.id,
-            'fecha_sesion': '2025-02-01',
+            'fecha_sesion': session_date.isoformat(),
             'modalidad': 'PRESENCIAL',
             'resumen': 'Sesion autorizada',
         }, format='json')
