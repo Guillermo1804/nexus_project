@@ -1,21 +1,46 @@
-<main>
-  <h1>Historial administrativo</h1>
-  <p>Consulta los cambios realizados sobre roles, cuentas y asociaciones.</p>
-  @if (loading) { <p>Cargando historial...</p> } @else {
-    <table><caption>Historial de acciones administrativas</caption>
-      <thead><tr><th scope="col">Fecha</th><th scope="col">Acción</th><th scope="col">Administrador</th><th scope="col">Cuenta afectada</th><th scope="col">Detalles</th></tr></thead>
-      <tbody>
-        @for (log of logs; track log.id) {
-          <tr>
-            <td>{{ log.created_at | date:'medium' }}</td>
-            <td>{{ log.action }}</td>
-            <td>{{ log.actor_email }}</td>
-            <td>{{ log.target_user_email || 'Asociación académica' }}</td>
-            <td>{{ log.details | json }}</td>
-          </tr>
-        }
-      </tbody>
-    </table><nav aria-label="Paginación del historial"><button type="button" (click)="load(page - 1)" [disabled]="page === 1">Anterior</button><span>Página {{ page }} de {{ total }} registros</span><button type="button" (click)="load(page + 1)" [disabled]="!hasNext">Siguiente</button></nav>
-  }
-  @if (error) { <p role="alert">{{ error }}</p> }
+<main class="page-shell">
+  <header class="page-header">
+    <h1>Historial administrativo</h1>
+    <p>Consulta los cambios realizados sobre roles, cuentas y asociaciones.</p>
+  </header>
+
+  <section class="nexus-card table-card" aria-labelledby="audit-heading">
+    <div class="section-header">
+      <h2 id="audit-heading">Registro de actividad</h2>
+      <p>{{ total }} acciones registradas</p>
+    </div>
+
+    @if (loading) {
+      <p class="state-message" role="status">Cargando historial...</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="visually-hidden">Historial de acciones administrativas</caption>
+          <thead>
+            <tr><th scope="col">Fecha</th><th scope="col">Acción</th><th scope="col">Administrador</th><th scope="col">Cuenta afectada</th><th scope="col">Detalles</th></tr>
+          </thead>
+          <tbody>
+            @for (log of logs; track log.id) {
+              <tr>
+                <td class="mono date-cell">{{ log.created_at | date:'medium' }}</td>
+                <td><span class="badge action-badge">{{ log.action }}</span></td>
+                <td>{{ log.actor_email }}</td>
+                <td>{{ log.target_user_email || 'Asociación académica' }}</td>
+                <td class="details-cell" [title]="detailsSummary(log)">{{ detailsSummary(log) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty-state">No hay acciones registradas.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <nav class="pagination" aria-label="Paginación del historial">
+        <button class="btn-secondary" type="button" (click)="load(page - 1)" [disabled]="page === 1">Anterior</button>
+        <span>Página {{ page }} · {{ total }} registros</span>
+        <button class="btn-secondary" type="button" (click)="load(page + 1)" [disabled]="!hasNext">Siguiente</button>
+      </nav>
+    }
+  </section>
+
+  @if (error) { <p class="feedback feedback-error" role="alert">{{ error }}</p> }
 </main>

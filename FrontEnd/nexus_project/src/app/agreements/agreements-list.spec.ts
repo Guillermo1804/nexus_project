@@ -54,6 +54,7 @@ describe('AgreementsListComponent (HU-14)', () => {
       of([{ id: 3, student: 4, numero: 2, fecha_inicio: '2026-01-01', fecha_fin: '2026-06-30', is_active: true }]),
     ),
     getAgreementAuditLog: jasmine.createSpy('getAgreementAuditLog').and.returnValue(of([])),
+    updateAgreementStatus: jasmine.createSpy('updateAgreementStatus').and.returnValue(of({})),
   };
 
   const authStub = {
@@ -87,6 +88,20 @@ describe('AgreementsListComponent (HU-14)', () => {
     expect(text).toContain('Entregar capítulo 3');
     expect(text).toContain('VENCIDO');
     expect(text).toContain('Diego Fuentes');
+  });
+
+  it('abre la edición y guarda únicamente la siguiente transición', () => {
+    const agreement = component['agreements'][0];
+    component['abrirEdicion'](agreement);
+
+    expect(component['isStatusEnabled']('EN_PROCESO')).toBeTrue();
+    expect(component['isStatusEnabled']('CONCLUIDO')).toBeFalse();
+
+    component['selectStatus']('EN_PROCESO');
+    component['comentario'] = 'Inicio de avance';
+    component['guardarCambios']();
+
+    expect(academicStub.updateAgreementStatus).toHaveBeenCalledWith(85, 'EN_PROCESO', 'Inicio de avance');
   });
 
   it('aplica filtros combinados al endpoint', () => {

@@ -1,39 +1,59 @@
-<main>
-  <div class="back-nav">
-    <a routerLink="/home" class="back-link">← Volver al inicio</a>
-  </div>
-  <h1>Administración de roles</h1>
-  <p>Asigna el rol institucional del usuario.</p>
+<main class="page-shell">
+  <header class="page-header">
+    <h1>Administración de roles</h1>
+    <p>Asigna el rol institucional de cada usuario.</p>
+  </header>
 
-  @if (loading) {
-    <p>Cargando usuarios...</p>
-  } @else {
-    <table><caption>Roles institucionales</caption>
-      <thead>
-        <tr><th scope="col">Usuario</th><th scope="col">Rol institucional</th></tr>
-      </thead>
-      <tbody>
-        @for (user of users; track user.id) {
-          <tr>
-            <td>{{ user.email }}</td>
-            <td>
-              @if (user.role === 'SYSTEM_ADMIN') {
-                <span>{{ getRoleLabel(user.role) }} (Administrador único)</span>
-              } @else {
-                <select
-                  [ngModel]="user.role"
-                  [disabled]="updatingUserIds.has(user.id)"
-                  (ngModelChange)="assignRole(user, $event)"
-                >
-                  @for (role of getAvailableRolesForUser(user); track role) { <option [value]="role">{{ getRoleLabel(role) }}</option> }
-                </select>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
+  <section class="nexus-card table-card" aria-labelledby="roles-heading">
+    <div class="section-header">
+      <div>
+        <h2 id="roles-heading">Usuarios institucionales</h2>
+        <p>Administra los permisos asociados a cada cuenta.</p>
+      </div>
+    </div>
 
-  @if (error) { <p role="alert">{{ error }}</p> }
+    @if (loading) {
+      <p class="state-message" role="status">Cargando usuarios...</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="visually-hidden">Roles institucionales</caption>
+          <thead>
+            <tr>
+              <th scope="col">Usuario</th>
+              <th scope="col">Rol institucional</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users; track user.id) {
+              <tr>
+                <td class="user-email">{{ user.email }}</td>
+                <td>
+                  @if (user.role === 'SYSTEM_ADMIN') {
+                    <span class="badge role-badge">{{ getRoleLabel(user.role) }} · Administrador único</span>
+                  } @else {
+                    <select
+                      class="input-field role-select"
+                      [ngModel]="user.role"
+                      [disabled]="updatingUserIds.has(user.id)"
+                      (ngModelChange)="assignRole(user, $event)"
+                      [attr.aria-label]="'Rol institucional de ' + user.email"
+                    >
+                      @for (role of getAvailableRolesForUser(user); track role) {
+                        <option [value]="role">{{ getRoleLabel(role) }}</option>
+                      }
+                    </select>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2" class="empty-state">No hay usuarios para mostrar.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  @if (error) { <p class="feedback feedback-error" role="alert">{{ error }}</p> }
 </main>

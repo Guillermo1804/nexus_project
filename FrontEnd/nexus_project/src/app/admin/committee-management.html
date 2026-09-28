@@ -1,38 +1,66 @@
-<main>
-  <div class="back-nav"><a routerLink="/home" class="back-link">← Volver al inicio</a></div>
-  <h1>Comités académicos</h1>
-  <p>Asigna integrantes al comité agrupado de cada estudiante.</p>
-  <form (ngSubmit)="createAssignment()">
-    <label>Participación
-      <select name="role" [(ngModel)]="form.role" (ngModelChange)="form.user = null">
-        <option value="ASESOR">Asesor</option><option value="COASESOR">Coasesor</option><option value="COMMITTEE_MEMBER">Miembro del comité</option>
-      </select>
-    </label>
-    <label>Cuenta institucional
-      <select name="user" [(ngModel)]="form.user" required [disabled]="loading">
-        <option [ngValue]="null">Selecciona una cuenta</option>
-        @for (user of compatibleUsers(); track user.id) { <option [ngValue]="user.id">{{ user.email }} ({{ getRoleLabel(user.role) }})</option> }
-      </select>
-    </label>
-    <label>Estudiante
-      <select name="student" [(ngModel)]="form.student" required [disabled]="loading">
-        <option [ngValue]="null">Selecciona un estudiante</option>
-        @for (student of students; track student.id) { <option [ngValue]="student.id">{{ student.matricula }} - {{ student.nombre_completo }}</option> }
-      </select>
-    </label>
-    <button type="submit" [disabled]="loading">Asignar membresía</button>
-  </form>
-  @if (loading) { <p>Cargando comités...</p> } @else {
-    <table><caption>Comités académicos</caption>
-      <thead><tr><th scope="col">Estudiante</th><th scope="col">Cuenta</th><th scope="col">Participación</th><th scope="col">Acción</th></tr></thead>
-      <tbody>
-        @for (committee of committees; track committee.id) {
-          @for (membership of committee.memberships; track membership.id) {
-            <tr><td>{{ committee.student_name }}</td><td>{{ membership.user_email }}</td><td>{{ getCommitteeRoleLabel(membership.role) }}</td><td><button type="button" (click)="remove(membership)">Eliminar</button></td></tr>
-          }
-        }
-      </tbody>
-    </table>
-  }
-  @if (error) { <p role="alert">{{ error }}</p> }
+<main class="page-shell">
+  <header class="page-header">
+    <h1>Comités académicos</h1>
+    <p>Asigna integrantes al comité agrupado de cada estudiante.</p>
+  </header>
+
+  <section class="nexus-card assignment-card" aria-labelledby="assignment-heading">
+    <div class="section-header">
+      <h2 id="assignment-heading">Nueva asignación</h2>
+      <p>Selecciona la participación, cuenta institucional y estudiante.</p>
+    </div>
+    <form (ngSubmit)="createAssignment()">
+      <label>Participación
+        <select class="input-field" name="role" [(ngModel)]="form.role" (ngModelChange)="form.user = null">
+          <option value="ASESOR">Asesor</option><option value="COASESOR">Coasesor</option><option value="COMMITTEE_MEMBER">Miembro del comité</option>
+        </select>
+      </label>
+      <label>Cuenta institucional
+        <select class="input-field" name="user" [(ngModel)]="form.user" required [disabled]="loading">
+          <option [ngValue]="null">Selecciona una cuenta</option>
+          @for (user of compatibleUsers(); track user.id) { <option [ngValue]="user.id">{{ user.email }} ({{ getRoleLabel(user.role) }})</option> }
+        </select>
+      </label>
+      <label>Estudiante
+        <select class="input-field" name="student" [(ngModel)]="form.student" required [disabled]="loading">
+          <option [ngValue]="null">Selecciona un estudiante</option>
+          @for (student of students; track student.id) { <option [ngValue]="student.id">{{ student.matricula }} - {{ student.nombre_completo }}</option> }
+        </select>
+      </label>
+      <div class="form-actions"><button class="btn-primary" type="submit" [disabled]="loading">Asignar membresía</button></div>
+    </form>
+  </section>
+
+  <section class="nexus-card table-card" aria-labelledby="committees-heading">
+    <div class="section-header">
+      <h2 id="committees-heading">Asociaciones actuales</h2>
+      <p>Integrantes asignados a cada comité académico.</p>
+    </div>
+    @if (loading) {
+      <p class="state-message" role="status">Cargando comités...</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="visually-hidden">Comités académicos</caption>
+          <thead><tr><th scope="col">Estudiante</th><th scope="col">Cuenta</th><th scope="col">Participación</th><th scope="col">Acción</th></tr></thead>
+          <tbody>
+            @for (committee of committees; track committee.id) {
+              @for (membership of committee.memberships; track membership.id) {
+                <tr>
+                  <td class="student-name">{{ committee.student_name }}</td>
+                  <td>{{ membership.user_email }}</td>
+                  <td><span class="badge role-badge">{{ getCommitteeRoleLabel(membership.role) }}</span></td>
+                  <td><button class="btn-secondary remove-button" type="button" (click)="remove(membership)">Eliminar</button></td>
+                </tr>
+              }
+            } @empty {
+              <tr><td colspan="4" class="empty-state">No hay comités registrados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  @if (error) { <p class="feedback feedback-error" role="alert">{{ error }}</p> }
 </main>

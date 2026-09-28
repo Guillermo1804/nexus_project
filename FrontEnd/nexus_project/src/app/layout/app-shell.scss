@@ -1,0 +1,94 @@
+:host { display: block; min-height: 100vh; }
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  bottom: 0;
+  left: 0;
+  padding: 24px 16px;
+  position: fixed;
+  top: 0;
+  width: 260px;
+  z-index: 20;
+}
+
+.logo {
+  align-items: center;
+  color: var(--brand);
+  display: flex;
+  font-size: 16px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: .1em;
+  padding: 4px 12px 28px;
+  text-decoration: none;
+}
+
+.nav-list { display: grid; gap: 4px; }
+.nav-list a {
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 12px;
+  text-decoration: none;
+}
+.nav-list a:hover { background: var(--surface-warm); color: var(--heading); }
+.nav-list a.active { background: var(--surface-soft); color: var(--brand); }
+.nav-group {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin: 24px 12px 6px;
+  text-transform: uppercase;
+}
+
+.workspace { margin-left: 260px; min-height: 100vh; }
+.topbar {
+  align-items: center;
+  background: var(--surface-warm);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  height: 64px;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.breadcrumb { align-items: center; color: var(--text-muted); display: flex; font-size: 13px; gap: 8px; }
+.breadcrumb b { color: var(--placeholder); font-weight: 400; }
+.breadcrumb strong { color: var(--heading); font-size: 15px; }
+.account { align-items: center; display: flex; gap: 16px; }
+.identity { display: grid; text-align: right; }
+.identity strong { color: var(--text); font-size: 13px; }
+.identity span { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+.account button { padding: 7px 14px; }
+.content { padding: 24px; }
+
+@media (max-width: 899px) {
+  .sidebar {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    border-right: 0;
+    display: flex;
+    height: 56px;
+    overflow-x: auto;
+    padding: 8px 12px;
+    right: 0;
+    width: auto;
+  }
+  .logo { font-size: 0; padding: 8px 12px; }
+  .nav-list { display: flex; gap: 2px; }
+  .nav-list a { font-size: 12px; padding: 8px 10px; white-space: nowrap; }
+  .nav-group { display: none; }
+  .workspace { margin-left: 0; padding-top: 56px; }
+  .topbar { height: auto; min-height: 64px; padding: 10px 16px; }
+  .breadcrumb span, .breadcrumb b, .identity { display: none; }
+  .content { padding: 16px; }
+}
+
+@media (max-width: 520px) {
+  .account button { padding: 7px 10px; }
+}

@@ -19,7 +19,9 @@ describe('Home Component', () => {
   };
 
   const academicStub = {
-    getGlobalStudents: () => of([]),
+    getGlobalOverview: () => of({ count: 0, next: null, previous: null, results: [] }),
+    getTutoringSessions: () => of({ count: 0, next: null, previous: null, results: [] }),
+    getAgreements: () => of({ count: 0, next: null, previous: null, results: [] }),
   };
 
   const studentStub = {

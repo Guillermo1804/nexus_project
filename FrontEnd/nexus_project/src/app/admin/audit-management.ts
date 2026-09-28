@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { DatePipe, JsonPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { finalize } from 'rxjs';
 import { AdminAuditLog } from './admin.models';
 import { AdminService } from './admin.service';
 
 @Component({
   selector: 'app-audit-management',
-  imports: [DatePipe, JsonPipe],
+  imports: [DatePipe],
   templateUrl: './audit-management.html',
   styleUrls: ['./audit-management.scss'],
 })
@@ -20,6 +20,11 @@ export class AuditManagement {
   protected hasNext = false;
 
   constructor() { this.load(); }
+
+  protected detailsSummary(log: AdminAuditLog): string {
+    const text = JSON.stringify(log.details ?? {});
+    return text.length > 90 ? `${text.slice(0, 90)}…` : text;
+  }
 
   protected load(page = 1): void {
     this.loading = true;

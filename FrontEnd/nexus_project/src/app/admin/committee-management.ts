@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, finalize } from 'rxjs';
 import { AdminService } from './admin.service';
@@ -8,7 +7,7 @@ import { AuthenticatedUser, ROLE_LABELS, UserRole } from '../core/auth/auth.mode
 
 @Component({
   selector: 'app-committee-management',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './committee-management.html',
   styleUrls: ['./committee-management.scss'],
 })

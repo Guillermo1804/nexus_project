@@ -1,44 +1,69 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #6365EF;
+  --bg-canvas: #F5F7FB;
+  --surface: #FFFFFF;
+  --surface-warm: #FCF8FF;
+  --surface-soft: #F5F2FE;
+  --brand: #494AD5;
+  --cta: #6365EF;
+  --heading: #1F1048;
+  --text: #1B1B23;
+  --text-secondary: #464554;
+  --text-muted: #767586;
+  --placeholder: #C7C4D7;
+  --border: #E4E7EC;
+  --success: #437E5C;
+  --success-bg: #E9FEF1;
+  --warning: #B57136;
+  --warning-bg: #FDF3E7;
+  --danger: #B42318;
+  --danger-bg: #FEECEB;
+  --info: #57949D;
+  --magenta: #A14D98;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --radius-small: 6px;
+  --radius-pill: 9999px;
+
+  --shadow-low: 0 1px 1.75px rgba(0, 0, 0, .05);
+  --shadow-card: 0 2px 3.5px rgba(44, 24, 103, .03), 0 4px 5.25px rgba(44, 24, 103, .05);
+  --shadow-modal: 0 12px 42px -12px rgba(44, 24, 103, .15);
+  --shadow-drawer: -4px 0 21px rgba(44, 24, 103, .08);
+
+  /* Legacy aliases retained for existing page styles. */
+  --primary: var(--cta);
   --primary-hover: #4E50DC;
   --primary-light: #EEEEFF;
   --primary-subtle: #F5F6FF;
   --emphasis: #2C1867;
-  --emphasis-dark: #1F1048;
-  --bg-app: #F5F7FB;
-  --bg-card: #FFFFFF;
-  --border: #E4E7EC;
+  --emphasis-dark: var(--heading);
+  --bg-app: var(--bg-canvas);
+  --bg-card: var(--surface);
   --border-light: #F2F4F7;
-  --text-primary: #101828;
-  --text-secondary: #475467;
-  --text-muted: #667085;
+  --text-primary: var(--text);
   --text-subtle: #98A2B3;
   --text-inverse: #FFFFFF;
-
   --badge-pending-bg: #F6FCFE;
-  --badge-pending-text: #57949D;
-  --badge-in-progress-bg: #FEF8F3;
-  --badge-in-progress-text: #B57136;
-  --badge-concluded-bg: #E9FEF1;
-  --badge-concluded-text: #437E5C;
+  --badge-pending-text: var(--info);
+  --badge-in-progress-bg: var(--warning-bg);
+  --badge-in-progress-text: var(--warning);
+  --badge-concluded-bg: var(--success-bg);
+  --badge-concluded-text: var(--success);
   --badge-overdue-bg: #F8F1FF;
-  --badge-overdue-text: #A14D98;
-  --badge-active-bg: #E9FEF1;
-  --badge-active-text: #437E5C;
+  --badge-overdue-text: var(--magenta);
+  --badge-active-bg: var(--success-bg);
+  --badge-active-text: var(--success);
   --badge-inactive-bg: #F3F4F6;
   --badge-inactive-text: #6B7280;
   --badge-info-bg: #F0F5FF;
   --badge-info-text: #3B82F6;
-  --danger-bg: #FEF3F2;
-  --danger-text: #B42318;
+  --danger-text: var(--danger);
   --danger-border: #FECDCA;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html,
 body,
@@ -47,46 +72,109 @@ app-root {
   width: 100%;
 }
 
-app-root {
-  display: block;
-}
-
-html,
-body {
-  overflow-x: hidden;
-}
+app-root { display: block; }
+html, body { overflow-x: hidden; }
 
 body {
-  background: var(--bg-app);
-  color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-canvas);
+  color: var(--text);
+  font-family: 'Inter', 'Liberation Sans', system-ui, sans-serif;
   margin: 0;
 }
 
-button, input, select, textarea {
-  font-family: inherit;
+button, input, select, textarea { font-family: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+
+.nexus-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.badge {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1;
+  padding: 6px 10px;
+}
+
+.btn-primary,
+.btn-secondary {
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 24px;
+}
+
+.btn-primary {
+  background: var(--cta);
+  border: 1px solid var(--cta);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled { cursor: not-allowed; opacity: .6; }
+
+.input-field {
+  background: var(--surface-warm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  padding: 10px 14px;
+}
+
+.input-field::placeholder { color: var(--placeholder); }
+.input-field:focus { border-color: var(--brand); outline: 3px solid rgba(73, 74, 213, .12); }
+.mono { font-family: 'Liberation Mono', monospace; }
+
+.modal-backdrop {
+  backdrop-filter: blur(3.5px);
+  background: rgba(48, 48, 56, .16);
+  display: grid;
+  inset: 0;
+  place-items: center;
+  position: fixed;
+  z-index: 1000;
+}
+
+.modal-panel {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
 }
 
 .brand-badge {
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background-color: #eeeeff;
-  color: #494ad5;
-  border-radius: 9999px;
-  padding: 6px 14px;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: #EEEEFF;
+  border-radius: var(--radius-pill);
+  color: var(--brand);
+  display: inline-flex;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  gap: 8px;
+  letter-spacing: .08em;
+  padding: 6px 14px;
   width: fit-content;
-
-  .nexus-brand-icon {
-    display: inline-block;
-    flex-shrink: 0;
-  }
 }
 
+.brand-badge .nexus-brand-icon { display: inline-block; flex-shrink: 0; }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
 }

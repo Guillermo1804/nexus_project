@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AuthenticatedUser, ROLE_LABELS, UserRole } from '../core/auth/auth.models';
@@ -14,7 +13,7 @@ const AVAILABLE_ROLES: UserRole[] = [
 
 @Component({
   selector: 'app-role-management',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './role-management.html',
   styleUrls: ['./role-management.scss'],
 })

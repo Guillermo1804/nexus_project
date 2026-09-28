@@ -1,42 +1,32 @@
-<main class="agreements-shell">
-  <header class="topbar">
-    <div class="topbar-brand">
-      <div class="brand-badge">
-        <svg class="nexus-brand-icon" viewBox="0 0 12 10" width="14" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3.98125 3.0625l1.54583-3.0625 0.175 0 1.54584 3.0625-3.26667 0 0 0m1.19583 6.9125l-5.03125-6.0375 5.03125 0 0 6.0375 0 0m0.875 0l0-6.0375 5.03125 0-5.03125 6.0375 0 0m2.15834-6.9125l-1.51667-3.0625 3.00417 0 1.53125 3.0625-3.01875 0 0 0m-8.21042 0l1.53125-3.0625 3.00417 0-1.51667 3.0625-3.01875 0 0 0" fill="currentColor"/>
-        </svg>
-        <span>N.E.X.U.S.</span>
-      </div>
-      <h1>Acuerdos pendientes y vencidos</h1>
-    </div>
-    <a routerLink="/home" class="btn-return">Volver al inicio</a>
+<main class="agreements-page">
+  <header class="page-header">
+    <h1>Gestión de Acuerdos</h1>
+    <p>Consulta y actualización de compromisos académicos, responsables y fechas límite.</p>
   </header>
 
-  <section class="filters-panel" aria-label="Filtros de acuerdos">
+  <section class="filters-panel nexus-card" aria-label="Filtros de acuerdos">
     <div class="filters-grid">
       <label>
         <span>Estudiante</span>
-        <select [(ngModel)]="filtroStudent" (ngModelChange)="onStudentChange()" [disabled]="auth.user()?.role === 'STUDENT'">
+        <select class="input-field" [(ngModel)]="filtroStudent" (ngModelChange)="onStudentChange()" [disabled]="auth.user()?.role === 'STUDENT'">
           <option value="">Todos</option>
           @for (est of students; track est.id) {
             <option [value]="est.id">{{ est.matricula ? est.matricula + ' — ' : '' }}{{ est.nombre_completo }}</option>
           }
         </select>
       </label>
-
       <label>
         <span>Semestre</span>
-        <select [(ngModel)]="filtroSemester" [disabled]="!filtroStudent">
+        <select class="input-field" [(ngModel)]="filtroSemester" [disabled]="!filtroStudent">
           <option value="">Todos</option>
           @for (sem of semesters; track sem.id) {
             <option [value]="sem.id">Semestre {{ sem.numero }}</option>
           }
         </select>
       </label>
-
       <label>
         <span>Estado</span>
-        <select [(ngModel)]="filtroEstado">
+        <select class="input-field" [(ngModel)]="filtroEstado">
           <option value="">Todos</option>
           <option value="PENDIENTE">Pendiente</option>
           <option value="EN_PROCESO">En proceso</option>
@@ -44,51 +34,47 @@
           <option value="VENCIDO">Vencido</option>
         </select>
       </label>
-
       <label>
         <span>Responsable</span>
-        <select [(ngModel)]="filtroResponsable">
+        <select class="input-field" [(ngModel)]="filtroResponsable">
           <option value="">Todos</option>
           @for (r of responsables; track r.id) {
             <option [value]="r.id">{{ r.nombre }}</option>
           }
         </select>
       </label>
-
       <label>
         <span>Fecha desde</span>
-        <input type="date" [(ngModel)]="filtroFechaDesde" />
+        <input class="input-field" type="date" [(ngModel)]="filtroFechaDesde" />
       </label>
-
       <label>
         <span>Fecha hasta</span>
-        <input type="date" [(ngModel)]="filtroFechaHasta" />
+        <input class="input-field" type="date" [(ngModel)]="filtroFechaHasta" />
       </label>
     </div>
-
     <div class="filters-actions">
-      <button type="button" class="btn-primary" (click)="aplicarFiltros()">Aplicar filtros</button>
       <button type="button" class="btn-secondary" (click)="limpiarFiltros()">Limpiar</button>
+      <button type="button" class="btn-primary" (click)="aplicarFiltros()">Aplicar filtros</button>
     </div>
   </section>
 
-  <section class="results-panel" aria-label="Listado de acuerdos">
+  <section class="results-panel nexus-card" aria-label="Listado de acuerdos">
     <div class="section-header">
-      <h2>Compromisos abiertos</h2>
-      <span class="count-badge">{{ total }} encontrados</span>
+      <div>
+        <h2>Acuerdos registrados</h2>
+        <p>{{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}</p>
+      </div>
     </div>
 
     @if (cargando) {
-      <p class="loading-hint" role="status">Cargando acuerdos...</p>
+      <p class="state-message" role="status">Cargando acuerdos...</p>
     } @else if (error) {
-      <div class="error-card" role="alert">
+      <div class="state-message error-message" role="alert">
         <p>{{ error }}</p>
-        <button type="button" (click)="aplicarFiltros()">Reintentar</button>
+        <button type="button" class="btn-secondary" (click)="aplicarFiltros()">Reintentar</button>
       </div>
     } @else if (agreements.length === 0) {
-      <div class="empty-card">
-        <p>No hay acuerdos con los filtros seleccionados.</p>
-      </div>
+      <p class="state-message">No hay acuerdos con los filtros seleccionados.</p>
     } @else {
       <div class="table-container">
         <table class="agreements-table">
@@ -101,7 +87,7 @@
               <th scope="col">Responsable</th>
               <th scope="col">Fecha límite</th>
               <th scope="col">Estado</th>
-              <th scope="col">Detalle</th>
+              <th scope="col">Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -110,20 +96,19 @@
                 <td>
                   <div class="student-cell">
                     <strong>{{ a.student_nombre || ('Estudiante #' + a.student) }}</strong>
-                    @if (a.student_matricula) {
-                      <span class="mono">{{ a.student_matricula }}</span>
-                    }
+                    <span class="mono">{{ a.student_matricula || '—' }}</span>
                   </div>
                 </td>
-                <td>{{ a.descripcion }}</td>
+                <td class="description-cell">{{ a.descripcion }}</td>
                 <td>{{ a.semester_numero != null ? ('S' + a.semester_numero) : '—' }}</td>
                 <td>{{ a.responsable_nombre }}</td>
-                <td class="mono">{{ a.fecha_limite }}</td>
+                <td class="mono date-cell">{{ a.fecha_limite }}</td>
+                <td><span class="badge" [ngClass]="badgeClass(a)">{{ estadoLabel(estadoVisible(a)) }}</span></td>
                 <td>
-                  <span class="badge" [class]="badgeClass(a)">{{ estadoVisible(a) }}</span>
-                </td>
-                <td>
-                  <button type="button" class="btn-link" (click)="verAuditoria(a)">Bitácora</button>
+                  <div class="row-actions">
+                    <button type="button" (click)="abrirEdicion(a, $event)">Editar</button>
+                    <button type="button" (click)="verAuditoria(a, $event)">Bitácora</button>
+                  </div>
                 </td>
               </tr>
             }
@@ -132,42 +117,116 @@
       </div>
 
       <nav class="paginator" aria-label="Paginación de acuerdos">
-        <button type="button" (click)="irPagina(pagina - 1)" [disabled]="pagina === 1 || cargando">Anterior</button>
-        <span>Página {{ pagina }}</span>
-        <button type="button" (click)="irPagina(pagina + 1)" [disabled]="!haySiguiente || cargando">Siguiente</button>
+        <button type="button" class="btn-secondary" (click)="irPagina(pagina - 1)" [disabled]="pagina === 1 || cargando">Anterior</button>
+        <span>Página {{ pagina }} de {{ totalPaginas }}</span>
+        <button type="button" class="btn-secondary" (click)="irPagina(pagina + 1)" [disabled]="!haySiguiente || cargando">Siguiente</button>
       </nav>
     }
   </section>
 </main>
 
-@if (auditOpen) {
-  <div class="audit-backdrop" (click)="cerrarAuditoria()" role="presentation"></div>
-  <aside class="audit-drawer" role="dialog" aria-modal="true" aria-label="Bitácora del acuerdo">
-    <div class="audit-header">
-      <h2>Bitácora del acuerdo</h2>
-      <button type="button" class="btn-secondary" (click)="cerrarAuditoria()">Cerrar</button>
-    </div>
-    @if (auditAgreement) {
-      <p class="audit-desc">{{ auditAgreement.descripcion }}</p>
-    }
-    @if (auditLoading) {
-      <p role="status">Cargando bitácora...</p>
-    } @else if (auditError) {
-      <p class="error-text" role="alert">{{ auditError }}</p>
-    } @else if (auditEntries.length === 0) {
-      <p class="empty-hint">Sin cambios registrados aún.</p>
-    } @else {
-      <ul class="audit-list">
-        @for (entry of auditEntries; track entry.id) {
-          <li>
-            <strong>{{ entry.estado_anterior }} → {{ entry.estado_nuevo }}</strong>
-            <span>{{ entry.fecha_cambio | date: 'medium' }}</span>
-            @if (entry.comentario) {
-              <p>{{ entry.comentario }}</p>
+@if (drawerOpen && drawerAgreement; as agreement) {
+  <div class="drawer-backdrop" (click)="cerrarDrawer()" aria-hidden="true"></div>
+  <aside
+    class="agreement-drawer"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="drawerMode === 'edit' ? 'drawer-title' : 'audit-title'"
+  >
+    <header class="drawer-header">
+      <div>
+        <span class="folio mono">{{ folio(agreement) }}</span>
+        <h2 [id]="drawerMode === 'edit' ? 'drawer-title' : 'audit-title'">
+          {{ drawerMode === 'edit' ? 'Edición de Acuerdo' : 'Bitácora del Acuerdo' }}
+        </h2>
+        <p>Estudiante: {{ agreement.student_nombre || ('Estudiante #' + agreement.student) }}</p>
+      </div>
+      <button #drawerClose type="button" class="close-button" (click)="cerrarDrawer()" aria-label="Cerrar drawer">×</button>
+    </header>
+
+    <div class="drawer-body">
+      @if (drawerMode === 'edit') {
+        <section class="agreement-summary" aria-label="Datos del acuerdo">
+          <div class="field-block">
+            <span class="field-label">Título del acuerdo</span>
+            <p class="agreement-description">{{ agreement.descripcion }}</p>
+          </div>
+          <div class="metadata-grid">
+            <div>
+              <span class="field-label">Responsable</span>
+              <p>{{ agreement.responsable_nombre }}</p>
+            </div>
+            <div>
+              <span class="field-label">Fecha límite</span>
+              <p class="mono">{{ agreement.fecha_limite }}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="transition-section" aria-labelledby="transition-title">
+          <h3 id="transition-title">Transición de Estado</h3>
+          <div class="status-options">
+            @for (status of statuses; track status) {
+              <button
+                type="button"
+                class="status-chip"
+                [ngClass]="statusClass(status)"
+                [class.current]="isStatusCurrent(status)"
+                [class.next]="isStatusEnabled(status)"
+                [disabled]="!isStatusEnabled(status)"
+                (click)="selectStatus(status)"
+              >{{ estadoLabel(status) }}</button>
             }
-          </li>
+          </div>
+        </section>
+
+        <label class="notes-field">
+          <span class="field-label">Notas de Bitácora</span>
+          <textarea
+            class="input-field"
+            rows="4"
+            [(ngModel)]="comentario"
+            placeholder="Describe el avance o evidencia de cierre…"
+          ></textarea>
+        </label>
+      }
+
+      <section class="audit-section" aria-labelledby="audit-heading">
+        <h3 id="audit-heading">Bitácora</h3>
+        @if (auditLoading) {
+          <p class="drawer-state" role="status">Cargando bitácora...</p>
+        } @else if (auditError) {
+          <p class="drawer-state error-text" role="alert">{{ auditError }}</p>
+        } @else if (auditEntries.length === 0) {
+          <p class="drawer-state">Sin cambios registrados aún.</p>
+        } @else {
+          <ul class="audit-list">
+            @for (entry of auditEntries; track entry.id) {
+              <li>
+                <strong>{{ estadoLabel(entry.estado_anterior) }} → {{ estadoLabel(entry.estado_nuevo) }}</strong>
+                <time [attr.datetime]="entry.fecha_cambio">{{ entry.fecha_cambio | date: 'medium' }}</time>
+                @if (entry.comentario) { <p>{{ entry.comentario }}</p> }
+              </li>
+            }
+          </ul>
         }
-      </ul>
-    }
+      </section>
+
+      @if (saveError) {
+        <p class="save-error" role="alert">{{ saveError }}</p>
+      }
+    </div>
+
+    <footer class="drawer-footer">
+      <button type="button" class="btn-secondary" (click)="cerrarDrawer()">Cancelar</button>
+      @if (drawerMode === 'edit') {
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="guardarCambios()"
+          [disabled]="!selectedStatus || saving || saveDisabled"
+        >{{ saving ? 'Guardando…' : 'Guardar Cambios' }}</button>
+      }
+    </footer>
   </aside>
 }

@@ -1,432 +1,108 @@
 <main class="overview-shell">
-  <header class="overview-topbar">
-    <div class="topbar-brand">
-      <div class="brand-badge">
-        <svg class="nexus-brand-icon" viewBox="0 0 12 10" width="14" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3.98125 3.0625l1.54583-3.0625 0.175 0 1.54584 3.0625-3.26667 0 0 0m1.19583 6.9125l-5.03125-6.0375 5.03125 0 0 6.0375 0 0m0.875 0l0-6.0375 5.03125 0-5.03125 6.0375 0 0m2.15834-6.9125l-1.51667-3.0625 3.00417 0 1.53125 3.0625-3.01875 0 0 0m-8.21042 0l1.53125-3.0625 3.00417 0-1.51667 3.0625-3.01875 0 0 0" fill="currentColor"/>
-        </svg>
-        <span>N.E.X.U.S.</span>
-      </div>
-      <span class="view-title">Expediente del Estudiante</span>
-    </div>
-    <a routerLink="/home" class="btn-return">Volver al inicio</a>
-  </header>
+  <nav class="breadcrumb" aria-label="Ruta de navegación">Estudiantes <span>/</span> Expediente del Doctorando</nav>
 
   @if (cargando) {
-    <div class="state-container loading-state" role="status" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <p>Cargando expediente del estudiante...</p>
-    </div>
+    <div class="state-container" role="status"><div class="spinner"></div><p>Cargando expediente del estudiante...</p></div>
   } @else if (error) {
-    <div class="state-container error-state" role="alert">
-      <p class="error-message">{{ error }}</p>
-      <button type="button" class="btn-retry" (click)="cargarExpediente()">Reintentar</button>
-    </div>
+    <div class="state-container error-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="cargarExpediente()">Reintentar</button></div>
   } @else if (overview) {
-    <!-- Encabezado con datos del estudiante -->
-    <div class="student-header-card">
-      <div class="student-header-info">
-        <h1 class="student-name">{{ overview.nombre_completo }}</h1>
-        <div class="student-meta">
-          <span class="meta-item"><strong>Matrícula:</strong> {{ overview.matricula }}</span>
-          <span class="meta-item"><strong>Programa:</strong> {{ overview.programa_doctoral }}</span>
-          <span class="meta-item"><strong>Cohorte:</strong> {{ overview.cohorte }}</span>
-        </div>
+    <section class="student-header nexus-card">
+      <div class="avatar" aria-hidden="true">{{ initials }}</div>
+      <div class="student-details">
+        <div class="name-row"><h1>{{ overview.nombre_completo }}</h1><span class="badge" [class.active]="overview.estatus_activo" [class.inactive]="!overview.estatus_activo">{{ overview.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}</span></div>
+        <p class="program">{{ overview.programa_doctoral }}</p>
+        <div class="student-meta"><span class="mono">{{ overview.matricula }}</span><span>Cohorte {{ overview.cohorte }}</span><span>Semestre {{ overview.current_semester?.numero ?? 'sin registrar' }}</span></div>
       </div>
-      <div class="student-header-status">
-        @if (overview.estatus_activo) {
-          <span class="badge badge-active">ACTIVO</span>
-        } @else {
-          <span class="badge badge-inactive">INACTIVO</span>
-        }
-      </div>
+      <div class="header-actions"><button class="btn-secondary" disabled title="Próximamente">Descargar PDF</button><button class="btn-primary" (click)="openModal('avance')">Avance de Tesis</button></div>
+    </section>
+
+    @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
+
+    <div class="semester-tabs" role="tablist" aria-label="Semestres">
+      @for (semester of overview.semesters; track semester.id) {
+        <button type="button" role="tab" [attr.aria-selected]="selectedSemesterId === semester.id" [class.selected]="selectedSemesterId === semester.id" (click)="selectSemester(semester.id)">
+          Semestre {{ semester.numero }}{{ isCurrentSemester(semester) ? ' (Actual)' : '' }}
+        </button>
+      }
+      @if (auth.hasPermission('semesters.manage')) { <button class="add-semester" type="button" (click)="openModal('semestre')">+ Agregar</button> }
     </div>
 
-    <div class="overview-layout">
-      <!-- Columna Principal 70% -->
-      <section class="main-column">
-        <!-- 1. Tarjeta Semestre Actual -->
-        <article class="card current-semester-card">
-          <h2 class="card-title">Semestre Actual</h2>
-          @if (overview.current_semester) {
-            <div class="semester-details">
-              <div class="semester-badge-row">
-                <span class="semester-number">Semestre {{ overview.current_semester.numero }}</span>
-                @if (overview.current_semester.is_active) {
-                  <span class="badge badge-active">Activo</span>
+    <div class="dashboard-grid">
+      <div class="main-column">
+        @if (selectedSemester; as semester) {
+          <article class="nexus-card semester-summary">
+            <div class="section-heading"><div><span class="eyebrow">SEGUIMIENTO ACADÉMICO</span><h2>Resumen del Semestre {{ semester.numero }}</h2></div><span class="badge" [class.active]="semester.is_active" [class.neutral]="!semester.is_active">{{ semesterStatus(semester) }}</span></div>
+            <div class="mini-stats">
+              <div><strong>{{ semesterSessions.length }}</strong><span>Tutorías</span></div><div><strong>{{ semesterAgreements.length }}</strong><span>Acuerdos</span></div><div><strong>{{ completedCount }}</strong><span>Concluidos</span></div><div><strong>{{ semesterOverdueCount }}</strong><span>Vencidos</span></div>
+            </div>
+          </article>
+
+          <article id="agreements" class="nexus-card content-card">
+            <div class="section-heading"><div><h2>Acuerdos y Compromisos Formales</h2><p>Compromisos registrados en las tutorías del semestre.</p></div>@if (canCreateAgreement) { <button class="btn-primary" [disabled]="semesterSessions.length === 0" (click)="abrirNuevoAcuerdo()">+ Nuevo Acuerdo</button> }</div>
+            @if (semesterAgreements.length) {
+              <div class="agreement-table">
+                <div class="table-head"><span>Descripción</span><span>Responsable</span><span>Fecha límite</span><span>Estado</span><span></span></div>
+                @for (agreement of semesterAgreements; track agreement.id) {
+                  <div class="table-row">
+                    <strong>{{ agreement.descripcion }}</strong><span>{{ agreement.responsable_nombre }}</span><time>{{ agreement.fecha_limite | date:'dd MMM yyyy' }}</time>
+                    <span><span class="status-pill" [class.overdue]="agreement.is_vencido" [class.done]="agreement.estado === 'CONCLUIDO'">{{ etiquetaEstado(agreement.estado, agreement.is_vencido) }}</span></span>
+                    <span>@if (agreement.estado !== 'CONCLUIDO') { <button class="link-button" (click)="abrirEstado(agreement)">Actualizar Estado</button> }</span>
+                  </div>
                 }
               </div>
-              <p class="semester-dates">
-                <strong>Periodo:</strong>
-                {{ overview.current_semester.fecha_inicio }} al {{ overview.current_semester.fecha_fin }}
-              </p>
-            </div>
-          } @else {
-            <p class="empty-state">Sin semestre activo</p>
-          }
-        </article>
+            } @else { <p class="empty-state">No hay acuerdos registrados en este semestre.</p> }
+          </article>
 
-        <!-- 2. Tarjeta Avance de Tesis -->
-        <article class="card thesis-progress-card">
-          <h2 class="card-title">Avance de Tesis</h2>
-          @if (overview.thesis_progress; as progress) {
-            <div class="card-header-row"><span class="progress-pct">{{ progress.porcentaje_avance }}%</span></div>
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" [style.width.%]="progress.porcentaje_avance" role="progressbar"
-                [attr.aria-label]="'Avance de tesis: ' + progress.porcentaje_avance + '%'"
-                [attr.aria-valuenow]="progress.porcentaje_avance" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            <div class="thesis-observations"><strong>Observaciones:</strong><p>{{ progress.observaciones || 'Sin observaciones registradas.' }}</p></div>
-            @if (progress.fecha_registro) { <div class="thesis-update-date"><strong>Fecha de actualización:</strong> <span>{{ progress.fecha_registro }}</span></div> }
-            @if (progress.componentes_json && (progress.componentes_json | keyvalue).length > 0) {
-              <div class="thesis-components"><strong>Componentes:</strong><ul>
-                @for (item of progress.componentes_json | keyvalue; track item.key) { <li><strong>{{ item.key }}:</strong> {{ item.value }}</li> }
-              </ul></div>
-            }
-          } @else {
-            <p class="empty-state">Sin avance de tesis registrado</p>
-          }
-        </article>
+          <article class="nexus-card content-card">
+            <div class="section-heading"><div><h2>Tutorías del Semestre</h2><p>Sesiones formales y seguimiento del comité.</p></div>@if (canCreateTutoring) { <button class="btn-primary" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
+            @if (semesterSessions.length) {
+              <div class="session-list">@for (session of semesterSessions; track session.id) { <div class="session-item"><div><strong>{{ session.fecha_sesion | date:'longDate' }}</strong><span>{{ session.modalidad }} · {{ session.resumen }}</span></div><button class="btn-secondary" (click)="abrirCondiciones(session)">Condiciones de tutoría</button></div> }</div>
+            } @else { <p class="empty-state">No hay tutorías registradas en este semestre.</p> }
+          </article>
+        } @else {
+          <article class="nexus-card empty-state large">No hay semestres registrados. Agregue el primer semestre para iniciar el seguimiento.</article>
+        }
+      </div>
 
-        <!-- 3. Tarjeta Acuerdos Abiertos -->
-        <article class="card agreements-card">
-          <h2 class="card-title">Acuerdos Abiertos</h2>
-          @if (overview.open_agreements.length === 0) {
-            <p class="empty-state">Sin acuerdos pendientes</p>
-          } @else {
-            <div class="table-responsive">
-              <table class="data-table"><caption>Acuerdos abiertos del estudiante</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Descripción</th>
-                    <th scope="col">Responsable</th>
-                    <th scope="col">Fecha límite</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (acuerdo of overview.open_agreements; track acuerdo.id) {
-                    <tr>
-                      <td class="desc-cell">{{ acuerdo.descripcion }}</td>
-                      <td>{{ acuerdo.responsable_nombre }}</td>
-                      <td>{{ acuerdo.fecha_limite }}</td>
-                      <td>
-                        <span
-                          class="badge"
-                          [ngClass]="{
-                            'badge-pending': acuerdo.estado === 'PENDIENTE',
-                            'badge-in-progress': acuerdo.estado === 'EN_PROCESO',
-                            'badge-overdue': acuerdo.is_vencido
-                          }"
-                        >
-                          {{ etiquetaEstado(acuerdo.estado, acuerdo.is_vencido) }}
-                        </span>
-                      </td>
-                      <td>
-                        @if (puedeActualizarAcuerdo(acuerdo)) {
-                          <button
-                            type="button"
-                            class="btn-status-sm"
-                            [disabled]="actualizandoAcuerdoId === acuerdo.id"
-                            (click)="actualizarEstadoAcuerdo(acuerdo)"
-                          >
-                            {{ actualizandoAcuerdoId === acuerdo.id ? '...' : etiquetaSiguienteAcuerdo(acuerdo.estado) }}
-                          </button>
-                        } @else {
-                          <span class="muted-action">—</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-            @if (exitoEstado) {
-              <p class="success-msg" role="status">{{ exitoEstado }}</p>
-            }
-            @if (errorEstado) {
-              <p class="error-msg" role="alert">{{ errorEstado }}</p>
-            }
-          }
-        </article>
-
-        <!-- 4. Tarjeta Actividad Académica Reciente -->
-        <article class="card recent-activity-card">
-          <h2 class="card-title">Actividad Académica Reciente</h2>
-          @if (overview.recent_academic_activity.length === 0) {
-            <p class="empty-state">Sin actividad académica registrada</p>
-          } @else {
-            <ul class="activity-list">
-              @for (act of overview.recent_academic_activity; track act.titulo + act.fecha) {
-                <li class="activity-item">
-                  <div class="activity-header">
-                    <span class="badge badge-info">{{ act.tipo }}</span>
-                    <span class="activity-date">{{ act.fecha }}</span>
-                  </div>
-                  <h3 class="activity-title">{{ act.titulo }}</h3>
-                  <p class="activity-detail">{{ act.detalle }}</p>
-                </li>
-              }
-            </ul>
-          }
-        </article>
-      </section>
-
-      <!-- Columna Lateral 30% -->
       <aside class="side-column">
-        <!-- 5. Tarjeta Comité Tutorial -->
-        <article class="card committee-card">
-          <h2 class="card-title">Comité Tutorial</h2>
-          @if (!overview.advisors.advisor && !overview.advisors.coadvisor && (!overview.advisors.members || overview.advisors.members.length === 0)) {
-            <p class="empty-state">Comité pendiente de asignación</p>
-          } @else {
-            <div class="committee-members-list">
-              @if (overview.advisors.advisor) {
-                <div class="advisor-item">
-                  <span class="role-tag advisor-primary">Asesor Principal</span>
-                  <div class="member-name">{{ overview.advisors.advisor.nombre_completo }}</div>
-                  <div class="member-email">{{ overview.advisors.advisor.email }}</div>
-                </div>
-              }
-              @if (overview.advisors.coadvisor) {
-                <div class="advisor-item">
-                  <span class="role-tag advisor-co">Coasesor</span>
-                  <div class="member-name">{{ overview.advisors.coadvisor.nombre_completo }}</div>
-                  <div class="member-email">{{ overview.advisors.coadvisor.email }}</div>
-                </div>
-              }
-              @for (member of overview.advisors.members; track member.id) {
-                <div class="advisor-item">
-                  <span class="role-tag">{{ member.rol_comite }}</span>
-                  <div class="member-name">{{ member.nombre_completo }}</div>
-                  <div class="member-email">{{ member.email }}</div>
-                </div>
-              }
-            </div>
-          }
+        <article class="nexus-card side-card thesis-card">
+          <div class="section-heading"><h2>Avance de Tesis</h2><button class="icon-link" (click)="openModal('avance')" aria-label="Abrir detalle">↗</button></div>
+          <div class="progress-total"><strong>{{ overview.thesis_progress?.porcentaje_avance ?? 0 }}%</strong><span>Avance global</span></div>
+          <div class="progress-track"><span [style.width.%]="overview.thesis_progress?.porcentaje_avance ?? 0"></span></div>
+          @for (component of thesisComponents().slice(0, 4); track component.name) { <div class="component-progress"><div><span>{{ component.name }}</span>@if (component.percentage !== null) {<strong>{{ component.percentage }}%</strong>} @else {<span class="status-pill">{{ component.status }}</span>}</div>@if (component.percentage !== null) {<div class="progress-track"><span [style.width.%]="component.percentage"></span></div>} </div> }
+          <button class="text-action" (click)="openModal('avance')">Ver detalle del avance</button>
         </article>
 
-        <!-- 6. Tarjeta Última Tutoría -->
-        <article class="card tutoring-card" [class.tutoring-card--registering]="mostrarFormTutoria">
-          <div class="card-header-row">
-            <h2 class="card-title">{{ mostrarFormTutoria ? 'Registrar tutoría' : 'Última Tutoría' }}</h2>
-            @if (auth.hasPermission('tutoring.create')) {
-              <button
-                type="button"
-                class="btn-toggle-sem"
-                (click)="mostrarFormTutoria = !mostrarFormTutoria"
-                [attr.aria-expanded]="mostrarFormTutoria" aria-controls="tutoring-form"
-              >
-                {{ mostrarFormTutoria ? 'Cancelar' : '+ Registrar tutoría' }}
-              </button>
-            }
-          </div>
+        <article class="nexus-card side-card"><h2>Comité Tutorial</h2><div class="committee-list">@for (member of committeeMembers(); track member.id) { <div class="committee-member"><span class="member-avatar">{{ member.nombre_completo.charAt(0) }}</span><div><strong>{{ member.nombre_completo }}</strong><span>{{ member.etiqueta }}</span></div></div> } @empty { <p class="empty-state">Sin comité asignado.</p> }</div></article>
 
-          @if (mostrarFormTutoria) {
-            <app-tutoring-form id="tutoring-form" [studentId]="studentId" [semesters]="overview.semesters"
-              [currentSemesterId]="overview.current_semester?.id ?? null" (saved)="tutoriaGuardada()"
-              (cancelled)="mostrarFormTutoria = false" />
-          }
-          @if (exitoTutoria) {
-            <p class="success-msg" role="status">{{ exitoTutoria }}</p>
-          }
+        @if (overdueCount > 0) { <article class="overdue-card"><span class="alert-icon">!</span><div><h2>¡Compromisos Vencidos!</h2><p>{{ overdueCount }} {{ overdueCount === 1 ? 'acuerdo requiere' : 'acuerdos requieren' }} atención.</p><button (click)="scrollToOverdue()">Ver Acuerdos Vencidos</button></div></article> }
 
-          @if (overview.last_tutoring) {
-            <div class="tutoring-details">
-              <div class="tutoring-meta">
-                <span class="tutoring-date"><strong>Fecha:</strong> {{ overview.last_tutoring.fecha_sesion }}</span>
-                <span class="badge badge-info">{{ overview.last_tutoring.modalidad }}</span>
-              </div>
-              <div class="tutoring-summary">
-                <strong>Resumen:</strong>
-                <p>{{ overview.last_tutoring.resumen }}</p>
-              </div>
-              @if (overview.last_tutoring.proxima_reunion_fecha) {
-                <div class="next-meeting">
-                  <strong>Próxima reunión:</strong>
-                  <p>{{ overview.last_tutoring.proxima_reunion_fecha }}</p>
-                </div>
-              }
-              @if (overview.last_tutoring.proxima_reunion_notas) {
-                <div class="next-meeting-notes">
-                  <strong>Notas de próxima reunión:</strong>
-                  <p>{{ overview.last_tutoring.proxima_reunion_notas }}</p>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-state">Sin sesiones registradas</p>
-          }
-
-          <app-tutoring-observations
-            [studentId]="studentId"
-            [preferredSessionId]="overview.last_tutoring?.id ?? null"
-          />
-
-          <app-tutoring-agreements
-            [studentId]="studentId"
-            [preferredSessionId]="overview.last_tutoring?.id ?? null"
-            [responsibleOptions]="responsibleOptions()"
-            (changed)="cargarExpediente()"
-          />
+        <article class="nexus-card side-card last-tutoring">
+          <div class="section-heading"><h2>Última Tutoría</h2>@if (canCreateTutoring) { <button class="link-button" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
+          @if (overview.last_tutoring; as last) { <time>{{ last.fecha_sesion | date:'longDate' }}</time><span class="status-pill">{{ last.modalidad }}</span><p>{{ last.resumen }}</p><app-tutoring-observations [studentId]="studentId" [preferredSessionId]="last.id" /> } @else { <p class="empty-state">Aún no hay tutorías registradas.</p> }
         </article>
-
-        <article class="card evidence-card">
-          <app-evidence-upload [studentId]="studentId" [semesters]="overview.semesters" />
-        </article>
-
-        <!-- 7. Tarjeta Semestres Registrados (HU-05) -->
-        <article class="card semesters-card">
-          <div class="card-header-row">
-            <h2 class="card-title">Semestres Registrados</h2>
-            @if (auth.hasPermission('semesters.manage')) {
-              <button
-                type="button"
-                class="btn-toggle-sem"
-                (click)="mostrarFormSemestre = !mostrarFormSemestre"
-                [attr.aria-expanded]="mostrarFormSemestre" aria-controls="semester-form"
-              >
-                {{ mostrarFormSemestre ? 'Cancelar' : '+ Agregar' }}
-              </button>
-            }
-          </div>
-
-          @if (mostrarFormSemestre && auth.hasPermission('semesters.manage')) {
-            <app-semester-form id="semester-form" [studentId]="studentId" (saved)="semestreGuardado()" />
-          }
-
-          @if (overview.semesters && overview.semesters.length > 0) {
-  <ul class="semesters-list">
-
-    @for (sem of overview.semesters; track sem.id) {
-
-      <li class="semester-list-item semester-with-tutoring">
-
-        <div class="semester-header">
-
-          <div class="sem-item-info">
-            <span class="sem-num">
-              Semestre {{ sem.numero }}
-            </span>
-
-            <span class="sem-period">
-              {{ sem.fecha_inicio }} - {{ sem.fecha_fin }}
-            </span>
-          </div>
-
-          @if (sem.is_active) {
-            <span class="badge badge-active">
-              ACTIVO
-            </span>
-          }
-
-        </div>
-
-        <div class="semester-tutoring">
-
-          <h3 class="semester-tutoring-title">
-            Tutorías
-          </h3>
-
-          @if (
-            sem.tutoring_sessions &&
-            sem.tutoring_sessions.length > 0
-          ) {
-
-            <div class="semester-tutoring-list">
-
-              @for (
-                tutoria of sem.tutoring_sessions;
-                track tutoria.id
-              ) {
-
-                <div class="semester-tutoring-item">
-
-                  <div class="tutoring-session-header">
-
-                    <strong>
-                      {{ tutoria.fecha_sesion }}
-                    </strong>
-
-                    <span class="badge badge-info">
-                      {{ tutoria.modalidad }}
-                    </span>
-
-                  </div>
-
-                  <p class="tutoring-session-summary">
-                    {{ tutoria.resumen }}
-                  </p>
-
-                  @if (tutoria.proxima_reunion_fecha) {
-
-                    <p class="tutoring-next-meeting">
-                      <strong>
-                        Próxima reunión:
-                      </strong>
-
-                      {{ tutoria.proxima_reunion_fecha }}
-                    </p>
-
-                  }
-
-                  <button
-                    type="button"
-                    class="btn-tutoring-conditions"
-                    (click)="alternarCondicionesTutoria(tutoria.id)"
-                    [attr.aria-expanded]="tutoriaCondicionesId === tutoria.id"
-                  >
-                    {{
-                      tutoriaCondicionesId === tutoria.id
-                        ? 'Cerrar condiciones'
-                        : 'Condiciones de tutoría'
-                    }}
-                  </button>
-
-                  @if (tutoriaCondicionesId === tutoria.id) {
-                    <app-tutoring-conditions
-                      [tutoriaId]="tutoria.id"
-                      [estudiante]="overview.student"
-                      [asesores]="overview.advisors"
-                      [fechaSesion]="tutoria.fecha_sesion"
-                      [proximaReunionFecha]="tutoria.proxima_reunion_fecha ?? null"
-                      [proximaReunionNotas]="tutoria.proxima_reunion_notas ?? ''"
-                      (nextMeetingSaved)="proximaReunionGuardada()"
-                    />
-                  }
-
-                </div>
-
-              }
-
-            </div>
-
-          } @else {
-
-            <p class="empty-state">
-              Sin tutorías registradas en este semestre.
-            </p>
-
-          }
-
-        </div>
-
-      </li>
-
-    }
-
-  </ul>
-
-} @else {
-
-  <p class="empty-state">
-    No hay semestres registrados
-  </p>
-
-}
-        </article>
+        @if (canUploadEvidence) { <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button> }
       </aside>
     </div>
+
+    @if (modal === 'tutoria') {
+      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel tutoring-modal" role="dialog" aria-modal="true" aria-labelledby="tutoring-modal-title"><header class="modal-header"><div class="modal-title"><span class="modal-icon">▣</span><div><h2 id="tutoring-modal-title">Registro de Sesión de Tutoría Formal</h2><span class="mono">{{ overview.matricula }}</span></div></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="committee-note"><h3>COMITÉ TUTORAL (ASISTENCIA)</h3><div class="committee-modal-list">@for (member of committeeMembers(); track member.id) { <div><strong>{{ member.nombre_completo }}</strong><span>{{ member.etiqueta }}</span></div> }</div><p>La asistencia del comité se registra automáticamente.</p></div><app-tutoring-form [studentId]="studentId" [semesters]="overview.semesters" [currentSemesterId]="overview.current_semester?.id ?? null" (saved)="tutoriaGuardada()" (cancelled)="cerrarModal()" /></section></div>
+    }
+
+    @if (modal === 'acuerdo') {
+      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel small-modal" role="dialog" aria-modal="true" aria-labelledby="agreement-modal-title"><header class="modal-header"><h2 id="agreement-modal-title">Nuevo Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><form class="modal-form" (ngSubmit)="crearAcuerdo()"><label>Sesión de tutoría<select class="input-field" name="session" [(ngModel)]="acuerdo.sessionId">@for (session of semesterSessions; track session.id) { <option [ngValue]="session.id">{{ session.fecha_sesion | date:'mediumDate' }} — {{ session.modalidad }}</option> }</select></label><label>Descripción<textarea class="input-field" name="description" [(ngModel)]="acuerdo.descripcion" rows="4" maxlength="1000" placeholder="Describe el compromiso acordado"></textarea></label><label>Responsable<select class="input-field" name="responsible" [(ngModel)]="acuerdo.responsable">@for (option of responsibleOptions(); track option.id) { <option [ngValue]="option.id">{{ option.nombre_completo }} ({{ option.etiqueta }})</option> }</select></label><label>Fecha límite<input class="input-field" type="date" name="deadline" [(ngModel)]="acuerdo.fecha_limite"></label>@if (errorAcuerdo) { <p class="form-error" role="alert">{{ errorAcuerdo }}</p> }<footer class="modal-footer"><button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!acuerdoValido || guardandoAcuerdo">{{ guardandoAcuerdo ? 'Creando...' : 'Crear Acuerdo' }}</button></footer></form></section></div>
+    }
+
+    @if (modal === 'estado' && selectedAgreement; as agreement) {
+      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title"><header class="modal-header"><h2 id="status-modal-title">Actualizar Estado de Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="modal-form"><p class="agreement-description">{{ agreement.descripcion }}</p><div class="transition"><span class="status-pill">{{ etiquetaEstado(agreement.estado) }}</span><span>→</span><span class="status-pill next">{{ etiquetaEstado(siguienteEstado(agreement.estado) ?? '') }}</span></div><label>Comentario para la bitácora<textarea class="input-field" rows="3" [(ngModel)]="comentarioEstado" placeholder="Comentario opcional"></textarea></label>@if (!puedeActualizarAcuerdo(agreement)) { <p class="form-warning">Sólo el responsable puede actualizar el estado.</p> }@if (errorEstado) { <p class="form-error" role="alert">{{ errorEstado }}</p> }<footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button class="btn-primary" [disabled]="!puedeActualizarAcuerdo(agreement) || guardandoEstado" (click)="actualizarEstadoAcuerdo()">{{ guardandoEstado ? 'Guardando...' : 'Guardar' }}</button></footer></div></section></div>
+    }
+
+    @if (modal === 'avance') {
+      <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel progress-modal" role="dialog" aria-modal="true" aria-labelledby="progress-modal-title"><header class="modal-header"><div><h2 id="progress-modal-title">Avance de Tesis</h2><span class="mono">{{ overview.matricula }}</span></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="progress-body"><div class="progress-hero"><strong>{{ overview.thesis_progress?.porcentaje_avance ?? 0 }}%</strong><span>Avance global</span></div><div class="progress-track large"><span [style.width.%]="overview.thesis_progress?.porcentaje_avance ?? 0"></span></div><div class="progress-components">@for (component of thesisComponents(); track component.name) { <div class="progress-component"><div><strong>{{ component.name }}</strong><span class="status-pill">{{ component.status }}</span>@if (component.percentage !== null) {<b>{{ component.percentage }}%</b>}</div>@if (component.percentage !== null) {<div class="progress-track"><span [style.width.%]="component.percentage"></span></div>}</div> } @empty { <p class="empty-state">No hay componentes de avance registrados.</p> }</div>@if (overview.thesis_progress?.observaciones) { <div class="observations"><h3>Observaciones</h3><p>{{ overview.thesis_progress?.observaciones }}</p></div> }<p class="updated">Última actualización: {{ overview.thesis_progress?.fecha_registro ? (overview.thesis_progress?.fecha_registro | date:'longDate') : 'Sin registro' }}</p></div><footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cerrar</button></footer></section></div>
+    }
+
+    @if (modal === 'evidencia') { <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel evidence-modal" role="dialog" aria-modal="true"><header class="modal-header"><div class="modal-title"><span class="modal-icon">⇧</span><h2>Carga de Evidencias</h2></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-evidence-upload [studentId]="studentId" [semesters]="overview.semesters" (saved)="evidenciaGuardada()" (cancelled)="cerrarModal()" /></section></div> }
+    @if (modal === 'semestre') { <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel small-modal" role="dialog" aria-modal="true"><header class="modal-header"><h2>Agregar Semestre</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="embedded-form"><app-semester-form [studentId]="studentId" (saved)="semestreGuardado()" (cancelled)="cerrarModal()" /></div></section></div> }
+    @if (modal === 'condiciones' && selectedTutoring; as tutoring) { <div class="modal-backdrop" (mousedown)="$event.target === $event.currentTarget && cerrarModal()"><section class="modal-panel conditions-modal" role="dialog" aria-modal="true"><header class="modal-header"><h2>Condiciones de tutoría</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="embedded-form"><app-tutoring-conditions [tutoriaId]="tutoring.id" [estudiante]="overview.student" [asesores]="overview.advisors" [fechaSesion]="tutoring.fecha_sesion" [proximaReunionFecha]="tutoring.proxima_reunion_fecha ?? null" [proximaReunionNotas]="tutoring.proxima_reunion_notas ?? ''" (nextMeetingSaved)="proximaReunionGuardada()" /></div></section></div> }
   }
 </main>
