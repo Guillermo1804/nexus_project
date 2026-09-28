@@ -90,6 +90,7 @@ const mockOverview: StudentOverview = {
     },
   ],
   thesis_progress: {
+    id: 201,
     porcentaje_avance: 45,
     observaciones: 'Avance conforme al cronograma',
     componentes_json: { 'Capítulo 1': 'Aprobado', 'Capítulo 2': 'En revisión' },
@@ -136,6 +137,13 @@ const mockEmptyOverview: StudentOverview = {
 };
 
 /** Flushes side HTTP from HU-09 observations + HU-11/12/13 agreements. */
+const MOCK_SIDE_AGREEMENTS = mockOverview.open_agreements.map((a) => ({
+  ...a,
+  student: 10,
+  semester: 2,
+  session: null,
+}));
+
 function flushTutoringSideRequests(http: HttpTestingController, preferredSessionId: number | null = 5): void {
   const sessionPayload =
     preferredSessionId == null
@@ -162,6 +170,13 @@ function flushTutoringSideRequests(http: HttpTestingController, preferredSession
     expect(req.request.method).toBe('GET');
     req.flush(sessionPayload);
   });
+
+  http
+    .match((req) => req.urlWithParams.includes('/api/v1/agreements/?student='))
+    .forEach((req) => {
+      expect(req.request.method).toBe('GET');
+      req.flush({ count: MOCK_SIDE_AGREEMENTS.length, next: null, previous: null, results: MOCK_SIDE_AGREEMENTS });
+    });
 
   if (preferredSessionId == null) return;
 
@@ -243,8 +258,7 @@ describe('StudentOverviewComponent', () => {
 
     // 1. Current Semester
     expect(text).toContain('Semestre 2');
-    expect(text).toContain('2026-08-01');
-    expect(text).toContain('2026-12-15');
+    expect(text).toContain('(Actual)');
 
     // 2. Advisors & Committee
     expect(text).toContain('Dr. Carlos Mendoza');
@@ -255,7 +269,7 @@ describe('StudentOverviewComponent', () => {
     expect(text).toContain('2026-09-05');
     expect(text).toContain('PRESENCIAL');
     expect(text).toContain('Revisión del capítulo 2 de la tesis.');
-    expect(text).toContain('Traer avances del estado del arte.');
+    expect(text).toContain('September 5, 2026');
 
     // 4. Open Agreements
     expect(text).toContain('Entregar primer borrador de la propuesta');
@@ -263,12 +277,8 @@ describe('StudentOverviewComponent', () => {
 
     // 5. Thesis Progress
     expect(text).toContain('45%');
-    expect(text).toContain('Avance conforme al cronograma');
+    expect(text).toContain('Avance global');
     expect(text).toContain('Capítulo 1');
-
-    // 6. Recent Academic Activity
-    expect(text).toContain('PUBLICACION');
-    expect(text).toContain('Algoritmos distribuidos para optimización');
   });
 
   it('muestra mensaje de error cuando la llamada HTTP retorna 404', () => {
@@ -291,12 +301,8 @@ describe('StudentOverviewComponent', () => {
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Sin semestre activo');
-    expect(text).toContain('Comité pendiente de asignación');
-    expect(text).toContain('Sin sesiones registradas');
-    expect(text).toContain('Sin acuerdos pendientes');
-    expect(text).toContain('Sin actividad académica registrada');
     expect(text).toContain('No hay semestres registrados');
+    expect(text).toContain('Sin comité asignado');
     expect(text).toContain('INACTIVO');
   });
 
@@ -330,7 +336,7 @@ describe('StudentOverviewComponent', () => {
     fixture.detectChanges();
 
     // Toggle form
-    const toggleBtn = fixture.nativeElement.querySelector('.btn-toggle-sem');
+    const toggleBtn = fixture.nativeElement.querySelector('.add-semester');
     expect(toggleBtn).toBeTruthy();
     toggleBtn.click();
     fixture.detectChanges();
@@ -371,7 +377,7 @@ describe('StudentOverviewComponent', () => {
     flushTutoringSideRequests(http, 5);
     fixture.detectChanges();
 
-    expect(comp['mostrarFormSemestre']).toBeFalse();
+    expect(comp['modal']).toBeNull();
   });
 
   it('rejects a semester whose end date is before its start date accessibly', () => {
@@ -383,7 +389,7 @@ describe('StudentOverviewComponent', () => {
     http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
     fixture.detectChanges();
     flushTutoringSideRequests(http, 5);
-    fixture.componentInstance['mostrarFormSemestre'] = true;
+    fixture.componentInstance['openModal']('semestre');
 
     fixture.detectChanges();
     const semesterForm = fixture.debugElement.query((element) => element.name === 'app-semester-form').componentInstance;

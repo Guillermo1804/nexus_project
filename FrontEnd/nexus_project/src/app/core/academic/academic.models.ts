@@ -166,6 +166,7 @@ export interface StudentOverview {
     is_vencido: boolean;
   }[];
   thesis_progress: {
+    id: number;
     porcentaje_avance: number;
     observaciones: string;
     componentes_json?: Record<string, unknown>;
@@ -227,6 +228,7 @@ export interface EvidenceUploadData {
   student: number;
   semester: number | null;
   actividad_tipo: string;
+  actividad_id?: number;
   titulo: string;
   archivo_adjunto: File;
 }

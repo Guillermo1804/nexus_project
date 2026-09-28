@@ -116,6 +116,7 @@ export class AcademicService {
     form.append('student', String(data.student));
     if (data.semester !== null) form.append('semester', String(data.semester));
     form.append('actividad_tipo', data.actividad_tipo);
+    if (data.actividad_id !== undefined) form.append('actividad_id', String(data.actividad_id));
     form.append('titulo', data.titulo);
     form.append('archivo_adjunto', data.archivo_adjunto);
     return this.http.post<Evidence>(`${API}/evidence/`, form);
