@@ -19,14 +19,15 @@ h3 { color: var(--heading); font-size: 13px; }
 .badge.neutral { background: var(--surface-soft); color: var(--text-secondary); }
 .overview-tabs, .semester-tabs { display: flex; align-items: end; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); }
 .overview-tabs { margin: 24px 0 16px; }
-.overview-tabs button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; padding: 12px 16px; white-space: nowrap; font-weight: 600; border-bottom: 2px solid transparent; }
-.overview-tabs button.selected { color: var(--brand); border-bottom-color: var(--brand); }
+/* Los dos grupos de pestañas comparten estilo: se declaran juntos para no duplicarlos. */
+.overview-tabs button, .semester-tabs button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; padding: 12px 16px; white-space: nowrap; font-weight: 600; border-bottom: 2px solid transparent; }
+.overview-tabs button.selected, .semester-tabs button.selected { color: var(--brand); border-bottom-color: var(--brand); }
 .semester-tabs { margin: 0 0 16px; }
-.semester-tabs button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; padding: 12px 16px; white-space: nowrap; font-weight: 600; border-bottom: 2px solid transparent; }
-.semester-tabs button.selected { color: var(--brand); border-bottom-color: var(--brand); }
 .semester-tabs .add-semester { margin-left: auto; color: var(--brand); }
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr); gap: 20px; align-items: start; }
-.main-column, .side-column { display: grid; gap: 20px; min-width: 0; }
+/* `minmax(0, 1fr)` y no `1fr`: una columna `auto` no baja del ancho mínimo del
+   contenido, y la tabla de acuerdos (594 px) estiraría toda la columna en móvil. */
+.main-column, .side-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
 .semester-summary, .content-card, .side-card { padding: 22px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .section-heading p { color: var(--text-muted); font-size: 13px; margin: 6px 0 0; }
@@ -36,7 +37,9 @@ h3 { color: var(--heading); font-size: 13px; }
 .mini-stats div:first-child { padding-left: 0; }.mini-stats div:last-child { border: 0; }
 .mini-stats strong { color: var(--heading); font-size: 24px; }.mini-stats span { color: var(--text-muted); font-size: 12px; }
 .agreement-table { margin-top: 20px; overflow-x: auto; }
-.table-head, .table-row { display: grid; grid-template-columns: minmax(150px, 2fr) minmax(100px, 1fr) 88px 96px minmax(104px, max-content); gap: 10px; align-items: center; min-width: 0; padding: 10px 8px; }
+/* La columna de estado toma el ancho de su contenido: el distintivo «ADVERTENCIA ·
+   PRÓXIMO» no cabía en 96px fijos y se salía de la celda. */
+.table-head, .table-row { display: grid; grid-template-columns: minmax(150px, 2fr) minmax(100px, 1fr) 88px minmax(96px, max-content) minmax(104px, max-content); gap: 10px; align-items: center; min-width: 0; padding: 10px 8px; }
 .table-head { color: var(--text-muted); background: var(--surface-warm); font-size: 11px; font-weight: 700; text-transform: uppercase; }
 .table-row { border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; }.table-row strong { color: var(--heading); }
 .status-pill { display: inline-flex; border-radius: 999px; padding: 5px 9px; background: var(--warning-bg); color: var(--warning); font-size: 10px; font-weight: 700; white-space: nowrap; }
@@ -58,9 +61,13 @@ h3 { color: var(--heading); font-size: 13px; }
 .tutoring-modal { width: min(92vw, 1024px); }.small-modal { width: min(92vw, 560px); }.status-modal { width: min(92vw, 480px); }.evidence-modal { width: min(92vw, 512px); }.conditions-modal { width: min(92vw, 720px); }
 .modal-header { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }.modal-header h2 { font-size: 20px; }.modal-title { display: flex; align-items: center; gap: 12px; }.modal-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--surface-soft); color: var(--brand); display: grid; place-items: center; font-size: 20px; }.close-button { border: 0; background: none; color: var(--text-muted); font-size: 28px; cursor: pointer; line-height: 1; }
 .modal-form, .embedded-form, .progress-body { padding: 24px; background: var(--surface-warm); }.modal-form { display: grid; gap: 16px; }.modal-form label { display: grid; gap: 7px; color: var(--heading); font-size: 13px; font-weight: 700; }.modal-form .input-field { width: 100%; resize: vertical; }.modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); }.modal-form .modal-footer { margin: 8px -24px -24px; }
-.form-error { color: var(--danger); background: var(--danger-bg); padding: 10px; border-radius: 8px; font-size: 13px; margin: 0; }.form-warning { color: var(--warning); background: var(--warning-bg); padding: 10px; border-radius: 8px; font-size: 13px; margin: 0; }
+.form-error, .form-warning { border-radius: 8px; font-size: 13px; margin: 0; padding: 10px; }.form-error { color: var(--danger); background: var(--danger-bg); }.form-warning { color: var(--warning); background: var(--warning-bg); }
 .transition { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; }.transition .next { color: var(--brand); background: var(--surface-soft); }.agreement-description { color: var(--text-secondary); margin: 0; }
 .committee-note { padding: 18px 24px 0; background: var(--surface-warm); }.committee-note h3 { margin-bottom: 10px; }.committee-modal-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.committee-modal-list div { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 3px; }.committee-modal-list strong { color: var(--heading); font-size: 12px; }.committee-modal-list span, .committee-note p { color: var(--text-muted); font-size: 12px; }.committee-note p { margin: 10px 0 0; }
 
-@media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; }.side-column { grid-template-columns: repeat(2, 1fr); }.student-header { flex-wrap: wrap; }.header-actions { margin-left: 120px; }.committee-modal-list { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 680px) { .overview-shell { padding: 16px; }.student-header { align-items: flex-start; }.avatar { width: 64px; height: 64px; font-size: 24px; }.student-details { flex-basis: calc(100% - 88px); }.header-actions { margin: 0; width: 100%; }.header-actions button { flex: 1; }.mini-stats { grid-template-columns: 1fr 1fr; gap: 16px 0; }.mini-stats div:nth-child(2) { border-right: 0; }.side-column { grid-template-columns: 1fr; }.section-heading { flex-wrap: wrap; }.session-item { align-items: flex-start; flex-direction: column; }.modal-backdrop { padding: 10px; }.modal-panel { max-height: calc(100vh - 20px); }.committee-modal-list { grid-template-columns: 1fr; } }
+/* El apilado en fichas vive en styles.scss; aquí sólo queda la rejilla, que al ser
+   local gana por especificidad a la regla global y debe anularse en este punto. */
+@media (max-width: 900px) { .table-row { grid-template-columns: minmax(0, 1fr); } }
+
+@media (max-width: 1000px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); }.side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }.student-header { flex-wrap: wrap; }.header-actions { margin-left: 120px; }.committee-modal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .overview-shell { padding: 16px; }.student-header { align-items: flex-start; }.avatar { width: 64px; height: 64px; font-size: 24px; }.student-details { flex-basis: calc(100% - 88px); }.header-actions { margin: 0; width: 100%; }.header-actions button { flex: 1; }.mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 0; }.mini-stats div:nth-child(2) { border-right: 0; }.side-column { grid-template-columns: minmax(0, 1fr); }.section-heading { flex-wrap: wrap; }.session-item { align-items: flex-start; flex-direction: column; }.modal-backdrop { padding: 10px; }.modal-panel { max-height: calc(100vh - 20px); }.committee-modal-list { grid-template-columns: minmax(0, 1fr); } }

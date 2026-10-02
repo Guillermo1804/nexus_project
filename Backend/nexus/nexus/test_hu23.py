@@ -84,7 +84,9 @@ class TimelineHu23Tests(APITestCase):
         self.assertEqual(response.data['student'], {'id': self.student.id, 'matricula': 'HU23', 'nombre_completo': 'Ana Pérez'})
         self.assertEqual([item['numero'] for item in response.data['semestres']], [1, 2])
         events = response.data['semestres'][0]['eventos']
-        self.assertEqual([item['tipo'] for item in events], ['ACUERDO', 'TUTORIA', 'TESIS', 'EVIDENCIA'])
+        # El acuerdo hereda la fecha de su sesión, así que en ese día la tutoría va
+        # primero: es la secuencia real y no el orden alfabético de los identificadores.
+        self.assertEqual([item['tipo'] for item in events], ['TUTORIA', 'ACUERDO', 'TESIS', 'EVIDENCIA'])
         self.assertEqual([item['fecha'] for item in events], sorted(item['fecha'] for item in events))
         self.assertEqual(response.data['semestres'][1]['eventos'], [])
 
@@ -131,3 +133,60 @@ class TimelineHu23Tests(APITestCase):
         with self.assertNumQueries(7):
             response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+
+
+class TimelineIntraDayOrderTests(APITestCase):
+    """Varios eventos comparten fecha; el orden dentro del día debe ser estable."""
+
+    def setUp(self):
+        users = get_user_model()
+        self.owner = users.objects.create_user(
+            email='orden@example.com', password='x', first_name='Ana', last_name='Pérez', role=users.Role.STUDENT,
+        )
+        self.student = Student.objects.create(
+            user=self.owner, matricula='ORDEN', nombre_completo='Ana Pérez', cohorte='2026',
+        )
+        self.semester = Semester.objects.create(
+            student=self.student, numero=1,
+            fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 30), is_active=True,
+        )
+        self.url = f'/api/v1/monitoring/timeline/?student={self.student.id}'
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.owner)}')
+
+    def test_events_sharing_a_date_follow_the_real_sequence(self):
+        # Todo ocurre el mismo día: la sesión y sus acuerdos, un avance y una evidencia.
+        session = TutoringSession.objects.create(
+            student=self.student, semester=self.semester, fecha_sesion=date(2026, 5, 4),
+            modalidad=TutoringSession.Modality.IN_PERSON, resumen='Sesión única.', created_by=self.owner,
+        )
+        # Los acuerdos se crean en orden inverso al natural para que sólo la secuencia
+        # del servicio pueda ordenarlos bien.
+        for descripcion in ('Segundo acuerdo.', 'Primer acuerdo.'):
+            Agreement.objects.create(
+                session=session, student=self.student, descripcion=descripcion,
+                responsable=self.owner, fecha_limite=timezone.localdate() + timedelta(days=30),
+            )
+        ThesisProgress.objects.create(
+            student=self.student, semester=self.semester, porcentaje_avance=40,
+            registrado_por=self.owner, fecha_registro=date(2026, 5, 4),
+        )
+
+        events = self.client.get(self.url).data['semestres'][0]['eventos']
+
+        self.assertEqual(len(events), 4)
+        # La sesión se genera antes que sus acuerdos, y los acuerdos antes que la tesis.
+        self.assertEqual([item['tipo'] for item in events], ['TUTORIA', 'ACUERDO', 'ACUERDO', 'TESIS'])
+        self.assertEqual([item['orden'] for item in events], sorted(item['orden'] for item in events))
+        # El acuerdo creation order inverso no debe alterar la secuencia intra-día.
+        self.assertEqual(events[0]['id'], f'tutoria-{session.id}')
+        self.assertEqual([item['orden'] for item in events], [0, 1, 2, 3])
+
+    def test_every_event_carries_a_sequence_number(self):
+        TutoringSession.objects.create(
+            student=self.student, semester=self.semester, fecha_sesion=date(2026, 5, 4),
+            modalidad=TutoringSession.Modality.IN_PERSON, resumen='Sesión.', created_by=self.owner,
+        )
+
+        events = self.client.get(self.url).data['semestres'][0]['eventos']
+
+        self.assertTrue(all('orden' in item for item in events))

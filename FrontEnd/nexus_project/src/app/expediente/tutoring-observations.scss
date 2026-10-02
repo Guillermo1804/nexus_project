@@ -19,13 +19,16 @@
   margin: 0;
 }
 
+/* `min-width: 0` con base flexible: con `min-width: 14rem` fijo el selector no bajaba
+   de 224px y desbordaba el panel en columnas estrechas. */
 .session-picker {
   color: #475467;
   display: grid;
+  flex: 1 1 14rem;
   font-size: 0.78rem;
   font-weight: 650;
   gap: 0.35rem;
-  min-width: 14rem;
+  min-width: 0;
 }
 
 .session-picker select,

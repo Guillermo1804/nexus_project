@@ -282,6 +282,8 @@ export interface TimelineEvent {
   id: string;
   tipo: TimelineEventType;
   fecha: string;
+  /** Secuencia real dentro de su fecha; desempata los eventos que comparten día. */
+  orden?: number;
   titulo: string;
   descripcion: string;
   actor?: string;

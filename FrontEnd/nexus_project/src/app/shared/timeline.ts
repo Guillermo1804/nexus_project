@@ -10,6 +10,11 @@ interface TimelineEntry {
   semester: TimelineSemester;
 }
 
+/** Las fechas llegan como `YYYY-MM-DD`, así que basta la comparación directa. */
+function compareDates(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 @Component({
   selector: 'app-timeline',
   imports: [CommonModule],
@@ -89,12 +94,28 @@ export class TimelineComponent {
     { value: 'EVIDENCIA', label: 'Evidencias' },
   ];
 
-  /** One flat sequence: events are neither grouped by semester nor by day. */
+  /**
+   * One flat sequence: events are neither grouped by semester nor by day.
+   *
+   * Los acuerdos heredan la fecha de su sesión, así que un mismo día reúne varios
+   * eventos. Sin un desempate el orden de ese día queda al azar (un acuerdo aparecía
+   * antes que la tutoría que lo originó), por eso se usa `orden` del backend y, si no
+   * existiera, la posición de llegada. Los empates conservan siempre el mismo criterio
+   * en ambos sentidos: invertir el orden invierte la lista completa.
+   */
   protected get entries(): TimelineEntry[] {
     const all: TimelineEntry[] = this.semesters.flatMap((semester) => semester.eventos.map((event) => ({ event, semester })));
     const filtered = this.filter === 'TODOS' ? all : all.filter((entry) => entry.event.tipo === this.filter);
     const direction = this.order === 'DESC' ? -1 : 1;
-    return [...filtered].sort((a, b) => a.event.fecha.localeCompare(b.event.fecha) * direction);
+    return filtered
+      .map((entry, position) => ({ entry, position }))
+      .sort((a, b) => {
+        const byDate = compareDates(a.entry.event.fecha, b.entry.event.fecha);
+        if (byDate) return byDate * direction;
+        const byOrder = (a.entry.event.orden ?? a.position) - (b.entry.event.orden ?? b.position);
+        return (byOrder || a.position - b.position) * direction;
+      })
+      .map(({ entry }) => entry);
   }
 
   protected typeLabel(type: TimelineEventType): string {

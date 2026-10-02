@@ -84,3 +84,62 @@ describe('TimelineComponent (HU-23)', () => {
     expect(fixture.nativeElement.querySelector('.empty')?.textContent).toContain('No hay eventos');
   });
 });
+
+/** Varios eventos comparten día: los acuerdos heredan la fecha de su sesión. */
+const MISMO_DIA: TimelineSemester[] = [
+  {
+    id: 3,
+    numero: 3,
+    activo: true,
+    eventos: [
+      { id: 'T-9', tipo: 'TUTORIA', fecha: '2026-09-25', orden: 0, titulo: 'Sesión 5', descripcion: '', metadata: {} },
+      { id: 'A-9', tipo: 'ACUERDO', fecha: '2026-09-25', orden: 1, titulo: 'Acuerdo de la sesión 5', descripcion: '', metadata: {} },
+      { id: 'X-9', tipo: 'TESIS', fecha: '2026-09-25', orden: 2, titulo: 'Avance de tesis', descripcion: '', metadata: {} },
+      { id: 'E-9', tipo: 'EVIDENCIA', fecha: '2026-09-25', orden: 3, titulo: 'Evidencia', descripcion: '', metadata: {} },
+    ],
+  },
+];
+
+describe('TimelineComponent, orden dentro de un mismo día', () => {
+  let fixture: ComponentFixture<TimelineComponent>;
+
+  const titles = (): string[] =>
+    [...fixture.nativeElement.querySelectorAll('li.event article h4')].map((h4: Element) => (h4.textContent ?? '').trim());
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [TimelineComponent] }).compileComponents();
+    fixture = TestBed.createComponent(TimelineComponent);
+    fixture.componentRef.setInput('semesters', MISMO_DIA);
+    fixture.detectChanges();
+  });
+
+  it('respeta la secuencia real del día en vez del orden de llegada', () => {
+    // Por defecto va de más reciente a más antiguo, y dentro del día el último evento
+    // es el que ocurrió después: evidencia, tesis, acuerdo y por último la sesión.
+    expect(titles()).toEqual(['Evidencia', 'Avance de tesis', 'Acuerdo de la sesión 5', 'Sesión 5']);
+  });
+
+  it('la lista ascendente es el reflejo exacto de la descendente', () => {
+    const asc = [...fixture.nativeElement.querySelectorAll('.order button')].find((b: Element) =>
+      (b.textContent ?? '').includes('Más antiguo'),
+    ) as HTMLButtonElement;
+    asc.click();
+    fixture.detectChanges();
+
+    expect(titles()).toEqual(['Sesión 5', 'Acuerdo de la sesión 5', 'Avance de tesis', 'Evidencia']);
+  });
+
+  it('mantiene la secuencia cuando el backend no envía `orden`', () => {
+    fixture.componentRef.setInput('semesters', [{
+      id: 4, numero: 4, activo: true,
+      eventos: [
+        { id: 'B', tipo: 'ACUERDO', fecha: '2026-09-25', titulo: 'Acuerdo', descripcion: '', metadata: {} },
+        { id: 'A', tipo: 'TUTORIA', fecha: '2026-09-25', titulo: 'Sesión', descripcion: '', metadata: {} },
+      ],
+    }]);
+    fixture.detectChanges();
+
+    // Sin `orden` se usa la posición de llegada, que es el orden real del backend.
+    expect(titles()).toEqual(['Sesión', 'Acuerdo']);
+  });
+});

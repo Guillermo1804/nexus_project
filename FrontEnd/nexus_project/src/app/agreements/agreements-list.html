@@ -93,18 +93,18 @@
           <tbody>
             @for (a of agreements; track a.id) {
               <tr>
-                <td>
+                <td data-label="Estudiante">
                   <div class="student-cell">
                     <strong>{{ a.student_nombre || ('Estudiante #' + a.student) }}</strong>
                     <span class="mono">{{ a.student_matricula || '—' }}</span>
                   </div>
                 </td>
-                <td class="description-cell">{{ a.descripcion }}</td>
-                <td>{{ a.semester_numero != null ? ('S' + a.semester_numero) : '—' }}</td>
-                <td>{{ a.responsable_nombre }}</td>
-                <td class="mono date-cell">{{ a.fecha_limite }}</td>
-                <td><span class="badge" [ngClass]="badgeClass(a)">{{ estadoLabel(estadoVisible(a)) }}</span></td>
-                <td>
+                <td class="description-cell" data-label="Compromiso">{{ a.descripcion }}</td>
+                <td data-label="Semestre">{{ a.semester_numero != null ? ('S' + a.semester_numero) : '—' }}</td>
+                <td data-label="Responsable">{{ a.responsable_nombre }}</td>
+                <td class="mono date-cell" data-label="Fecha límite">{{ a.fecha_limite }}</td>
+                <td data-label="Estado"><span class="badge" [ngClass]="badgeClass(a)">{{ estadoLabel(estadoVisible(a)) }}</span></td>
+                <td data-label="Acción">
                   <div class="row-actions">
                     <button
                       type="button"

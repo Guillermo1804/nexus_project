@@ -106,3 +106,68 @@ describe('TutoringObservationsComponent (HU-09)', () => {
     expect(academicStub.getSessionObservations).toHaveBeenCalled();
   });
 });
+
+describe('TutoringObservationsComponent, tutorías que aún no han ocurrido', () => {
+  const manana = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); };
+  const ayer = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); };
+
+  const sesion = (id: number, fecha: string) => ({
+    id, student: 4, semester: 3, fecha_sesion: fecha,
+    modalidad: 'VIRTUAL', resumen: 'Sesión', created_by: 2,
+  });
+
+  /**
+   * El stub se construye por test: Jasmine ejecuta los specs en orden aleatorio y
+   * mutar uno compartido hacía fallar los demás según el orden de salida.
+   */
+  function montar(sesiones: unknown[]): { fixture: ComponentFixture<TutoringObservationsComponent>; component: TutoringObservationsComponent } {
+    const academicStub = {
+      getTutoringSessions: jasmine.createSpy('getTutoringSessions').and.returnValue(
+        of({ count: sesiones.length, next: null, previous: null, results: sesiones }),
+      ),
+      getSessionObservations: jasmine.createSpy('getSessionObservations').and.returnValue(of([])),
+      createSessionObservation: jasmine.createSpy('createSessionObservation'),
+    };
+    TestBed.configureTestingModule({
+      imports: [TutoringObservationsComponent],
+      providers: [
+        { provide: AcademicService, useValue: academicStub },
+        { provide: AuthService, useValue: { user: signal(null), hasPermission: () => true } },
+      ],
+    });
+    const fixture = TestBed.createComponent(TutoringObservationsComponent);
+    fixture.componentRef.setInput('studentId', 4);
+    fixture.componentRef.setInput('preferredSessionId', 30);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance };
+  }
+
+  it('no ofrece en el desplegable una tutoría que todavía no ha ocurrido', () => {
+    const { fixture, component } = montar([sesion(30, manana()), sesion(12, ayer())]);
+
+    expect(component['sessions'].map((s: { id: number }) => s.id)).toEqual([12]);
+    expect(component['futureSessions']).toBe(1);
+
+    const opciones = [...fixture.nativeElement.querySelectorAll('select option')].map(
+      (o: Element) => (o.textContent ?? '').trim(),
+    );
+    expect(opciones.length).toBe(1);
+    expect(opciones[0]).toContain(ayer());
+  });
+
+  it('selecciona por defecto la tutoría realizada, no la programada', () => {
+    const { component } = montar([sesion(30, manana()), sesion(12, ayer())]);
+
+    // Aunque se pida la 30 como preferida, al ser futura no es seleccionable.
+    expect(component['selectedSessionId']).toBe(12);
+  });
+
+  it('explica por qué no hay nada que documentar si sólo hay tutorías futuras', () => {
+    const { fixture } = montar([sesion(30, manana())]);
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('programada');
+    expect(texto).toContain('cuando la sesión ocurre');
+    expect(fixture.nativeElement.querySelector('.observation-form')).toBeNull();
+  });
+});

@@ -62,8 +62,13 @@ export class StudentOverviewComponent implements OnInit {
   @HostListener('document:keydown.escape')
   protected onEscape(): void { this.cerrarModal(); }
 
-  cargarExpediente(): void {
-    this.cargando = true; this.error = '';
+  /**
+   * @param silent refresco posterior a un guardado: no muestra el estado de carga para
+   * no parpadear toda la pantalla, pero trae los datos nuevos de inmediato.
+   */
+  cargarExpediente(silent = false): void {
+    if (!silent) this.cargando = true;
+    this.error = '';
     this.academicService.getStudentOverview(this.studentId).pipe(finalize(() => this.cargando = false)).subscribe({
       next: data => {
         this.overview = data;
@@ -136,8 +141,8 @@ export class StudentOverviewComponent implements OnInit {
     this.activeView = view;
     if (view === 'timeline' && !this.timelineLoaded) this.loadTimeline();
   }
-  protected loadTimeline(): void {
-    if (this.timelineLoading) return;
+  protected loadTimeline(force = false): void {
+    if (this.timelineLoading || (this.timelineLoaded && !force)) return;
     this.timelineLoading = true; this.timelineError = '';
     this.academicService.getTimeline(this.studentId).pipe(finalize(() => this.timelineLoading = false)).subscribe({
       next: data => { this.timeline = data; this.timelineLoaded = true; },
@@ -145,6 +150,16 @@ export class StudentOverviewComponent implements OnInit {
         ? 'La trayectoria no existe o no tiene permisos para consultarla.'
         : 'No fue posible cargar la línea de tiempo.',
     });
+  }
+  /**
+   * Refresco silencioso tras cualquier guardado: el expediente, los acuerdos y la línea
+   * de tiempo se vuelven a pedir para que el cambio se vea sin pulsar «Actualizar». La
+   * trayectoria sólo se recarga si está a la vista; si no, se marca como pendiente.
+   */
+  protected refrescar(): void {
+    this.cargarExpediente(true);
+    if (this.activeView === 'timeline') this.loadTimeline(true);
+    else this.timelineLoaded = false;
   }
   protected isCurrentSemester(semester: Semester): boolean { return semester.id === this.overview?.current_semester?.id; }
   protected semesterStatus(semester: Semester): string { return semester.is_active ? 'EN CURSO' : 'CONCLUIDO'; }
@@ -183,7 +198,7 @@ export class StudentOverviewComponent implements OnInit {
     this.academicService.createSessionAgreement(this.acuerdo.sessionId, {
       descripcion: this.acuerdo.descripcion.trim(), responsable: this.acuerdo.responsable, fecha_limite: this.acuerdo.fecha_limite,
     }).pipe(finalize(() => this.guardandoAcuerdo = false)).subscribe({
-      next: () => { this.cerrarModal(); this.cargarAcuerdos(); },
+      next: () => { this.cerrarModal(); this.refrescar(); },
       error: err => this.errorAcuerdo = err.error?.descripcion?.[0] || err.error?.responsable?.[0] || err.error?.fecha_limite?.[0] || err.error?.detail || 'No fue posible crear el acuerdo.',
     });
   }
@@ -198,7 +213,7 @@ export class StudentOverviewComponent implements OnInit {
     if (!agreement || !next || !this.puedeActualizarAcuerdo(agreement) || this.guardandoEstado) return;
     this.guardandoEstado = true; this.errorEstado = '';
     this.academicService.updateAgreementStatus(agreement.id, next, this.comentarioEstado.trim()).pipe(finalize(() => this.guardandoEstado = false)).subscribe({
-      next: () => { this.cerrarModal(); this.cargarAcuerdos(); },
+      next: () => { this.cerrarModal(); this.refrescar(); },
       error: err => this.errorEstado = err.status === 403 ? 'Sólo el responsable puede actualizar el estado.' : err.error?.estado?.[0] || err.error?.detail || 'No fue posible actualizar el estado del acuerdo.',
     });
   }
@@ -244,9 +259,9 @@ export class StudentOverviewComponent implements OnInit {
     if (semester) this.selectedSemesterId = semester.id;
     setTimeout(() => document.getElementById('agreements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
-  protected tutoriaGuardada(): void { this.cerrarModal(); this.exitoTutoria = 'Tutoría registrada correctamente.'; this.cargarExpediente(); }
-  protected semestreGuardado(): void { this.cerrarModal(); this.cargarExpediente(); }
-  protected evidenciaGuardada(): void { this.cerrarModal(); }
-  protected avanceGuardado(): void { this.cerrarModal(); this.cargarExpediente(); }
-  protected proximaReunionGuardada(): void { this.cargarExpediente(); }
+  protected tutoriaGuardada(): void { this.cerrarModal(); this.exitoTutoria = 'Tutoría registrada correctamente.'; this.refrescar(); }
+  protected semestreGuardado(): void { this.cerrarModal(); this.refrescar(); }
+  protected evidenciaGuardada(): void { this.cerrarModal(); this.refrescar(); }
+  protected avanceGuardado(): void { this.cerrarModal(); this.refrescar(); }
+  protected proximaReunionGuardada(): void { this.refrescar(); }
 }

@@ -475,3 +475,117 @@ describe('StudentOverviewComponent', () => {
     expect(fixture.componentInstance['modal']).withContext('clic dentro del panel').toBe('semestre');
   });
 });
+
+describe('StudentOverviewComponent, refresco automático tras guardar', () => {
+  let component: StudentOverviewComponent;
+  let fixture: ComponentFixture<StudentOverviewComponent>;
+  let http: HttpTestingController;
+  let authService: AuthService;
+
+  const MOCK_TIMELINE = {
+    student: { id: 10, matricula: 'DOC-2026-010', nombre_completo: 'Laura Méndez' },
+    semestres: [] as unknown[],
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [StudentOverviewComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: '10' }) } },
+        },
+      ],
+    }).compileComponents();
+
+    http = TestBed.inject(HttpTestingController);
+    authService = TestBed.inject(AuthService);
+    fixture = TestBed.createComponent(StudentOverviewComponent);
+    component = fixture.componentInstance;
+  });
+
+  afterEach(() => http.verify());
+
+  /** Carga inicial y deja el componente con datos en pantalla. */
+  function cargarInicial(): void {
+    fixture.detectChanges();
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+    fixture.detectChanges();
+  }
+
+  it('recarga el expediente al guardar una evidencia, sin pedir recargar la página', () => {
+    cargarInicial();
+
+    component['evidenciaGuardada']();
+
+    // La siguiente petición es el refresco: si no se hiciera, no habría nada que responder.
+    const refresh = http.expectOne('http://localhost:8000/api/v1/students/10/overview/');
+    expect(refresh.request.method).toBe('GET');
+    refresh.flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+    fixture.detectChanges();
+    http.verify();
+  });
+
+  it('el refresco no parpadea la pantalla: no muestra el estado de carga', () => {
+    cargarInicial();
+    expect(fixture.nativeElement.querySelector('.state-container')).toBeNull();
+
+    component['evidenciaGuardada']();
+    fixture.detectChanges();
+
+    expect(component['cargando']).withContext('refresco silencioso').toBeFalse();
+    expect(fixture.nativeElement.querySelector('.state-container')).toBeNull();
+
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+  });
+
+  it('vuelve a pedir la línea de tiempo aunque ya se haya cargado', () => {
+    authService.user.set({
+      id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
+      role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'], permissions: ['semesters.manage'],
+    });
+    cargarInicial();
+
+    component['selectView']('timeline');
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
+    fixture.detectChanges();
+    expect(component['timelineLoaded']).toBeTrue();
+
+    // Un avance de tesis nuevo tiene que verse sin pasar por «Actualizar».
+    component['avanceGuardado']();
+    fixture.detectChanges();
+
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
+    fixture.detectChanges();
+    http.verify();
+  });
+
+  it('descarta la línea de tiempo vieja si no está a la vista', () => {
+    cargarInicial();
+    expect(component['timelineLoaded']).toBeFalse();
+
+    component['tutoriaGuardada']();
+    fixture.detectChanges();
+
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+    fixture.detectChanges();
+    // No se habrá pedido la trayectoria porque sigue en la vista de resumen.
+    http.verify();
+  });
+});

@@ -411,6 +411,13 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if request.method == 'GET':
             return Response(TutoringObservationSerializer(session.observations.select_related('autor'), many=True).data)
+        # Una tutoría que aún no ocurre no tiene minuta: documentarla sólo daría lugar a
+        # observaciones sobre una sesión que todavía no hay.
+        if session.fecha_sesion > timezone.localdate():
+            return Response(
+                {'detail': 'No se pueden registrar observaciones en una tutoría que aún no se ha realizado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = TutoringObservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         observation = serializer.save(session=session, autor=request.user)

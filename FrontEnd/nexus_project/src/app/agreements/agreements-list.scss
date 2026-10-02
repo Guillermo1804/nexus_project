@@ -383,6 +383,15 @@
   .filters-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
 }
 
+/* El apilado en fichas lo define styles.scss; aquí sólo se anula el ancho mínimo
+   propio del componente, que al ser local ganaría a la regla global. A 880px esta
+   tabla ya no cabe ni en tablet, así que el corte sube más que en las demás. */
+@media (max-width: 900px) {
+  .table-container { overflow-x: visible; }
+  .agreements-table { min-width: 0; }
+  .row-actions { flex-wrap: wrap; }
+}
+
 @media (max-width: 560px) {
   .agreements-page { padding: 24px 16px 36px; }
   .filters-grid { grid-template-columns: 1fr; }

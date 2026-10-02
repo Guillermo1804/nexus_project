@@ -179,11 +179,11 @@
                   <tbody>
                     @for (student of visibleStudents; track student.id) {
                       <tr>
-                        <td><strong>{{ student.nombre_completo }}</strong><span class="mono">{{ student.matricula }}</span></td>
-                        <td>{{ student.programa_doctoral }}</td>
-                        <td>{{ student.cohorte }}</td>
-                        <td><span class="badge" [class.active-badge]="student.estatus_activo" [class.inactive-badge]="!student.estatus_activo">{{ student.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
-                        <td><a [routerLink]="['/expediente', student.id]">Ver Expediente</a></td>
+                        <td data-label="Estudiante"><strong>{{ student.nombre_completo }}</strong><span class="mono">{{ student.matricula }}</span></td>
+                        <td data-label="Programa">{{ student.programa_doctoral }}</td>
+                        <td data-label="Cohorte">{{ student.cohorte }}</td>
+                        <td data-label="Estatus"><span class="badge" [class.active-badge]="student.estatus_activo" [class.inactive-badge]="!student.estatus_activo">{{ student.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
+                        <td data-label="Acciones"><a [routerLink]="['/expediente', student.id]">Ver Expediente</a></td>
                       </tr>
                     }
                   </tbody>

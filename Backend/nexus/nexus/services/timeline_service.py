@@ -26,20 +26,25 @@ class TimelineService:
             Prefetch('evidences', queryset=Evidence.objects.select_related('created_by')),
         ).order_by('numero')
 
-        return [
-            {
+        semestres = []
+        # La numeración de sesiones corre a lo largo de toda la trayectoria: numerarlas
+        # por semestre repetiría «Sesión 1» en cada uno y la lista dejaría de leerse.
+        inicio = 0
+        for semester in semesters:
+            eventos = self._events(semester, inicio)
+            inicio += len(semester.tutoring_sessions.all())
+            semestres.append({
                 'id': semester.id,
                 'numero': semester.numero,
                 'activo': semester.is_active,
-                'eventos': self._events(semester),
-            }
-            for semester in semesters
-        ]
+                'eventos': eventos,
+            })
+        return semestres
 
-    def _events(self, semester):
+    def _events(self, semester, numeracion_inicial=0):
         events = []
         sessions = list(semester.tutoring_sessions.all())
-        for index, session in enumerate(sorted(sessions, key=lambda item: (item.fecha_sesion, item.id)), 1):
+        for index, session in enumerate(sorted(sessions, key=lambda item: (item.fecha_sesion, item.id)), numeracion_inicial + 1):
             events.append({
                 'id': f'tutoria-{session.id}',
                 'tipo': 'TUTORIA',
@@ -95,4 +100,9 @@ class TimelineService:
                 event['enlace_url'] = evidence.enlace_url
             events.append(event)
 
-        return sorted(events, key=lambda event: (event['fecha'], event['id']))
+        # Varios eventos comparten fecha (los acuerdos heredan la de su sesión), así que
+        # `orden` fija la secuencia real dentro del día y el orden deja de depender del id.
+        for position, event in enumerate(events):
+            event['orden'] = position
+
+        return sorted(events, key=lambda event: (event['fecha'], event['orden']))

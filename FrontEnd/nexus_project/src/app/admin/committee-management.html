@@ -47,10 +47,10 @@
             @for (committee of committees; track committee.id) {
               @for (membership of committee.memberships; track membership.id) {
                 <tr>
-                  <td class="student-name">{{ committee.student_name }}</td>
-                  <td>{{ membership.user_email }}</td>
-                  <td><span class="badge role-badge">{{ getCommitteeRoleLabel(membership.role) }}</span></td>
-                  <td><button class="btn-secondary remove-button" type="button" (click)="remove(membership)">Eliminar</button></td>
+                  <td class="student-name" data-label="Estudiante">{{ committee.student_name }}</td>
+                  <td data-label="Cuenta">{{ membership.user_email }}</td>
+                  <td data-label="Participación"><span class="badge role-badge">{{ getCommitteeRoleLabel(membership.role) }}</span></td>
+                  <td data-label="Acción"><button class="btn-secondary remove-button" type="button" (click)="remove(membership, committee.student_name)">Eliminar</button></td>
                 </tr>
               }
             } @empty {
@@ -63,4 +63,8 @@
   </section>
 
   @if (error) { <p class="feedback feedback-error" role="alert">{{ error }}</p> }
+
+  @if (pendingRemoval; as removal) {
+    <app-confirm-dialog [request]="removal.request" (confirmed)="confirmRemove()" (cancelled)="cancelRemove()" />
+  }
 </main>

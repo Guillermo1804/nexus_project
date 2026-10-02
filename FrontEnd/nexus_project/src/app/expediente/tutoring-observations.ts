@@ -21,6 +21,8 @@ export class TutoringObservationsComponent implements OnChanges {
   protected readonly auth = inject(AuthService);
 
   protected sessions: TutoringSession[] = [];
+  /** Sesiones futuras que existen pero todavía no admiten observaciones. */
+  protected futureSessions = 0;
   protected selectedSessionId: number | null = null;
   protected observations: TutoringObservation[] = [];
   protected cargandoSesiones = false;
@@ -91,9 +93,12 @@ export class TutoringObservationsComponent implements OnChanges {
       .pipe(finalize(() => (this.cargandoSesiones = false)))
       .subscribe({
         next: (data) => {
-          this.sessions = data.results
-            .filter((s) => s.student === this.studentId)
-            .sort((a, b) => b.fecha_sesion.localeCompare(a.fecha_sesion) || b.id - a.id);
+          // Una tutoría programada para después no admite comentarios: no ocurrió.
+          const today = new Date().toISOString().slice(0, 10);
+          const propias = data.results.filter((s) => s.student === this.studentId);
+          const pasadas = propias.filter((s) => s.fecha_sesion <= today);
+          this.futureSessions = propias.length - pasadas.length;
+          this.sessions = [...pasadas].sort((a, b) => b.fecha_sesion.localeCompare(a.fecha_sesion) || b.id - a.id);
           const preferred = this.preferredSessionId;
           const exists = preferred != null && this.sessions.some((s) => s.id === preferred);
           this.selectedSessionId = exists ? preferred : this.sessions[0]?.id ?? null;
@@ -101,6 +106,7 @@ export class TutoringObservationsComponent implements OnChanges {
         },
         error: () => {
           this.sessions = [];
+          this.futureSessions = 0;
           this.selectedSessionId = null;
           this.observations = [];
           this.error = 'No fue posible cargar las tutorías del estudiante.';

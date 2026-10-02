@@ -104,7 +104,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .btn-primary,
-.btn-secondary {
+.btn-secondary,
+.btn-danger {
   border-radius: var(--radius-control);
   cursor: pointer;
   font-weight: 600;
@@ -123,8 +124,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
   color: var(--text-secondary);
 }
 
+/* Acción irreversible: el borrado nunca usa el color de la marca. */
+.btn-danger {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: #fff;
+}
+
 .btn-primary:disabled,
-.btn-secondary:disabled { cursor: not-allowed; opacity: .6; }
+.btn-secondary:disabled,
+.btn-danger:disabled { cursor: not-allowed; opacity: .6; }
 
 .input-field {
   background: var(--surface-warm);
@@ -193,6 +202,52 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .agreement-alert-banner { align-items: start; grid-template-columns: auto 1fr auto; }
   .agreement-alert-banner a { grid-column: 2; }
   .agreement-alert-banner > button { grid-column: 3; grid-row: 1; }
+}
+
+/* Tablas apiladas. Por debajo de 900px ninguna de las tablas de la aplicación cabe
+   ya en su columna, y el arrastre horizontal que las salva se pierde en móvil; cada
+   fila pasa a ser una ficha y `data-label` rotula la celda, porque la cabecera deja
+   de estar sobre los datos. */
+@media (max-width: 900px) {
+  .table-scroll,
+  .table-container { overflow-x: visible; }
+  .table-scroll table,
+  .table-container table { min-width: 0; width: 100%; }
+  .table-scroll thead,
+  .table-container thead { display: none; }
+  .table-scroll tbody tr,
+  .table-container tbody tr { border-top: 1px solid var(--border); display: block; padding: 6px 0; }
+  .table-scroll tbody td,
+  .table-container tbody td {
+    align-items: baseline; border-top: 0; display: flex; gap: 12px;
+    min-height: 44px; padding: 8px 16px;
+  }
+  .table-scroll tbody td::before,
+  .table-container tbody td::before {
+    color: var(--text-muted); content: attr(data-label); flex: 0 0 104px;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* La tabla de acuerdos del expediente se arma con divs, no con <table>, pero
+     comparte el mismo criterio: fila apilada y celda rotulada por `data-label`. */
+  .agreement-table { overflow-x: visible; }
+  .agreement-table .table-head { display: none; }
+  .agreement-table .table-row { gap: 6px; grid-template-columns: minmax(0, 1fr); padding: 14px 0; }
+  .agreement-table .table-row > * { align-items: baseline; display: flex; gap: 10px; }
+  .agreement-table .table-row > *::before {
+    color: var(--text-muted); content: attr(data-label); flex: 0 0 108px;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .agreement-table .table-row > strong { display: block; }
+  .agreement-table .table-row > strong::before { display: block; margin-bottom: 4px; }
+}
+
+/* Objetivos táctiles: 44px es el mínimo cómodo con el dedo, y los botones de
+   acción de las tablas no llegaban a eso en móvil. */
+@media (max-width: 680px) {
+  .row-actions { margin-top: 6px; }
+  .row-actions .link-button { min-height: 44px; padding: 8px 0; }
+  .header-actions button { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

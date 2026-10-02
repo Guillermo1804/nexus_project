@@ -33,6 +33,127 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Base de datos poblada exitosamente con datos representativos."))
 
 
+# Seis semanas de uso simulado, de la más antigua a la más reciente.
+# `vencimiento` son los días respecto a HOY, no respecto a la sesión: así el semáforo
+# muestra de todo en lugar de salirse todo vencido, porque todas las sesiones ya pasaron.
+PLAN_SEMANAL = [
+    {
+        "modalidad": "PRESENCIAL",
+        "resumen": "Alineación del protocolo, delimitación del problema y calendarización del primer semestre.",
+        "tema": "Diseño metodológico inicial",
+        "observacion": "La delimitación es pertinente. Se sugiere explicitar la contribución esperada antes de avanzar a la fase piloto.",
+        "acuerdos": [
+            ("Presentar anteproyecto ampliado con justificación y marco conceptual.", -33, Agreement.Status.COMPLETED),
+            ("Construir el instrumento de recolección de datos del piloto.", -26, Agreement.Status.COMPLETED),
+        ],
+        "tesis_pct": 8,
+        "evidencias": [("Cronograma de investigación", "Diagrama de Gantt del primer semestre con hitos y responsables.", "doi")],
+    },
+    {
+        "modalidad": "VIRTUAL",
+        "resumen": "Revisión del estado del arte y depuración de la base bibliográfica inicial.",
+        "tema": "Estado del arte",
+        "observacion": "Buen criterio de inclusión y exclusión. Faltan trabajos de 2025 en el área de analítica longitudinal.",
+        "acuerdos": [
+            ("Completar matriz de comparación de literatura reciente.", -19, Agreement.Status.COMPLETED),
+            ("Depurar la base bibliográfica dejando sólo artículos indexados.", -12, Agreement.Status.COMPLETED),
+        ],
+        "tesis_pct": 15,
+        "evidencias": [("Matriz de comparación bibliográfica", "Cuestionario con 48 referencias y criterios de evaluación.", "doi")],
+    },
+    {
+        "modalidad": "PRESENCIAL",
+        "resumen": "Definición de la fase piloto: muestra, variables y protocolo de recolección.",
+        "tema": "Fase piloto y muestra",
+        "observacion": "La muestra propuesta es defendible. Conviene reportar el poder estadístico del diseño antes de recolectar.",
+        "acuerdos": [
+            ("Definir tamaño de muestra y justificación estadística.", -19, Agreement.Status.COMPLETED),
+            ("Redactar el protocolo de recolección de datos del piloto.", 12, Agreement.Status.IN_PROGRESS),
+            ("Someter el protocolo al comité de ética institucional.", 19, Agreement.Status.IN_PROGRESS),
+        ],
+        "tesis_pct": 24,
+        "evidencias": [("Justificación del tamaño de muestra", "Cálculo de poder estadístico y supuesto mínimos.", "doi")],
+    },
+    {
+        "modalidad": "VIRTUAL",
+        "resumen": "Ejecución del piloto y primeras pruebas del pipeline de procesamiento.",
+        "tema": "Resultados preliminares",
+        "observacion": "El pipeline procesa el lote completo sin errores. Falta versionar el entorno de ejecución.",
+        "acuerdos": [
+            ("Ejecutar el piloto completo y depurar incidencias del pipeline.", -6, Agreement.Status.OVERDUE),
+            ("Documentar el entorno reproducible del experimento.", 5, Agreement.Status.IN_PROGRESS),
+        ],
+        "tesis_pct": 33,
+        "evidencias": [
+            ("Registro de ejecución del piloto", "Bitácora del lote con tiempos y registros de error.", "archivo"),
+            ("Script de preprocessing", "Notebook de limpieza y normalización de las_series.", "archivo"),
+        ],
+    },
+    {
+        "modalidad": "PRESENCIAL",
+        "resumen": "Análisis de resultados del piloto y ajuste del diseño experimental.",
+        "tema": "Análisis e interpretación",
+        "observacion": "Los resultados respaldan la hipótesis de trabajo. Se requiere comparar contra los baselines de la literatura.",
+        "acuerdos": [
+            ("Comparar el modelo propuesto contra los baselines publicados.", -2, Agreement.Status.OVERDUE),
+            ("Incorporar análisis de sensibilidad al pipeline.", 9, Agreement.Status.PENDING),
+            ("Envío del abstract al congreso internacional del programa.", 16, Agreement.Status.PENDING),
+        ],
+        "tesis_pct": 41,
+        "evidencias": [("Gráficas comparativas del piloto", "Curvas de desempeño del modelo frente a la línea base.", "archivo")],
+    },
+    {
+        "modalidad": "HIBRIDA",
+        "resumen": "Consolidación de resultados y apertura del borrador del manuscrito.",
+        "tema": "Redacción del manuscrito",
+        "observacion": "Avance sostenido y buena disposición para la redacción. Revisar figuras en formato de publicación.",
+        "acuerdos": [
+            ("Cerrar el análisis de sensibilidad con todos los parámetros.", 3, Agreement.Status.PENDING),
+            ("Redactar los capítulos 1 y 2 del manuscrito.", 11, Agreement.Status.PENDING),
+        ],
+        "tesis_pct": 48,
+        "evidencias": [("Borrador del manuscrito", "Capítulos de introducción y trabajos relacionados.", "archivo")],
+    },
+]
+
+def componentes_tesis(porcentaje):
+    """Reparte el avance global entre los seis componentes reglamentarios.
+
+    Los pesos suman 100, así que el conjunto siempre cuadra con el porcentaje que
+    ve el usuario en la interfaz.
+    """
+    pesos = [
+        ("Protocolo de Investigación", 10),
+        ("Estado del Arte y Antecedentes", 15),
+        ("Marco Teórico y Conceptual", 15),
+        ("Metodología y Diseño Experimental", 25),
+        ("Análisis e Interpretación de Resultados", 20),
+        ("Redacción del Documento de Tesis", 15),
+    ]
+    asignado = 0
+    componentes = {}
+    for nombre, peso in pesos:
+        parte = round(porcentaje * peso / 100)
+        asignado += parte
+        componentes[nombre] = {
+            "porcentaje": parte,
+            "estado": "CONCLUIDO" if parte >= peso else "EN PROCESO" if parte > 0 else "PENDIENTE",
+        }
+    # El redondeo por componente deja residuo: se ajusta el último para que sume bien.
+    ultimo = pesos[-1][0]
+    componentes[ultimo]["porcentaje"] += porcentaje - asignado
+    if componentes[ultimo]["porcentaje"] < 0:
+        componentes[ultimo]["porcentaje"] = 0
+    return componentes
+
+
+PLAN_PRODUCCION = [
+    ("Artículo JCR Q1", "ACEPTADO", -33),
+    ("Artículo de conferencia", "ACEPTADO", -19),
+    ("Capítulo de libro", "ENVIADO", -5),
+]
+
+
 def populate():
     default_password = "Admin1234!"
     now = timezone.now()
@@ -159,14 +280,15 @@ def populate():
             },
         ]
 
-        # Fechas canónicas semestrales
+        # Calendario semestral anclado a hoy: el último semestre es el que está en
+        # curso, de modo que la interfaz nunca muestre un semestre «activo» ya cerrado.
         semesters_calendar = [
-            (1, datetime.date(2024, 1, 15), datetime.date(2024, 6, 30)),
-            (2, datetime.date(2024, 8, 15), datetime.date(2024, 12, 20)),
-            (3, datetime.date(2025, 1, 15), datetime.date(2025, 6, 30)),
-            (4, datetime.date(2025, 8, 15), datetime.date(2025, 12, 20)),
-            (5, datetime.date(2026, 1, 15), datetime.date(2026, 6, 30)),
-            (6, datetime.date(2026, 8, 15), datetime.date(2026, 12, 20)),
+            (
+                numero,
+                today - datetime.timedelta(days=30 * 6 * (6 - numero)),
+                today - datetime.timedelta(days=30 * 6 * (6 - numero) - 150),
+            )
+            for numero in range(1, 7)
         ]
 
         for sdata in students_info:
@@ -187,6 +309,7 @@ def populate():
             # -----------------------------------------------------------------
             count = sdata["semestres_count"]
             active_sem = None
+            created_semesters = []
             for idx in range(count):
                 num, ini, fin = semesters_calendar[idx]
                 is_active = (idx == count - 1)
@@ -199,6 +322,7 @@ def populate():
                         "is_active": is_active,
                     },
                 )
+                created_semesters.append(sem)
                 if is_active:
                     active_sem = sem
 
@@ -234,218 +358,126 @@ def populate():
             )
 
             # -----------------------------------------------------------------
-            # 6. TUTORÍAS (TutoringSession, Participant, Observation)
+            # 6-9. SIMULACIÓN DE SEIS SEMANAS
             # -----------------------------------------------------------------
-            # Sesión 1: Hace 10 días
-            sess1, _ = TutoringSession.objects.get_or_create(
-                student=student,
-                semester=active_sem,
-                fecha_sesion=today - datetime.timedelta(days=10),
-                defaults={
-                    "modalidad": TutoringSession.Modality.IN_PERSON,
-                    "resumen": "Revisión exhaustiva del protocolo y definición de los experimentos de la fase piloto.",
-                    "proxima_reunion_fecha": today - datetime.timedelta(days=3),
-                    "proxima_reunion_notas": "Traer avances del análisis estadístico y gráficas comparativas.",
-                    "created_by": sdata["tutor"],
-                },
-            )
-            TutoringParticipant.objects.get_or_create(
-                session=sess1, user=sdata["tutor"], defaults={"rol_en_sesion": "Asesor Principal", "asistencia": True}
-            )
-            TutoringParticipant.objects.get_or_create(
-                session=sess1, user=sdata["user"], defaults={"rol_en_sesion": "Doctorando", "asistencia": True}
-            )
-            TutoringObservation.objects.get_or_create(
-                session=sess1,
-                autor=sdata["tutor"],
-                defaults={
-                    "tema_revisado": "Fase Piloto y Metodología",
-                    "observaciones_detalladas": "El estudiante presenta solidez en la justificación. Se recomienda afinar el tamaño de muestra.",
-                },
-            )
+            # Un bloque por semana, de la más antigua a la más reciente, para que
+            # las pantallas de los tres sprints muestren una trayectoria viva:
+            # tutorías con minutas, acuerdos en todos sus estados, avances de
+            # tesis y evidencias. Todo es idempotente: volver a ejecutar el
+            # comando no duplica nada.
+            total_semanas = len(PLAN_SEMANAL)
+            semanas_por_semestre = 2
+            for indice, plan in enumerate(PLAN_SEMANAL):
+                # Las semanas más recientes caen en el semestre en curso y las anteriores
+                # retroceden por semestres completos. Repartirlas de forma intercalada
+                # haría que «Sesión 3» fuese más reciente que «Sesión 6».
+                retrocede = (total_semanas - 1 - indice) // semanas_por_semestre
+                semestre = created_semesters[max(0, len(created_semesters) - 1 - retrocede)]
+                fecha_sesion = today - datetime.timedelta(days=7 * (total_semanas - indice))
+                es_ultima = indice == total_semanas - 1
 
-            # Sesión 2: Hace 3 días (la más reciente)
-            sess2, _ = TutoringSession.objects.get_or_create(
-                student=student,
-                semester=active_sem,
-                fecha_sesion=today - datetime.timedelta(days=3),
-                defaults={
-                    "modalidad": TutoringSession.Modality.HYBRID,
-                    "resumen": "Evaluación de resultados intermedios y preparación del borrador de artículo científico.",
-                    "proxima_reunion_fecha": today + datetime.timedelta(days=11),
-                    "proxima_reunion_notas": "Revisión final de figuras y referencias en formato IEEE.",
-                    "created_by": sdata["tutor"],
-                },
-            )
-            TutoringParticipant.objects.get_or_create(
-                session=sess2, user=sdata["tutor"], defaults={"rol_en_sesion": "Asesor Principal", "asistencia": True}
-            )
-            TutoringParticipant.objects.get_or_create(
-                session=sess2, user=sdata["coadvisor"], defaults={"rol_en_sesion": "Coasesor", "asistencia": True}
-            )
-            TutoringParticipant.objects.get_or_create(
-                session=sess2, user=sdata["user"], defaults={"rol_en_sesion": "Doctorando", "asistencia": True}
-            )
-            TutoringObservation.objects.get_or_create(
-                session=sess2,
-                autor=sdata["coadvisor"],
-                defaults={
-                    "tema_revisado": "Redacción de Manuscrito JCR",
-                    "observaciones_detalladas": "Se observa buen progreso. Es indispensable contrastar contra los modelos baseline de la literatura.",
-                },
-            )
-
-            # -----------------------------------------------------------------
-            # 7. ACUERDOS Y COMPROMISOS (Agreement con Semáforos)
-            # -----------------------------------------------------------------
-            # A. CONCLUIDO (hace 8 días)
-            agr1, _ = Agreement.objects.get_or_create(
-                session=sess1,
-                student=student,
-                descripcion="Entrega de revisión bibliográfica y estado del arte indexado en Scopus.",
-                defaults={
-                    "responsable": sdata["user"],
-                    "fecha_limite": today - datetime.timedelta(days=8),
-                    "estado": Agreement.Status.COMPLETED,
-                    "fecha_conclusion": today - datetime.timedelta(days=8),
-                    "created_by": sdata["tutor"],
-                },
-            )
-            AgreementAuditLog.objects.get_or_create(
-                agreement=agr1,
-                estado_anterior=Agreement.Status.PENDING,
-                estado_nuevo=Agreement.Status.COMPLETED,
-                defaults={"user": sdata["tutor"], "comentario": "Revisión aprobada sin observaciones."},
-            )
-
-            # B. EN PROCESO (vence en 5 días)
-            agr2, _ = Agreement.objects.get_or_create(
-                session=sess2,
-                student=student,
-                descripcion="Implementación del pipeline de pruebas automatizadas y benchmark de latencia.",
-                defaults={
-                    "responsable": sdata["user"],
-                    "fecha_limite": today + datetime.timedelta(days=5),
-                    "estado": Agreement.Status.IN_PROGRESS,
-                    "created_by": sdata["tutor"],
-                },
-            )
-            AgreementAuditLog.objects.get_or_create(
-                agreement=agr2,
-                estado_anterior=Agreement.Status.PENDING,
-                estado_nuevo=Agreement.Status.IN_PROGRESS,
-                defaults={"user": sdata["user"], "comentario": "Código cargado al repositorio institucional."},
-            )
-
-            # C. PENDIENTE (vence en 12 días)
-            Agreement.objects.get_or_create(
-                session=sess2,
-                student=student,
-                descripcion="Envío del abstract y registro al Congreso Internacional de Ciencias Computacionales.",
-                defaults={
-                    "responsable": sdata["user"],
-                    "fecha_limite": today + datetime.timedelta(days=12),
-                    "estado": Agreement.Status.PENDING,
-                    "created_by": sdata["tutor"],
-                },
-            )
-
-            # D. VENCIDO (venció hace 2 días para activar el semáforo magenta)
-            Agreement.objects.get_or_create(
-                session=sess1,
-                student=student,
-                descripcion="Validación de las cartas de autorización del comité de ética institucional.",
-                defaults={
-                    "responsable": sdata["user"],
-                    "fecha_limite": today - datetime.timedelta(days=2),
-                    "estado": Agreement.Status.OVERDUE,
-                    "created_by": sdata["tutor"],
-                },
-            )
-
-            # -----------------------------------------------------------------
-            # 8. AVANCE DE TESIS (ThesisProgress con los 6 componentes)
-            # -----------------------------------------------------------------
-            pct = sdata["thesis_pct"]
-            ThesisProgress.objects.update_or_create(
-                student=student,
-                semester=active_sem,
-                defaults={
-                    "porcentaje_avance": pct,
-                    "componentes_json": {
-                        "Protocolo de Investigación (10%)": "Aprobado",
-                        "Estado del Arte y Antecedentes (15%)": "Completado",
-                        "Marco Teórico y Conceptual (15%)": "En revisión",
-                        "Metodología y Diseño Experimental (25%)": "En ejecución",
-                        "Análisis e Interpretación de Resultados (20%)": "Preliminar",
-                        "Redacción del Documento de Tesis (15%)": "Borrador de capítulos 1 y 2",
+                # --- Tutoría, participantes y minuta -----------------------------
+                sesion, _ = TutoringSession.objects.get_or_create(
+                    student=student,
+                    semester=semestre,
+                    fecha_sesion=fecha_sesion,
+                    defaults={
+                        "modalidad": plan["modalidad"],
+                        "resumen": plan["resumen"],
+                        # Sólo la última sesión deja rendezvous pendiente: el resto ya
+                        # cumplió su próxima reunión, que es lo que pasa en la práctica.
+                        "proxima_reunion_fecha": (today + datetime.timedelta(days=7)) if es_ultima else fecha_sesion + datetime.timedelta(days=7),
+                        "proxima_reunion_notas": "Traer resultados del piloto y figuras comparativas." if es_ultima else "Compromisos de la sesión anterior revisados.",
+                        "created_by": sdata["tutor"],
                     },
-                    "observaciones": f"Trayectoria doctoral en curso regular con avance global acumulado del {pct}%. Cumple con los hitos reglamentarios.",
-                    "registrado_por": sdata["tutor"],
-                    "fecha_registro": today - datetime.timedelta(days=3),
-                },
-            )
+                )
+                TutoringParticipant.objects.get_or_create(
+                    session=sesion, user=sdata["tutor"], defaults={"rol_en_sesion": "Asesor Principal", "asistencia": True}
+                )
+                TutoringParticipant.objects.get_or_create(
+                    session=sesion, user=sdata["user"], defaults={"rol_en_sesion": "Doctorando", "asistencia": True}
+                )
+                if indice % 2 == 1:
+                    TutoringParticipant.objects.get_or_create(
+                        session=sesion, user=sdata["coadvisor"], defaults={"rol_en_sesion": "Coasesor", "asistencia": True}
+                    )
+                    TutoringObservation.objects.get_or_create(
+                        session=sesion,
+                        autor=sdata["coadvisor"],
+                        defaults={"tema_revisado": plan["tema"], "observaciones_detalladas": plan["observacion"]},
+                    )
+                else:
+                    TutoringObservation.objects.get_or_create(
+                        session=sesion,
+                        autor=sdata["tutor"],
+                        defaults={"tema_revisado": plan["tema"], "observaciones_detalladas": plan["observacion"]},
+                    )
 
-            # -----------------------------------------------------------------
-            # 9. PRODUCCIÓN CIENTÍFICA, EVENTOS Y ESTANCIAS
-            # -----------------------------------------------------------------
-            # Publicación
-            Publication.objects.get_or_create(
-                student=student,
-                titulo=f"Deep Learning Architectures for Distributed Trajectory Analytics in Posgraduate Systems",
-                defaults={
-                    "semester": active_sem,
-                    "autores_texto": f"{student.nombre_completo}, {sdata['tutor'].first_name} {sdata['tutor'].last_name}",
-                    "tipo": "Artículo JCR Q1",
-                    "revista_editorial": "IEEE Transactions on Neural Networks and Learning Systems",
-                    "estado": "ACEPTADO",
-                    "fecha_publicacion": today - datetime.timedelta(days=6),
-                    "doi_url": f"https://doi.org/10.1109/TNNLS.2026.{student.id}0421",
-                },
-            )
+                # --- Acuerdos y bitácora de estados ------------------------------
+                for descripcion, vencimiento, estado in plan["acuerdos"]:
+                    # El vencimiento se mide desde hoy, no desde la sesión: así el
+                    # semáforo reparte entre concluidos, vencidos y por cumplir.
+                    fecha_limite = today + datetime.timedelta(days=vencimiento)
+                    # El estado efectivo se recalcula: un acuerdo con fecha pasada y sin
+                    # concluir aparece vencido, que es lo que el semáforo debe mostrar.
+                    estado_real = Agreement.Status.OVERDUE if estado != Agreement.Status.COMPLETED and fecha_limite < today else estado
+                    acuerdo, _ = Agreement.objects.get_or_create(
+                        student=student,
+                        descripcion=descripcion,
+                        defaults={
+                            "session": sesion,
+                            "responsable": sdata["user"],
+                            "fecha_limite": fecha_limite,
+                            "estado": estado_real,
+                            "fecha_conclusion": fecha_limite if estado_real == Agreement.Status.COMPLETED else None,
+                            "created_by": sdata["tutor"],
+                        },
+                    )
+                    if estado_real == Agreement.Status.COMPLETED:
+                        AgreementAuditLog.objects.get_or_create(
+                            agreement=acuerdo,
+                            estado_anterior=Agreement.Status.PENDING,
+                            estado_nuevo=Agreement.Status.COMPLETED,
+                            defaults={"user": sdata["user"], "comentario": "Entregable recibido y revisado por el asesor."},
+                        )
+                    elif estado_real == Agreement.Status.IN_PROGRESS:
+                        AgreementAuditLog.objects.get_or_create(
+                            agreement=acuerdo,
+                            estado_anterior=Agreement.Status.PENDING,
+                            estado_nuevo=Agreement.Status.IN_PROGRESS,
+                            defaults={"user": sdata["user"], "comentario": "Trabajo iniciado; avance visible en el repositorio institucional."},
+                        )
 
-            # Evento Académico
-            AcademicEvent.objects.get_or_create(
-                student=student,
-                nombre_evento="Congreso Internacional de Computación y Posgrados Científicos (CICOP 2026)",
-                defaults={
-                    "semester": active_sem,
-                    "tipo_evento": "CONGRESO_INTERNACIONAL",
-                    "titulo_ponencia": "Modelos Asimétricos y Visualización Longitudinal de Datos Académicos",
-                    "fecha_presentacion": today - datetime.timedelta(days=8),
-                    "sede_lugar": "Ciudad de México / Virtual",
-                    "modalidad": "HIBRIDA",
-                },
-            )
+                # --- Avance de tesis ---------------------------------------------
+                ThesisProgress.objects.get_or_create(
+                    student=student,
+                    semester=semestre,
+                    fecha_registro=fecha_sesion,
+                    defaults={
+                        "porcentaje_avance": plan["tesis_pct"],
+                        "componentes_json": componentes_tesis(plan["tesis_pct"]),
+                        "observaciones": plan["observacion"],
+                        "registrado_por": sdata["tutor"],
+                    },
+                )
 
-            # Estancia de Investigación
-            ResearchStay.objects.get_or_create(
-                student=student,
-                institucion_receptora="Centro de Investigación en Computación (CIC - IPN)",
-                defaults={
-                    "semester": active_sem,
-                    "pais": "México",
-                    "fecha_inicio": today - datetime.timedelta(days=12),
-                    "fecha_fin": today + datetime.timedelta(days=45),
-                    "responsable_estancia": "Dr. Fernando Del Razo",
-                    "objetivos": "Validación experimental en clúster de alto rendimiento y GPU distribuida.",
-                    "resultados": "Generación de benchmarks reproducibles y análisis comparativo preliminar.",
-                },
-            )
+                # --- Evidencias --------------------------------------------------
+                for numero, (titulo, descripcion, tipo) in enumerate(plan["evidencias"], start=1):
+                    Evidence.objects.get_or_create(
+                        student=student,
+                        titulo=f"{titulo}",
+                        defaults={
+                            "semester": semestre,
+                            "tipo": Evidence.EvidenceType.LOCAL_FILE if tipo == "archivo" else Evidence.EvidenceType.DOI_LINK,
+                            "actividad_tipo": Evidence.ActivityType.THESIS,
+                            "descripcion": descripcion,
+                            "enlace_url": "" if tipo == "archivo" else f"https://nexus.edu/evidencias/{student.id}/{indice + 1}-{numero}",
+                            "fecha_carga": fecha_sesion + datetime.timedelta(days=numero),
+                            "created_by": sdata["user"],
+                        },
+                    )
 
-            # Otro Producto
-            OtherProduct.objects.get_or_create(
-                student=student,
-                titulo="NEXUS Benchmark Toolkit v1.0",
-                defaults={
-                    "semester": active_sem,
-                    "tipo_producto": "SOFTWARE",
-                    "descripcion": "Librería Python para el procesamiento longitudinal de métricas de tutoría y seguimiento.",
-                    "fecha_registro": today - datetime.timedelta(days=5),
-                },
-            )
-
-            # Evidencia Digital
+            # Evidencia de enlace, una vez y fuera de la cadencia semanal.
             Evidence.objects.get_or_create(
                 student=student,
                 titulo="Constancia de Aceptación de Ponencia CICOP 2026",
@@ -455,8 +487,64 @@ def populate():
                     "actividad_tipo": Evidence.ActivityType.OTHER,
                     "descripcion": "Constancia con firma electrónica institucional y folio de registro.",
                     "enlace_url": "https://cicop2026.org/certificates/val-48892",
-                    "fecha_carga": today - datetime.timedelta(days=7),
+                    "fecha_carga": today - datetime.timedelta(days=19),
                     "created_by": sdata["user"],
+                },
+            )
+
+            # -----------------------------------------------------------------
+            # 9. PRODUCCIÓN CIENTÍFICA Y ESTANCIAS
+            # -----------------------------------------------------------------
+            for indice, (tipo_producto, estado, dias) in enumerate(PLAN_PRODUCCION, start=1):
+                Publication.objects.get_or_create(
+                    student=student,
+                    titulo=f"{tipo_producto} sobre analítica longitudinal en posgrado {student.id}-{indice}",
+                    defaults={
+                        "semester": active_sem,
+                        "autores_texto": f"{student.nombre_completo}, {sdata['tutor'].first_name} {sdata['tutor'].last_name}",
+                        "tipo": tipo_producto,
+                        "revista_editorial": "IEEE Transactions on Neural Networks and Learning Systems",
+                        "estado": estado,
+                        "fecha_publicacion": today - datetime.timedelta(days=dias),
+                        "doi_url": f"https://doi.org/10.1109/TNNLS.2026.{student.id}{indice:02d}",
+                    },
+                )
+
+            ResearchStay.objects.get_or_create(
+                student=student,
+                institucion_receptora="Centro de Investigación en Computación (CIC - IPN)",
+                defaults={
+                    "semester": active_sem,
+                    "pais": "México",
+                    "fecha_inicio": today - datetime.timedelta(days=42),
+                    "fecha_fin": today + datetime.timedelta(days=45),
+                    "responsable_estancia": "Dr. Fernando Del Razo",
+                    "objetivos": "Validación experimental en clúster de alto rendimiento y GPU distribuida.",
+                    "resultados": "Generación de benchmarks reproducibles y análisis comparativo preliminar.",
+                },
+            )
+
+            AcademicEvent.objects.get_or_create(
+                student=student,
+                nombre_evento="Congreso Internacional de Computación y Posgrados Científicos (CICOP 2026)",
+                defaults={
+                    "semester": active_sem,
+                    "tipo_evento": "CONGRESO_INTERNACIONAL",
+                    "titulo_ponencia": "Modelos Asimétricos y Visualización Longitudinal de Datos Académicos",
+                    "fecha_presentacion": today - datetime.timedelta(days=19),
+                    "sede_lugar": "Ciudad de México / Virtual",
+                    "modalidad": "HIBRIDA",
+                },
+            )
+
+            OtherProduct.objects.get_or_create(
+                student=student,
+                titulo="NEXUS Benchmark Toolkit",
+                defaults={
+                    "semester": active_sem,
+                    "tipo_producto": "SOFTWARE",
+                    "descripcion": "Librería Python para el procesamiento longitudinal de métricas de tutoría y seguimiento.",
+                    "fecha_registro": today - datetime.timedelta(days=12),
                 },
             )
 

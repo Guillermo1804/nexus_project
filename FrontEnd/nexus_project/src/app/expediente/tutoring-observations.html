@@ -22,7 +22,13 @@
   @if (cargandoSesiones) {
     <p role="status">Cargando tutorías...</p>
   } @else if (sessions.length === 0) {
-    <p class="empty-hint">Registre una tutoría para poder documentar observaciones.</p>
+    <p class="empty-hint">
+      @if (futureSessions > 0) {
+        Sólo hay {{ futureSessions }} tutoría{{ futureSessions === 1 ? '' : 's' }} programada{{ futureSessions === 1 ? '' : 's' }} y todavía ninguna realizada. Las observaciones se registran cuando la sesión ocurre.
+      } @else {
+        Registre una tutoría para poder documentar observaciones.
+      }
+    </p>
   } @else {
     @if (puedeRegistrar()) {
       <form class="observation-form" [formGroup]="form" (ngSubmit)="submit()" aria-label="Registrar observación">
