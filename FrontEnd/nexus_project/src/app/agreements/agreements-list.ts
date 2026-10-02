@@ -47,24 +47,60 @@ export class AgreementsListComponent implements OnInit {
 
   protected filtroStudent = '';
   protected filtroSemester = '';
-  protected filtroEstado = '';
   protected filtroResponsable = '';
   protected filtroFechaDesde = '';
   protected filtroFechaHasta = '';
   protected filtroBusqueda = '';
-  /** Orden por fecha límite ascendente: lo más urgente, vencidos incluidos, va primero. */
-  protected filtroOrden = 'fecha_limite';
-  protected readonly ordenes: { value: string; label: string }[] = [
-    { value: 'fecha_limite', label: 'Fecha límite (más próxima primero)' },
-    { value: 'fecha_limite_desc', label: 'Fecha límite (más lejana primero)' },
-    { value: 'estado', label: 'Estado (A–Z)' },
-    { value: 'estado_desc', label: 'Estado (Z–A)' },
-    { value: 'estudiante', label: 'Estudiante (A–Z)' },
-    { value: 'estudiante_desc', label: 'Estudiante (Z–A)' },
-    { value: 'responsable', label: 'Responsable (A–Z)' },
-    { value: 'responsable_desc', label: 'Responsable (Z–A)' },
-    { value: 'creado_desc', label: 'Añadidos recientemente' },
+  /** Estados marcados a la vez; vacío significa todos. Igual que la línea de tiempo. */
+  protected estadosSeleccionados: string[] = [];
+  /** Por urgencia: vencidos, luego lo que vence y por último lo ya concluido. */
+  protected filtroOrden = 'urgencia';
+
+  protected readonly ordenes: { value: string; label: string; corto: string }[] = [
+    { value: 'urgencia', label: 'Urgencia (lo que requiere atención)', corto: 'Urgencia' },
+    { value: 'urgencia_desc', label: 'Urgencia (lo menos urgente primero)', corto: 'Menos urgente' },
+    { value: 'fecha_limite', label: 'Fecha límite: la más próxima primero', corto: 'Vence pronto' },
+    { value: 'fecha_limite_desc', label: 'Fecha límite: la más lejana primero', corto: 'Vence tarde' },
+    { value: 'responsable', label: 'Responsable (A–Z)', corto: 'Responsable' },
+    { value: 'estudiante', label: 'Estudiante (A–Z)', corto: 'Estudiante' },
+    { value: 'creado_desc', label: 'Añadidos recientemente', corto: 'Recientes' },
   ];
+
+  protected readonly estadosDisponibles: { value: string; label: string }[] = [
+    { value: 'PENDIENTE', label: 'Pendiente' },
+    { value: 'EN_PROCESO', label: 'En proceso' },
+    { value: 'VENCIDO', label: 'Vencido' },
+    { value: 'CONCLUIDO', label: 'Concluido' },
+  ];
+
+  protected isEstadoActivo(estado: string): boolean {
+    return this.estadosSeleccionados.includes(estado);
+  }
+
+  /** Los estados se acumulan, igual que los filtros de la línea de tiempo. */
+  protected alternarEstado(estado: string): void {
+    this.estadosSeleccionados = this.isEstadoActivo(estado)
+      ? this.estadosSeleccionados.filter((item) => item !== estado)
+      : [...this.estadosSeleccionados, estado];
+    this.pagina = 1;
+    this.cargarAcuerdos();
+  }
+
+  protected limpiarEstados(): void {
+    this.estadosSeleccionados = [];
+    this.pagina = 1;
+    this.cargarAcuerdos();
+  }
+
+  /** Cuántos acuerdos hay en cada estado, para que el filtro diga si dalgo habría resultados. */
+  protected conteoPorEstado(): Record<string, number> {
+    const conteo: Record<string, number> = {};
+    for (const agreement of this.agreements) {
+      const clave = this.estadoVisible(agreement);
+      conteo[clave] = (conteo[clave] ?? 0) + 1;
+    }
+    return conteo;
+  }
 
   protected pagina = 1;
   protected total = 0;
@@ -89,7 +125,8 @@ export class AgreementsListComponent implements OnInit {
   ngOnInit(): void {
     const queryParams = this.route.snapshot.queryParamMap;
     this.filtroStudent = queryParams.get('student') ?? '';
-    this.filtroEstado = queryParams.get('vencido') === 'true' ? 'VENCIDO' : queryParams.get('estado') ?? '';
+    const estadoInicial = queryParams.get('vencido') === 'true' ? 'VENCIDO' : queryParams.get('estado') ?? '';
+    this.estadosSeleccionados = estadoInicial ? [estadoInicial] : [];
     this.cargarEstudiantes();
     if (this.filtroStudent) this.onStudentChange();
     this.cargarAcuerdos();
@@ -108,12 +145,12 @@ export class AgreementsListComponent implements OnInit {
   protected limpiarFiltros(): void {
     this.filtroStudent = '';
     this.filtroSemester = '';
-    this.filtroEstado = '';
+    this.estadosSeleccionados = [];
     this.filtroResponsable = '';
     this.filtroFechaDesde = '';
     this.filtroFechaHasta = '';
     this.filtroBusqueda = '';
-    this.filtroOrden = 'fecha_limite';
+    this.filtroOrden = 'urgencia';
     this.semesters = [];
     this.pagina = 1;
     this.cargarAcuerdos();
@@ -128,7 +165,7 @@ export class AgreementsListComponent implements OnInit {
 
   protected get filtrosActivos(): number {
     return [
-      this.filtroStudent, this.filtroSemester, this.filtroEstado, this.filtroResponsable,
+      this.filtroStudent, this.filtroSemester, this.filtroResponsable, this.estadosSeleccionados.length ? 'x' : '',
       this.filtroFechaDesde, this.filtroFechaHasta, this.filtroBusqueda.trim(),
     ].filter((value) => !!value).length;
   }
@@ -178,9 +215,26 @@ export class AgreementsListComponent implements OnInit {
     return 'badge-pending';
   }
 
+  /**
+   * Un clic siempre responde. Antes el botón iba deshabilitado para los acuerdos
+   * vencidos y sólo explicaba el motivo en un `title` de hover, que en móvil no
+   * existe: el clic no hacía nada y parecía una aplicación colgada. Ahora el panel
+   * se abre en modo de sólo lectura y explica allí por qué no se puede modificar.
+   */
   protected abrirEdicion(a: Agreement, event?: Event): void {
-    if (a.is_vencido) return;
+    if (a.is_vencido) {
+      this.toasts.info(
+        `«${this.corte(a.descripcion)}» está vencido: se abre en lectura para que puedas revisar su bitácora, pero no admite cambios.`,
+      );
+      this.openDrawer(a, 'audit', event);
+      return;
+    }
     this.openDrawer(a, 'edit', event);
+  }
+
+  /** Recorta el texto del acuerdo para que el aviso quepa en una línea. */
+  private corte(texto: string, maximo = 48): string {
+    return texto.length > maximo ? `${texto.slice(0, maximo)}…` : texto;
   }
 
   protected verAuditoria(a: Agreement, event?: Event): void {
@@ -341,8 +395,7 @@ export class AgreementsListComponent implements OnInit {
     const responsable = Number(this.filtroResponsable);
     if (Number.isInteger(responsable) && responsable > 0) filters.responsable = responsable;
 
-    if (this.filtroEstado === 'VENCIDO') filters.vencido = true;
-    else if (this.filtroEstado) filters.estado = this.filtroEstado;
+    if (this.estadosSeleccionados.length) filters.estados = this.estadosSeleccionados.join(',');
     if (this.filtroFechaDesde) filters.fecha_desde = this.filtroFechaDesde;
     if (this.filtroFechaHasta) filters.fecha_hasta = this.filtroFechaHasta;
     if (this.filtroBusqueda.trim()) filters.busqueda = this.filtroBusqueda.trim();

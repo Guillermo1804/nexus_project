@@ -26,7 +26,15 @@
         <a routerLink="/acuerdos" routerLinkActive="active" class="agreements-link">
           <span>Acuerdos</span>
           @if (agreementAlertCount() > 0) {
-            <span class="alert-count" aria-label="{{ agreementAlertCount() }} alertas de acuerdos">{{ agreementAlertCount() }}</span>
+            <span
+              class="alert-count"
+              [class.critical]="hasVencidos()"
+              [title]="alertSummary()"
+              [attr.aria-label]="alertSummary()"
+            >
+              <span class="alert-icon" aria-hidden="true">!</span>
+              {{ agreementAlertCount() }}
+            </span>
           }
         </a>
       }

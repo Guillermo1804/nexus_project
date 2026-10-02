@@ -202,6 +202,8 @@ export interface AgreementFilters {
   student?: number;
   semester?: number;
   estado?: string;
+  /** Varios estados separados por coma; `VENCIDO` es un estado derivado. */
+  estados?: string;
   responsable?: number;
   vencido?: boolean;
   fecha_limite?: string;

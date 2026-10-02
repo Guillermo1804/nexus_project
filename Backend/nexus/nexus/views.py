@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from django.db import connection, transaction
-from django.db.models import CharField, Prefetch, Q
+from django.db.models import Case, CharField, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
 
 from .models import (
@@ -349,7 +349,7 @@ class TimelineView(APIView):
                 'matricula': student.matricula,
                 'nombre_completo': student.nombre_completo,
             },
-            'semestres': TimelineService(student).build(),
+            'semestres': TimelineService(student).build(base_url=request.build_absolute_uri('/')),
         })
 
 
@@ -486,6 +486,25 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
             queryset = queryset.filter(responsable_id=responsable)
         if semester := self.request.query_params.get('semester'):
             queryset = queryset.filter(session__semester_id=semester)
+        # Varios estados a la vez, como los filtros múltiples de la línea de tiempo.
+        if estados := self.request.query_params.get('estados'):
+            propios, vencidos = [], []
+            for estado in estados.split(','):
+                estado = estado.strip()
+                if estado == Agreement.Status.OVERDUE:
+                    vencidos.append(estado)
+                elif estado in Agreement.Status.values:
+                    propios.append(estado)
+            condiciones = Q()
+            if propios:
+                condiciones |= Q(estado__in=propios)
+            if vencidos:
+                # Vencido es un estado derivado: no concluido y con fecha ya pasada.
+                # Filtrar sólo por `estado` no basta, porque hay filas guardadas como
+                # VENCIDO y otras que únicamente lo cumplen por su fecha.
+                condiciones |= ~Q(estado=Agreement.Status.COMPLETED) & Q(fecha_limite__lt=timezone.localdate())
+            if condiciones:
+                queryset = queryset.filter(condiciones)
         if estado := self.request.query_params.get('estado'):
             if estado == Agreement.Status.OVERDUE:
                 queryset = queryset.exclude(estado=Agreement.Status.COMPLETED).filter(
@@ -524,12 +543,27 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
     }
 
     def ordenamiento(self):
-        """Ordena por el campo pedido y, si no es válido, por fecha límite.
+        """Ordena por el campo pedido y, si no es válido, por urgencia.
 
-        Antes sólo había fecha límite ascendente: los acuerdos vencidos quedaban
-        repartidos y sin forma de cambiarlo.
+        Antes sólo había fecha límite ascendente. Ordenando por esa fecha los
+        vencidos ya salían primero, pero era un efecto colateral invisible: la
+        pantalla no explicaba que estuviera ordenada por urgencia. `urgencia` lo
+        hace explícito y separa lo concluido, que ya no requiere acción.
         """
-        return (self.ORDENES.get(self.request.query_params.get('orden', ''), 'fecha_limite'), 'id')
+        clave = self.request.query_params.get('orden', '')
+        if clave in ('urgencia', 'urgencia_desc'):
+            # 0 = vencido, 1 = abierto, 2 = concluido. Dentro de cada grupo, la
+            # fecha límite más próxima primero: es la que marca la urgencia.
+            prioridad = Case(
+                When(estado=Agreement.Status.COMPLETED, then=Value(2)),
+                When(fecha_limite__lt=timezone.localdate(), then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+            if clave == 'urgencia_desc':
+                return (prioridad.desc(), '-fecha_limite', '-id')
+            return (prioridad, 'fecha_limite', 'id')
+        return (self.ORDENES.get(clave, 'fecha_limite'), 'id')
 
     from rest_framework.decorators import action
 

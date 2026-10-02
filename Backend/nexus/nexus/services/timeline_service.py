@@ -14,7 +14,13 @@ class TimelineService:
         full_name = f'{user.first_name} {user.last_name}'.strip()
         return full_name or user.email
 
-    def build(self):
+    def build(self, base_url=None):
+        """Devuelve la trayectoria agrupada por semestre.
+
+        `base_url` convierte las rutas de archivo en URLs absolutas. Sin él la
+        evidencia quedaba enlazada como `/media/...`, que el navegador resolvía
+        contra el servidor de la interfaz y no contra el backend.
+        """
         semesters = Semester.objects.filter(student_id=self.student_id).prefetch_related(
             Prefetch('tutoring_sessions', queryset=TutoringSession.objects.select_related('created_by')),
             Prefetch(
@@ -31,7 +37,7 @@ class TimelineService:
         # por semestre repetiría «Sesión 1» en cada uno y la lista dejaría de leerse.
         inicio = 0
         for semester in semesters:
-            eventos = self._events(semester, inicio)
+            eventos = self._events(semester, inicio, base_url)
             inicio += len(semester.tutoring_sessions.all())
             semestres.append({
                 'id': semester.id,
@@ -41,7 +47,14 @@ class TimelineService:
             })
         return semestres
 
-    def _events(self, semester, numeracion_inicial=0):
+    @staticmethod
+    def _absoluta(url, base_url):
+        """Las rutas `/media/...` sólo funcionan si quien las pide es el backend."""
+        if not base_url or not url or url.startswith(('http://', 'https://')):
+            return url
+        return base_url.rstrip('/') + '/' + url.lstrip('/')
+
+    def _events(self, semester, numeracion_inicial=0, base_url=None):
         events = []
         sessions = list(semester.tutoring_sessions.all())
         for index, session in enumerate(sorted(sessions, key=lambda item: (item.fecha_sesion, item.id)), numeracion_inicial + 1):
@@ -95,7 +108,7 @@ class TimelineService:
                 'metadata': {'tipo_evidencia': evidence.tipo},
             }
             if evidence.archivo_adjunto:
-                event['archivo_url'] = evidence.archivo_adjunto.url
+                event['archivo_url'] = self._absoluta(evidence.archivo_adjunto.url, base_url)
             elif evidence.enlace_url:
                 event['enlace_url'] = evidence.enlace_url
             events.append(event)

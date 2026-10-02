@@ -120,24 +120,29 @@ describe('AgreementsListComponent (HU-14)', () => {
     expect(academicStub.updateAgreementStatus).toHaveBeenCalledWith(86, 'EN_PROCESO', 'Inicio de avance');
   });
 
-  it('bloquea la edición de acuerdos vencidos', () => {
+  it('un clic en un acuerdo vencido abre la bitácora en vez de no hacer nada', () => {
+    // Antes el botón iba deshabilitado y sólo explicaba el motivo en un `title` de
+    // hover, que en móvil no existe: el clic no respondía y parecía una aplicación
+    // colgada. Ahora responde siempre.
     academicStub.getAgreementAuditLog.calls.reset();
     component['abrirEdicion'](component['agreements'][0]);
 
-    expect(component['drawerAgreement']).toBeNull();
-    expect(academicStub.getAgreementAuditLog).not.toHaveBeenCalled();
+    expect(component['drawerAgreement']).not.toBeNull();
+    expect(component['drawerMode']).toBe('audit');
+    expect(academicStub.getAgreementAuditLog).toHaveBeenCalled();
   });
 
-  it('informa en la tabla por qué un acuerdo vencido no se puede editar', () => {
+  it('marca el botón del acuerdo vencido y lo etiqueta como lectura', () => {
     fixture.detectChanges();
     const rows = fixture.nativeElement.querySelectorAll('tbody tr');
     const vencidoBtn = rows[0].querySelector('.row-actions button') as HTMLButtonElement;
     const vigenteBtn = rows[1].querySelector('.row-actions button') as HTMLButtonElement;
 
-    expect(vencidoBtn.textContent?.trim()).toBe('Editar');
-    expect(vencidoBtn.disabled).toBeTrue();
-    expect(vencidoBtn.title).toContain('vencido');
-    expect(vencidoBtn.getAttribute('aria-label')).toContain('no disponible');
+    expect(vencidoBtn.disabled).withContext('un clic nunca debe quedar muerto').toBeFalse();
+    expect(vencidoBtn.textContent?.trim()).toContain('Revisar');
+    expect(vencidoBtn.classList).toContain('locked');
+    expect(vencidoBtn.title).toContain('sólo lectura');
+    expect(vigenteBtn.textContent?.trim()).toBe('Editar');
     expect(vigenteBtn.disabled).toBeFalse();
   });
 
@@ -145,7 +150,7 @@ describe('AgreementsListComponent (HU-14)', () => {
     academicStub.getAgreements.calls.reset();
     component['filtroStudent'] = '4';
     component['filtroSemester'] = '3';
-    component['filtroEstado'] = 'VENCIDO';
+    component['estadosSeleccionados'] = ['VENCIDO'];
     component['filtroResponsable'] = '15';
     component['filtroFechaDesde'] = '2026-01-01';
     component['filtroFechaHasta'] = '2026-12-31';
@@ -157,10 +162,51 @@ describe('AgreementsListComponent (HU-14)', () => {
         student: 4,
         semester: 3,
         responsable: 15,
-        vencido: true,
+        estados: 'VENCIDO',
         fecha_desde: '2026-01-01',
         fecha_hasta: '2026-12-31',
       }),
+    );
+  });
+  it('acumula varios estados a la vez, como los filtros de la línea de tiempo', () => {
+    academicStub.getAgreements.calls.reset();
+    component['alternarEstado']('VENCIDO');
+    component['alternarEstado']('EN_PROCESO');
+
+    expect(component['estadosSeleccionados']).toEqual(['VENCIDO', 'EN_PROCESO']);
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ estados: 'VENCIDO,EN_PROCESO' }),
+    );
+  });
+
+  it('desmarca un estado sin tocar los demás', () => {
+    academicStub.getAgreements.calls.reset();
+    component['alternarEstado']('VENCIDO');
+    component['alternarEstado']('EN_PROCESO');
+    component['alternarEstado']('VENCIDO');
+
+    expect(component['estadosSeleccionados']).toEqual(['EN_PROCESO']);
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ estados: 'EN_PROCESO' }),
+    );
+  });
+
+  it('ordena por urgencia de forma predefinida', () => {
+    expect(component['filtroOrden']).toBe('urgencia');
+    expect(component['ordenes'][0].value).toBe('urgencia');
+  });
+
+  it('limpiar filtros devuelve también el orden a urgencia', () => {
+    component['estadosSeleccionados'] = ['VENCIDO'];
+    component['filtroOrden'] = 'estudiante';
+    academicStub.getAgreements.calls.reset();
+
+    component['limpiarFiltros']();
+
+    expect(component['estadosSeleccionados']).toEqual([]);
+    expect(component['filtroOrden']).toBe('urgencia');
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ orden: 'urgencia' }),
     );
   });
 });

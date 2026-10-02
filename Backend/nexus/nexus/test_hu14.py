@@ -165,3 +165,66 @@ class AgreementOrderingAndSearchTests(APITestCase):
 
     def test_la_busqueda_sin_coincidencias_devuelve_lista_vacia(self):
         self.assertEqual(self.descripciones('/api/v1/agreements/?busqueda=inexistente'), [])
+
+class AgreementUrgencyAndMultiStatusTests(APITestCase):
+    """Orden de urgencia y filtros acumulables de estado."""
+
+    def setUp(self):
+        U = get_user_model()
+        self.admin = U.objects.create_user(
+            email='urgencia@x.co', password='x', role=U.Role.SYSTEM_ADMIN, is_staff=True,
+        )
+        self.student = Student.objects.create(
+            user=self.admin, matricula='URG', nombre_completo='Estudiante Urgente', cohorte='2026',
+        )
+        hoy = timezone.localdate()
+        self.vencido = Agreement.objects.create(
+            student=self.student, descripcion='Vencido', responsable=self.admin,
+            fecha_limite=hoy - timedelta(days=2), estado=Agreement.Status.PENDING,
+        )
+        self.abierto = Agreement.objects.create(
+            student=self.student, descripcion='Abierto', responsable=self.admin,
+            fecha_limite=hoy + timedelta(days=2), estado=Agreement.Status.IN_PROGRESS,
+        )
+        self.concluido = Agreement.objects.create(
+            student=self.student, descripcion='Concluido', responsable=self.admin,
+            fecha_limite=hoy - timedelta(days=20), estado=Agreement.Status.COMPLETED,
+            fecha_conclusion=hoy - timedelta(days=20),
+        )
+        # Hay dos formas de estar vencido: guardada como estado, o deduciéndola de la
+        # fecha. El filtro debe cubrir ambas, y no sólo la segunda.
+        self.vencido_guardado = Agreement.objects.create(
+            student=self.student, descripcion='Vencido guardado', responsable=self.admin,
+            fecha_limite=hoy - timedelta(days=5), estado=Agreement.Status.OVERDUE,
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.admin)}')
+
+    def descriptions(self, query=''):
+        response = self.client.get(f'/api/v1/agreements/?{query}')
+        self.assertEqual(response.status_code, 200)
+        return [item['descripcion'] for item in response.data['results']]
+
+    def test_urgencia_pone_vencidos_abiertos_y_concluidos_en_ese_orden(self):
+        orden = self.descriptions('orden=urgencia')
+        # Dentro de los vencidos manda la fecha más antigua primero.
+        self.assertEqual(orden[:2], ['Vencido guardado', 'Vencido'])
+        self.assertEqual(orden[-1], 'Concluido')
+        self.assertLess(orden.index('Abierto'), orden.index('Concluido'))
+
+    def test_urgencia_inversa_pone_lo_concluido_primero(self):
+        self.assertEqual(self.descriptions('orden=urgencia_desc'), ['Concluido', 'Abierto', 'Vencido', 'Vencido guardado'])
+
+    def test_filtra_vencidos_y_en_proceso_a_la_vez(self):
+        self.assertEqual(
+            set(self.descriptions('estados=VENCIDO,EN_PROCESO')),
+            {'Vencido', 'Abierto', 'Vencido guardado'},
+        )
+
+    def test_el_filtro_de_vencidos_incluye_los_guardados_como_vencidos(self):
+        self.assertIn('Vencido guardado', self.descriptions('estados=VENCIDO'))
+
+    def test_filtra_pendientes_y_concluidos_a_la_vez(self):
+        self.assertEqual(set(self.descriptions('estados=PENDIENTE,CONCLUIDO')), {'Vencido', 'Concluido'})
+
+    def test_ignora_estados_desconocidos_sin_romper_la_consulta(self):
+        self.assertEqual(len(self.descriptions('estados=INVENTADO')), 4)

@@ -5,6 +5,28 @@
   </header>
 
   <section class="filters-panel nexus-card" aria-label="Filtros de acuerdos">
+    <div class="status-filters">
+      <span class="group-label" id="status-filter-label">Estado</span>
+      <div class="pills" role="group" aria-labelledby="status-filter-label">
+        @for (opcion of estadosDisponibles; track opcion.value) {
+          <button
+            type="button"
+            class="pill"
+            [class.urgent]="opcion.value === 'VENCIDO'"
+            [class.active]="isEstadoActivo(opcion.value)"
+            [attr.aria-pressed]="isEstadoActivo(opcion.value)"
+            (click)="alternarEstado(opcion.value)"
+          >
+            {{ opcion.label }}
+            @if (conteoPorEstado()[opcion.value]; as n) { <span class="pill-count">{{ n }}</span> }
+          </button>
+        }
+        @if (estadosSeleccionados.length > 0) {
+          <button type="button" class="pill clear" (click)="limpiarEstados()">Todos</button>
+        }
+      </div>
+    </div>
+
     <div class="filters-grid">
       <label>
         <span>Estudiante</span>
@@ -22,16 +44,6 @@
           @for (sem of semesters; track sem.id) {
             <option [value]="sem.id">Semestre {{ sem.numero }}</option>
           }
-        </select>
-      </label>
-      <label>
-        <span>Estado</span>
-        <select class="input-field" [(ngModel)]="filtroEstado">
-          <option value="">Todos</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="EN_PROCESO">En proceso</option>
-          <option value="CONCLUIDO">Concluido</option>
-          <option value="VENCIDO">Vencido</option>
         </select>
       </label>
       <label>
@@ -77,19 +89,21 @@
         <h2>Acuerdos registrados</h2>
         <p>{{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}</p>
       </div>
-      <label class="sort-field">
-        <span>Ordenar por</span>
-        <select
-          class="input-field"
-          [ngModel]="filtroOrden"
-          (ngModelChange)="cambiarOrden($event)"
-          aria-label="Ordenar acuerdos"
-        >
+      <div class="order-pills" role="group" aria-label="Ordenar acuerdos">
+        <span class="group-label">Ordenar</span>
+        <div class="pills">
           @for (opcion of ordenes; track opcion.value) {
-            <option [value]="opcion.value">{{ opcion.label }}</option>
+            <button
+              type="button"
+              class="pill"
+              [class.active]="filtroOrden === opcion.value"
+              [attr.aria-pressed]="filtroOrden === opcion.value"
+              [title]="opcion.label"
+              (click)="cambiarOrden(opcion.value)"
+            >{{ opcion.corto }}</button>
           }
-        </select>
-      </label>
+        </div>
+      </div>
     </div>
 
     @if (cargando) {
@@ -134,11 +148,14 @@
                   <div class="row-actions">
                     <button
                       type="button"
-                      [disabled]="a.is_vencido"
-                      [title]="a.is_vencido ? 'Este acuerdo está vencido: los compromisos vencidos quedan cerrados y no admiten cambios de estado.' : 'Cambiar el estado del acuerdo'"
-                      [attr.aria-label]="a.is_vencido ? 'Editar acuerdo no disponible: el acuerdo está vencido' : 'Editar acuerdo'"
+                      class="edit-button"
+                      [class.locked]="a.is_vencido"
+                      [title]="a.is_vencido ? 'Vencido: se abrirá en sólo lectura para revisar su bitácora' : 'Cambiar el estado del acuerdo'"
                       (click)="abrirEdicion(a, $event)"
-                    >Editar</button>
+                    >
+                      @if (a.is_vencido) { <span class="lock" aria-hidden="true">🔒</span> }
+                      {{ a.is_vencido ? 'Revisar' : 'Editar' }}
+                    </button>
                     <button type="button" (click)="verAuditoria(a, $event)">Bitácora</button>
                   </div>
                 </td>
@@ -179,6 +196,14 @@
     </header>
 
     <div class="drawer-body">
+      @if (agreement.is_vencido && drawerMode !== 'edit') {
+        <p class="notice notice-danger read-only-notice" role="note">
+          <strong>Acuerdo vencido.</strong> Los compromisos vencidos quedan cerrados:
+          no se puede cambiar su estado ni sus notas, pero su bitácora se conserva y
+          se puede consultar aquí.
+        </p>
+      }
+
       @if (drawerMode === 'edit') {
         <section class="agreement-summary" aria-label="Datos del acuerdo">
           <div class="field-block">
@@ -215,7 +240,7 @@
             }
           </div>
           @if (motivoBloqueoEstado()) {
-            <p class="status-hint" id="status-blocked">{{ motivoBloqueoEstado() }}</p>
+            <p class="notice notice-warning" id="status-blocked" role="note">{{ motivoBloqueoEstado() }}</p>
           }
         </section>
 

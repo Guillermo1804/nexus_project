@@ -70,21 +70,31 @@
   margin-right: auto;
 }
 
-/* La búsqueda ocupa el ancho completo: el resto de filtros son listas cortas. */
+/* Filtros y orden como grupos de píldoras, igual que en la línea de tiempo. */
+.status-filters { display: grid; gap: 8px; margin-bottom: 20px; }
+.order-pills { display: grid; gap: 8px; }
+.group-label { color: var(--heading); font-size: 13px; font-weight: 600; }
+.pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.pill {
+  align-items: center; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; color: var(--text-secondary); cursor: pointer; display: inline-flex;
+  font-weight: 600; gap: 6px; min-height: 36px; padding: 7px 12px;
+  transition:
+    background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.pill:hover:not(.active) { border-color: var(--brand); color: var(--brand); }
+.pill:active { transform: scale(.97); }
+.pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.pill-count {
+  background: var(--surface-soft); border-radius: 999px; color: var(--text-muted);
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+}
+.pill.active .pill-count { background: rgb(255 255 255 / 22%); color: #fff; }
+/* El filtro de vencidos se marca en rojo: es el único que pide acción inmediata. */
+.pill.urgent:not(.active) { border-color: var(--danger); color: var(--danger); }
+.pill.clear { border-color: transparent; text-decoration: underline; }
 .search-field { grid-column: 1 / -1; }
-
-.sort-field {
-  display: grid;
-  flex: 0 0 auto;
-  gap: 6px;
-  min-width: 260px;
-}
-
-.sort-field > span {
-  color: var(--heading);
-  font-size: 13px;
-  font-weight: 600;
-}
 
 .results-panel { overflow: hidden; }
 
@@ -408,7 +418,8 @@
 
 @media (max-width: 900px) {
   .filters-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sort-field { flex: 1 1 100%; min-width: 0; }
+  .section-header { align-items: stretch; flex-direction: column; }
+  .order-pills { width: 100%; }
 }
 
 /* El apilado en fichas lo define styles.scss; aquí sólo se anula el ancho mínimo
@@ -429,3 +440,12 @@
   .metadata-grid { grid-template-columns: 1fr; }
   .drawer-footer { padding: 16px; }
 }
+
+/* El aviso de sólo lectura usa el patrón `.notice` compartido en styles.scss. */
+.read-only-notice { margin-bottom: 20px; }
+
+/* El botón de un acuerdo vencido no se apaga: se marca para que se sepa que lleva
+   candado, pero sigue respondiendo al clic. */
+.edit-button { align-items: center; display: inline-flex; gap: 6px; }
+.edit-button.locked { color: var(--text-muted); }
+.edit-button .lock { font-size: 12px; }

@@ -282,7 +282,7 @@ tbody tr, .state-container, .feedback { animation: row-in var(--motion-base) var
   .table-scroll tbody td,
   .table-container tbody td {
     align-items: baseline; border-top: 0; display: flex; gap: 12px;
-    min-height: 44px; padding: 8px 16px;
+    min-height: 44px; min-width: 0; overflow-wrap: anywhere; padding: 8px 16px;
   }
   .table-scroll tbody td::before,
   .table-container tbody td::before {
@@ -290,18 +290,22 @@ tbody tr, .state-container, .feedback { animation: row-in var(--motion-base) var
     font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   }
 
-  /* La tabla de acuerdos del expediente se arma con divs, no con <table>, pero
-     comparte el mismo criterio: fila apilada y celda rotulada por `data-label`. */
-  .agreement-table { overflow-x: visible; }
-  .agreement-table .table-head { display: none; }
-  .agreement-table .table-row { gap: 6px; grid-template-columns: minmax(0, 1fr); padding: 14px 0; }
-  .agreement-table .table-row > * { align-items: baseline; display: flex; gap: 10px; }
+  /* La tabla de acuerdos del expediente se arma con divs, no con <table>, pero comparte
+     el criterio: fila apilada y celda rotulada por `data-label`. Estas reglas no compiten
+     con las del componente, así que viven aquí; las de la rejilla y la cabecera se quedan
+     allí porque ahí sí habría empate por especificidad. */
+  /* `min-width: 0` + `overflow-wrap`: una palabra larga dentro de una celda con
+     etiqueta fija desbordaba la ficha en pantallas de 360 px. */
+  .agreement-table .table-row > * {
+    align-items: baseline; display: flex; gap: 10px; min-width: 0; overflow-wrap: anywhere;
+  }
   .agreement-table .table-row > *::before {
     color: var(--text-muted); content: attr(data-label); flex: 0 0 108px;
     font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   }
   .agreement-table .table-row > strong { display: block; }
   .agreement-table .table-row > strong::before { display: block; margin-bottom: 4px; }
+
 }
 
 /* Objetivos táctiles: 44px es el mínimo cómodo con el dedo, y los botones de
@@ -311,6 +315,36 @@ tbody tr, .state-container, .feedback { animation: row-in var(--motion-base) var
   .row-actions .link-button { min-height: 44px; padding: 8px 0; }
   .header-actions button { min-height: 44px; }
 }
+
+/* Avisos dentro de un panel. Antes cada uno tenía su propio aspecto y el aviso que
+   explica por qué una acción está bloqueada salía como texto pelado, indistinguible
+   de una nota cualquiera. Estos tres tonos son los mismos en toda la aplicación. */
+.notice {
+  align-items: flex-start;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  display: flex;
+  font-size: 13px;
+  gap: 10px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+}
+.notice::before { flex: 0 0 auto; font-weight: 800; }
+.notice p { margin: 0; }
+.notice strong { font-weight: 700; }
+
+.notice-warning { background: var(--warning-bg); border-color: #F5D9B4; color: var(--text); }
+.notice-warning::before { color: var(--warning); content: '!'; }
+
+.notice-danger { background: var(--danger-bg); border-color: #FECDCA; color: var(--text); }
+.notice-danger::before { color: var(--danger); content: '×'; }
+
+.notice-info { background: var(--surface-soft); border-color: var(--border); color: var(--text); }
+.notice-info::before { color: var(--brand); content: 'i'; }
+
+.notice-warning strong,
+.notice-danger strong { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

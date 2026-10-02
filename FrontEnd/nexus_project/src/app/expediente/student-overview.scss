@@ -32,7 +32,9 @@ h3 { color: var(--heading); font-size: 13px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .section-heading p { color: var(--text-muted); font-size: 13px; margin: 6px 0 0; }
 .eyebrow { color: var(--brand); font-size: 11px; font-weight: 700; letter-spacing: .08em; display: block; margin-bottom: 5px; }
-.mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); margin-top: 20px; padding-top: 18px; }
+/* `auto-fit` reparte en cuatro columnas cuando hay sitio y baja a dos cuando no,
+   en lugar de forzar cuatro y desbordar en columnas estrechas. */
+.mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); border-top: 1px solid var(--border); margin-top: 20px; padding-top: 18px; }
 .mini-stats div { display: grid; gap: 5px; padding: 0 16px; border-right: 1px solid var(--border); }
 .mini-stats div:first-child { padding-left: 0; }.mini-stats div:last-child { border: 0; }
 .mini-stats strong { color: var(--heading); font-size: 24px; }.mini-stats span { color: var(--text-muted); font-size: 12px; }
@@ -57,17 +59,30 @@ h3 { color: var(--heading); font-size: 13px; }
 .state-container, .timeline-state { min-height: 280px; display: grid; place-content: center; justify-items: center; color: var(--text-muted); }.timeline-state { min-height: 360px; gap: 12px; }.timeline-state p { margin: 0; }.timeline-panel { min-height: 400px; }.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; }@keyframes spin { to { transform: rotate(360deg); } }
 
 .modal-backdrop { padding: 24px; overflow-y: auto; align-items: center; }
-.modal-panel { width: min(92vw, 720px); max-height: calc(100vh - 48px); overflow-y: auto; }
-.tutoring-modal { width: min(92vw, 1024px); }.small-modal { width: min(92vw, 560px); }.status-modal { width: min(92vw, 480px); }.evidence-modal { width: min(92vw, 512px); }.conditions-modal { width: min(92vw, 720px); }
+/* Cada modal fija su ancho con una variable y todos comparten la misma fórmula. */
+.modal-panel { max-height: calc(100vh - 48px); overflow-y: auto; width: min(92vw, var(--ancho-modal, 720px)); }
+.tutoring-modal { --ancho-modal: 1024px; }.small-modal { --ancho-modal: 560px; }.status-modal { --ancho-modal: 480px; }.evidence-modal { --ancho-modal: 512px; }
 .modal-header { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }.modal-header h2 { font-size: 20px; }.modal-title { display: flex; align-items: center; gap: 12px; }.modal-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--surface-soft); color: var(--brand); display: grid; place-items: center; font-size: 20px; }.close-button { border: 0; background: none; color: var(--text-muted); font-size: 28px; cursor: pointer; line-height: 1; }
 .modal-form, .embedded-form, .progress-body { padding: 24px; background: var(--surface-warm); }.modal-form { display: grid; gap: 16px; }.modal-form label { display: grid; gap: 7px; color: var(--heading); font-size: 13px; font-weight: 700; }.modal-form .input-field { width: 100%; resize: vertical; }.modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); }.modal-form .modal-footer { margin: 8px -24px -24px; }
 .form-error, .form-warning { border-radius: 8px; font-size: 13px; margin: 0; padding: 10px; }.form-error { color: var(--danger); background: var(--danger-bg); }.form-warning { color: var(--warning); background: var(--warning-bg); }
 .transition { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; }.transition .next { color: var(--brand); background: var(--surface-soft); }.agreement-description { color: var(--text-secondary); margin: 0; }
 .committee-note { padding: 18px 24px 0; background: var(--surface-warm); }.committee-note h3 { margin-bottom: 10px; }.committee-modal-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.committee-modal-list div { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 3px; }.committee-modal-list strong { color: var(--heading); font-size: 12px; }.committee-modal-list span, .committee-note p { color: var(--text-muted); font-size: 12px; }.committee-note p { margin: 10px 0 0; }
 
-/* El apilado en fichas vive en styles.scss; aquí sólo queda la rejilla, que al ser
-   local gana por especificidad a la regla global y debe anularse en este punto. */
-@media (max-width: 900px) { .table-row { grid-template-columns: minmax(0, 1fr); } }
+/* La tabla de acuerdos deja de ser tabla y se apila en fichas. Estas reglas viven
+   aquí, no en styles.scss: al ser del componente empatan en especificidad con la
+   regla global de las tablas y, al inyectarse después, la global no aplicaba. */
+@media (max-width: 1200px) {
+  .agreement-table { overflow-x: visible; }
+  .table-head { display: none; }
+  .table-row { gap: 6px; grid-template-columns: minmax(0, 1fr); padding: 14px 0; }
+  /* «ADVERTENCIA · PRÓXIMO» es más ancho que la etiqueta y el distintivo es
+     inline-flex, así que su texto no envolvía. Esta regla vive aquí porque la del
+     componente empata en especificidad con la global y, al inyectarse después, manda. */
+  .status-pill { display: inline-block; min-width: 0; white-space: normal; }
+}
 
-@media (max-width: 1000px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); }.side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }.student-header { flex-wrap: wrap; }.header-actions { margin-left: 120px; }.committee-modal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 680px) { .overview-shell { padding: 16px; }.student-header { align-items: flex-start; }.avatar { width: 64px; height: 64px; font-size: 24px; }.student-details { flex-basis: calc(100% - 88px); }.header-actions { margin: 0; width: 100%; }.header-actions button { flex: 1; }.mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 0; }.mini-stats div:nth-child(2) { border-right: 0; }.side-column { grid-template-columns: minmax(0, 1fr); }.section-heading { flex-wrap: wrap; }.session-item { align-items: flex-start; flex-direction: column; }.modal-backdrop { padding: 10px; }.modal-panel { max-height: calc(100vh - 20px); }.committee-modal-list { grid-template-columns: minmax(0, 1fr); } }
+/* El encabezado se apila a 1200px y no a 1000: entre ambos anchos los datos del
+   estudiante quedaban comprimidos a menos de 80px. */
+@media (max-width: 1200px) { .student-header { flex-wrap: wrap; }.header-actions { margin-left: 120px; } }
+@media (max-width: 1000px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); }.side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }.committee-modal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .overview-shell { padding: 16px; }.student-header { align-items: flex-start; }.avatar { width: 64px; height: 64px; font-size: 24px; }.student-details { flex-basis: calc(100% - 88px); }.header-actions { margin: 0; width: 100%; }.header-actions button { flex: 1; }.mini-stats { gap: 16px 0; }.side-column { grid-template-columns: minmax(0, 1fr); }.section-heading { flex-wrap: wrap; }.session-item { align-items: flex-start; flex-direction: column; }.modal-backdrop { padding: 10px; }.modal-panel { max-height: calc(100vh - 20px); }.committee-modal-list { grid-template-columns: minmax(0, 1fr); } }
