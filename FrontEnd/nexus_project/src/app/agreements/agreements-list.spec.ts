@@ -127,6 +127,19 @@ describe('AgreementsListComponent (HU-14)', () => {
     expect(academicStub.getAgreementAuditLog).not.toHaveBeenCalled();
   });
 
+  it('informa en la tabla por qué un acuerdo vencido no se puede editar', () => {
+    fixture.detectChanges();
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr');
+    const vencidoBtn = rows[0].querySelector('.row-actions button') as HTMLButtonElement;
+    const vigenteBtn = rows[1].querySelector('.row-actions button') as HTMLButtonElement;
+
+    expect(vencidoBtn.textContent?.trim()).toBe('Editar');
+    expect(vencidoBtn.disabled).toBeTrue();
+    expect(vencidoBtn.title).toContain('vencido');
+    expect(vencidoBtn.getAttribute('aria-label')).toContain('no disponible');
+    expect(vigenteBtn.disabled).toBeFalse();
+  });
+
   it('aplica filtros combinados al endpoint', () => {
     academicStub.getAgreements.calls.reset();
     component['filtroStudent'] = '4';

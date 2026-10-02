@@ -65,15 +65,15 @@ describe('TutoringConditionsComponent (HU-10)', () => {
     });
   });
 
-  it('exige fecha cuando existen notas', () => {
+  it('permite guardar notas sin fecha de próxima reunión', () => {
     component.nextMeetingForm.setValue({
       proxima_reunion_fecha: '',
       proxima_reunion_notas: 'Preparar resultados.',
     });
 
-    expect(component.nextMeetingForm.hasError('dateRequiredForNotes')).toBeTrue();
+    expect(component.nextMeetingForm.valid).toBeTrue();
     component.guardarProximaReunion();
-    expect(updateNextMeeting).not.toHaveBeenCalled();
+    expect(updateNextMeeting).toHaveBeenCalled();
   });
 
   it('rechaza fechas pasadas y el día actual', () => {

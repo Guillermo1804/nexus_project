@@ -13,6 +13,7 @@ import {
 } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { StudentService } from '../core/students/student.service';
+import { ModalFocusDirective } from '../shared/modal-focus.directive';
 
 interface ResponsableOption {
   id: number;
@@ -24,7 +25,7 @@ type DrawerMode = 'edit' | 'audit';
 
 @Component({
   selector: 'app-agreements-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalFocusDirective],
   templateUrl: './agreements-list.html',
   styleUrl: './agreements-list.scss',
 })

@@ -25,9 +25,7 @@ const nextMeetingValidator = (sessionDate: () => string, today: () => string): V
   control: AbstractControl,
 ): ValidationErrors | null => {
   const date = String(control.get('proxima_reunion_fecha')?.value ?? '');
-  const notes = String(control.get('proxima_reunion_notas')?.value ?? '').trim();
 
-  if (notes && !date) return { dateRequiredForNotes: true };
   if (date && date <= today()) return { dateNotFuture: true };
   if (date && date <= sessionDate()) return { dateNotAfterSession: true };
   return null;
@@ -84,7 +82,7 @@ const nextMeetingValidator = (sessionDate: () => string, today: () => string): V
         <div>
           <h5 id="next-meeting-title">Próxima reunión</h5>
         </div>
-        <p>Programa el seguimiento acordado para esta tutoría.</p>
+        <p>Programa el seguimiento acordado para esta tutoría. Puedes guardar las notas aunque la fecha siga pendiente.</p>
 
         <form [formGroup]="nextMeetingForm" (ngSubmit)="guardarProximaReunion()" class="next-meeting-form">
           <div class="next-meeting-field">
@@ -97,12 +95,8 @@ const nextMeetingValidator = (sessionDate: () => string, today: () => string): V
               [attr.aria-invalid]="nextMeetingForm.invalid && nextMeetingForm.touched"
               aria-describedby="next-meeting-date-hint next-meeting-date-error"
             />
-            <small id="next-meeting-date-hint">Debe ser posterior al {{ fechaSesion }}.</small>
-            @if (nextMeetingForm.touched && nextMeetingForm.hasError('dateRequiredForNotes')) {
-              <span id="next-meeting-date-error" class="field-error" role="alert">
-                Indica una fecha si registras notas preparatorias.
-              </span>
-            } @else if (nextMeetingForm.touched && nextMeetingForm.hasError('dateNotFuture')) {
+            <small id="next-meeting-date-hint">Opcional. Si la indicas, debe ser posterior al {{ fechaSesion }}.</small>
+            @if (nextMeetingForm.touched && nextMeetingForm.hasError('dateNotFuture')) {
               <span id="next-meeting-date-error" class="field-error" role="alert">
                 La fecha tentativa debe ser posterior al día de hoy.
               </span>

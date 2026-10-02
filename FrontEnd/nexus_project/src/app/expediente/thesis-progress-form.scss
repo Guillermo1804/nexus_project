@@ -8,9 +8,14 @@ label { display: grid; gap: 7px; color: var(--heading); font-size: 13px; font-we
 .progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width .15s ease; }
 fieldset { display: grid; gap: 18px; margin: 0; padding: 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 legend { padding: 0 7px; color: var(--heading); font-size: 14px; font-weight: 700; }
+.field-hint { margin: -6px 0 0; color: var(--text-muted); font-size: 12px; font-weight: 400; }
 .slider-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-.slider-row output { color: var(--brand); font-variant-numeric: tabular-nums; }
-.slider-row input { grid-column: 1 / -1; width: 100%; accent-color: var(--brand); cursor: pointer; }
+.slider-row .component-label { color: var(--heading); font-size: 13px; font-weight: 700; }
+.component-value { display: flex; align-items: center; gap: 4px; }
+.component-number { width: 68px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--brand); font: inherit; font-weight: 700; text-align: right; }
+.component-number:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.component-value span { color: var(--brand); font-size: 13px; font-weight: 700; }
+.slider-row input[type='range'] { grid-column: 1 / -1; width: 100%; accent-color: var(--brand); cursor: pointer; }
 .field-error, .form-error { margin: -10px 0 0; color: var(--danger); font-size: 13px; }
 .form-error { margin: 0; padding: 10px; border-radius: 8px; background: var(--danger-bg); }
 .form-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); }

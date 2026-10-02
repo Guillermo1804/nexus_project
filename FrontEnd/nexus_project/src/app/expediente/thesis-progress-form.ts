@@ -27,10 +27,34 @@ const COMPONENTS: { key: ThesisComponentKey; label: string }[] = [
         @if (form.controls.porcentaje_avance.invalid && form.controls.porcentaje_avance.touched) { <p class="field-error">Indica un número entero entre 0 y 100.</p> }
 
         <fieldset formGroupName="componentes_json"><legend>Avance por componentes</legend>
+          <p class="field-hint" id="components-hint">Indica el porcentaje de cada componente con el deslizador o escríbelo directamente en el campo numérico.</p>
           @for (component of components; track component.key) {
-            <label class="slider-row" [for]="'thesis-' + component.key"><span>{{ component.label }}</span><output [for]="'thesis-' + component.key">{{ componentValue(component.key) }}%</output>
-              <input [id]="'thesis-' + component.key" type="range" min="0" max="100" step="1" [formControlName]="component.key" />
-            </label>
+            <div class="slider-row">
+              <span class="component-label" [id]="componentLabelId(component.key)">{{ component.label }}</span>
+              <span class="component-value">
+                <input
+                  class="component-number"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  [attr.aria-labelledby]="componentLabelId(component.key)"
+                  aria-describedby="components-hint"
+                  [value]="draftValue(component.key)"
+                  (input)="setComponentValue(component.key, $any($event.target).value)"
+                  (blur)="normalizeComponent(component.key)"
+                /><span aria-hidden="true">%</span>
+              </span>
+              <input
+                [id]="'thesis-' + component.key"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                [attr.aria-labelledby]="componentLabelId(component.key)"
+                [formControlName]="component.key"
+              />
+            </div>
           }
         </fieldset>
 
@@ -52,6 +76,9 @@ export class ThesisProgressFormComponent implements OnInit {
   private readonly service = inject(AcademicService);
   private readonly fb = inject(FormBuilder);
   protected readonly components = COMPONENTS;
+  protected readonly componentKeys = COMPONENTS.map(({ key }) => key);
+  /** Raw text of the numeric inputs, so an in-progress edit is not overwritten by the bound value. */
+  protected readonly drafts: Partial<Record<ThesisComponentKey, string>> = {};
   protected saving = false;
   protected error = '';
   protected readonly form = this.fb.nonNullable.group({
@@ -70,10 +97,25 @@ export class ThesisProgressFormComponent implements OnInit {
   ngOnInit(): void {
     const values = Object.fromEntries(COMPONENTS.map(({ key }) => [key, this.validPercentage(this.currentComponents[key])])) as ThesisComponents;
     this.form.patchValue({ porcentaje_avance: this.validPercentage(this.currentPercentage), componentes_json: values, observaciones: this.currentObservations });
+    for (const key of this.componentKeys) this.drafts[key] = String(this.componentValue(key));
   }
 
   protected get globalPercentage(): number { return this.validPercentage(this.form.controls.porcentaje_avance.value); }
   protected componentValue(key: ThesisComponentKey): number { return this.form.controls.componentes_json.controls[key].value; }
+  protected componentLabelId(key: ThesisComponentKey): string { return `thesis-${key}-label`; }
+  protected draftValue(key: ThesisComponentKey): string { return this.drafts[key] ?? String(this.componentValue(key)); }
+
+  protected setComponentValue(key: ThesisComponentKey, raw: string): void {
+    const text = String(raw ?? '').trim();
+    this.drafts[key] = text;
+    if (text === '') return;
+    const parsed = Number(text);
+    if (!Number.isFinite(parsed)) return;
+    this.form.controls.componentes_json.controls[key].setValue(Math.min(100, Math.max(0, Math.round(parsed))));
+  }
+
+  /** Drops an edit the user abandoned (empty or out of range) so the field matches the stored value. */
+  protected normalizeComponent(key: ThesisComponentKey): void { this.drafts[key] = String(this.componentValue(key)); }
 
   protected submit(): void {
     if (this.form.invalid || this.saving) { this.form.markAllAsTouched(); return; }

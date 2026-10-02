@@ -6,15 +6,13 @@ h2, h3, h4, p { margin-top: 0; }
 h2 { color: var(--heading); margin-bottom: 6px; }
 .timeline-header p { color: var(--text-muted); font-size: 13px; margin-bottom: 0; }
 .eyebrow { color: var(--brand); display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; margin-bottom: 5px; }
-.filters { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
-.filters button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-secondary); cursor: pointer; font-weight: 600; padding: 7px 12px; }
-.filters button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.controls { display: grid; gap: 8px; justify-items: end; }
+.filters, .order { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+.filters button, .order button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-secondary); cursor: pointer; font-weight: 600; padding: 7px 12px; }
+.filters button.active, .order button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.order button { font-size: 12px; }
 ol { list-style: none; margin: 0; padding: 0; }
-.semester-group { margin-bottom: 28px; }
-.semester-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.semester-heading h3 { color: var(--heading); font-size: 16px; margin-bottom: 0; }
-.semester-heading span { background: var(--success-bg); border-radius: 999px; color: var(--success); font-size: 10px; font-weight: 700; padding: 4px 8px; text-transform: uppercase; }
-.semester-group > ol { margin-left: 17px; padding-left: 28px; border-left: 2px solid var(--border); }
+ol[aria-label='Trayectoria cronológica del estudiante'] { margin-left: 17px; padding-left: 28px; border-left: 2px solid var(--border); }
 .event { position: relative; padding: 0 0 18px; animation: fade-in .24s ease-out both; }
 .node { position: absolute; left: -44px; top: 15px; width: 30px; height: 30px; display: grid; place-items: center; border: 3px solid var(--surface); border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
 .event.acuerdo .node { background: var(--warning); }.event.tesis .node { background: #6352a1; }.event.evidencia .node { background: var(--success); }
@@ -22,11 +20,13 @@ ol { list-style: none; margin: 0; padding: 0; }
 .event-heading, .event footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .event-heading { justify-content: space-between; margin-bottom: 8px; }
 .event-heading time, .event footer { color: var(--text-muted); font-size: 12px; }
-.type-badge, .status { border-radius: 999px; background: var(--surface-soft); color: var(--brand); font-size: 10px; font-weight: 700; padding: 4px 8px; text-transform: uppercase; }
+.type-badge, .semester-badge, .status { border-radius: 999px; background: var(--surface-soft); color: var(--brand); font-size: 10px; font-weight: 700; padding: 4px 8px; text-transform: uppercase; }
+.semester-badge { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+.semester-badge.current { background: var(--success-bg); border-color: transparent; color: var(--success); }
 .event h4 { color: var(--heading); font-size: 15px; margin-bottom: 7px; }
 .event p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
 .event footer a { color: var(--brand); font-weight: 700; }
 .empty { color: var(--text-muted); padding: 36px; text-align: center; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-@media (max-width: 720px) { .timeline { padding: 18px; }.timeline-header { flex-direction: column; }.filters { justify-content: flex-start; }.semester-group > ol { margin-left: 14px; padding-left: 22px; }.node { left: -38px; } }
+@media (max-width: 720px) { .timeline { padding: 18px; }.timeline-header { flex-direction: column; }.controls { justify-items: start; }.filters, .order { justify-content: flex-start; }ol[aria-label='Trayectoria cronológica del estudiante'] { margin-left: 14px; padding-left: 22px; }.node { left: -38px; } }
 @media (prefers-reduced-motion: reduce) { .event { animation: none; }.filters button { transition: none; } }

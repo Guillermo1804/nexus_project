@@ -14,12 +14,13 @@ import { EvidenceUploadComponent } from './evidence-upload';
 import { TutoringConditionsComponent } from './tutoring-conditions';
 import { ThesisProgressFormComponent } from './thesis-progress-form';
 import { TimelineComponent } from '../shared/timeline';
+import { ModalFocusDirective } from '../shared/modal-focus.directive';
 
 type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semestre' | 'condiciones' | null;
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, RouterLink, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ModalFocusDirective, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })

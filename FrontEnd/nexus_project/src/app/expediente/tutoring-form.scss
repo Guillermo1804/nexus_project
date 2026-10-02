@@ -8,7 +8,7 @@ textarea { resize: vertical; }
 textarea::placeholder, input::placeholder { color: var(--placeholder); }
 input:focus, select:focus, textarea:focus { border-color: var(--brand); outline: 3px solid rgba(73, 74, 213, .12); }
 .field-error { color: var(--danger); font-size: 12px; margin-top: -4px; }
-.next-meeting { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; margin-top: 6px; }
+.field-hint { color: var(--text-muted); font-size: 12px; margin: 4px 0 0; }
 .error-msg { color: var(--danger); background: var(--danger-bg); border-radius: 8px; margin: 0 24px 16px; padding: 10px; font-size: 13px; }
 .form-actions { background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; }
-@media (max-width: 899px) { .form-body { grid-template-columns: 1fr; }.next-meeting { grid-template-columns: 1fr; } }
+@media (max-width: 899px) { .form-body { grid-template-columns: 1fr; } }

@@ -68,4 +68,24 @@ describe('EvidenceUploadComponent', () => {
     }));
     expect(component.saved.emit).toHaveBeenCalled();
   });
+
+  it('explica qué falta en lugar de dejar el botón deshabilitado en silencio', () => {
+    fixture.componentRef.setInput('semesters', [{ id: 1, numero: 1, is_active: true } as any]);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    const pending = fixture.nativeElement.querySelector('#evidence-pending-file') as HTMLElement;
+    expect(pending.textContent).toContain('un archivo');
+    expect(pending.textContent).toContain('el título de la evidencia');
+    expect(pending.textContent).toContain('el semestre');
+    expect((fixture.nativeElement.querySelector('.evidence-modal button[type=submit], button[type=submit]') as HTMLButtonElement).disabled).toBeTrue();
+
+    component.title = 'Bitácora';
+    component.semesterId = 1;
+    component.file = new File([new Uint8Array([1])], 'evidencia.pdf', { type: 'application/pdf' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#evidence-pending-file')).toBeNull();
+    expect((fixture.nativeElement.querySelector('button[type=submit]') as HTMLButtonElement).disabled).toBeFalse();
+  });
 });

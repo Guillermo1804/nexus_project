@@ -551,13 +551,10 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
         if len(resumen) > 2000:
             raise serializers.ValidationError({'resumen': 'El resumen no puede superar 2000 caracteres.'})
         proxima_fecha = attrs.get('proxima_reunion_fecha', self.instance.proxima_reunion_fecha if self.instance else None)
-        proxima_notas = attrs.get('proxima_reunion_notas', self.instance.proxima_reunion_notas if self.instance else '')
         if proxima_fecha and proxima_fecha <= timezone.localdate():
             raise serializers.ValidationError({'proxima_reunion_fecha': 'La próxima reunión debe tener una fecha futura.'})
         if proxima_fecha and proxima_fecha <= fecha_sesion:
             raise serializers.ValidationError({'proxima_reunion_fecha': 'La próxima reunión debe ser posterior a la sesión.'})
-        if proxima_notas and not proxima_fecha:
-            raise serializers.ValidationError({'proxima_reunion_fecha': 'Indique la fecha de la próxima reunión para registrar notas.'})
         return attrs
 
     def create(self, validated_data):

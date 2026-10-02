@@ -106,7 +106,13 @@
                 <td><span class="badge" [ngClass]="badgeClass(a)">{{ estadoLabel(estadoVisible(a)) }}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button type="button" (click)="abrirEdicion(a, $event)">Editar</button>
+                    <button
+                      type="button"
+                      [disabled]="a.is_vencido"
+                      [title]="a.is_vencido ? 'Este acuerdo está vencido: los compromisos vencidos quedan cerrados y no admiten cambios de estado.' : 'Cambiar el estado del acuerdo'"
+                      [attr.aria-label]="a.is_vencido ? 'Editar acuerdo no disponible: el acuerdo está vencido' : 'Editar acuerdo'"
+                      (click)="abrirEdicion(a, $event)"
+                    >Editar</button>
                     <button type="button" (click)="verAuditoria(a, $event)">Bitácora</button>
                   </div>
                 </td>
@@ -129,8 +135,10 @@
   <div class="drawer-backdrop" (click)="cerrarDrawer()" aria-hidden="true"></div>
   <aside
     class="agreement-drawer"
+    appModalFocus
     role="dialog"
     aria-modal="true"
+    (appModalEscape)="cerrarDrawer()"
     [attr.aria-labelledby]="drawerMode === 'edit' ? 'drawer-title' : 'audit-title'"
   >
     <header class="drawer-header">

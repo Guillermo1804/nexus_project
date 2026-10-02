@@ -44,7 +44,7 @@ class NextMeetingHu10Tests(APITestCase):
             'resumen': 'Resumen válido de la sesión de tutoría.',
         }
 
-    def test_next_meeting_must_be_after_session_and_notes_require_date(self):
+    def test_next_meeting_must_be_after_session_and_notes_allow_missing_date(self):
         same_date = self.client.post(
             self.url,
             {**self.base, 'proxima_reunion_fecha': str(self.session_date)},
@@ -57,7 +57,9 @@ class NextMeetingHu10Tests(APITestCase):
             {**self.base, 'proxima_reunion_notas': 'Agenda'},
             format='json',
         )
-        self.assertEqual(notes_without_date.status_code, 400)
+        self.assertEqual(notes_without_date.status_code, 201)
+        self.assertEqual(notes_without_date.data['proxima_reunion_notas'], 'Agenda')
+        self.assertIsNone(notes_without_date.data['proxima_reunion_fecha'])
 
         next_date = self.session_date + timedelta(days=1)
         ok = self.client.post(
@@ -134,7 +136,9 @@ class NextMeetingHu10Tests(APITestCase):
             {'proxima_reunion_notas': 'Agenda'},
             format='json',
         )
-        self.assertEqual(notes_without_date.status_code, 400)
+        self.assertEqual(notes_without_date.status_code, 200)
+        self.assertEqual(notes_without_date.data['proxima_reunion_notas'], 'Agenda')
+        self.assertIsNone(notes_without_date.data['proxima_reunion_fecha'])
 
         too_long = self.client.patch(
             detail_url,

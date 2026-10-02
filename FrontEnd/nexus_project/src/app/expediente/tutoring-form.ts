@@ -27,7 +27,7 @@ const localDateString = (): string => { const d = new Date(); return `${d.getFul
         <div class="form-column">
           <label for="tut-resumen">Resumen General de la Sesión<textarea id="tut-resumen" formControlName="resumen" rows="6" maxlength="2000" placeholder="Describe los temas tratados, avances revisados y acuerdos principales" [attr.aria-invalid]="form.controls.resumen.invalid && form.controls.resumen.touched"></textarea></label>
           @if (form.controls.resumen.invalid && form.controls.resumen.touched) { <span class="field-error">El resumen debe tener entre 10 y 2000 caracteres significativos.</span> }
-          <div class="next-meeting"><label for="next-date">Próxima reunión<input id="next-date" type="date" formControlName="proxima_reunion_fecha" [attr.min]="today"></label><label for="next-notes">Notas<textarea id="next-notes" rows="2" maxlength="500" formControlName="proxima_reunion_notas" placeholder="Notas preparatorias opcionales"></textarea></label></div>
+          <p class="field-hint">La próxima reunión y sus notas se registran en «Condiciones de tutoría» una vez guardada la sesión.</p>
         </div>
       </div>
       @if (error) { <p class="error-msg" role="alert">{{ error }}</p> }
@@ -49,7 +49,6 @@ export class TutoringFormComponent {
   protected readonly form = this.fb.nonNullable.group({
     semester: [0, Validators.required], fecha_sesion: [this.today, [Validators.required, notPastDateValidator(this.today)]],
     modalidad: ['PRESENCIAL' as 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA', Validators.required], resumen: ['', [Validators.required, Validators.maxLength(2000), significantTextValidator]],
-    proxima_reunion_fecha: [''], proxima_reunion_notas: ['', Validators.maxLength(500)],
   });
   protected get activeSemesters(): Semester[] { return this.semesters.filter(s => s.is_active); }
   ngOnInit(): void { this.form.patchValue({ semester: this.currentSemesterId || this.activeSemesters[0]?.id || 0 }); }
@@ -60,7 +59,7 @@ export class TutoringFormComponent {
     if (!semester?.is_active) { this.form.controls.semester.setErrors({ inactive: true }); this.error = 'Selecciona un semestre activo.'; return; }
     if (value.fecha_sesion < semester.fecha_inicio) { this.form.controls.fecha_sesion.setErrors({ beforeSemester: true }); this.error = 'La fecha de la sesión no puede ser anterior al inicio del semestre.'; return; }
     this.saving = true; this.error = '';
-    this.service.createTutoringSession({ student: this.studentId, semester: Number(value.semester), fecha_sesion: value.fecha_sesion, modalidad: value.modalidad, resumen: value.resumen, ...(value.proxima_reunion_fecha ? { proxima_reunion_fecha: value.proxima_reunion_fecha } : {}), ...(value.proxima_reunion_notas.trim() ? { proxima_reunion_notas: value.proxima_reunion_notas.trim() } : {}) })
+    this.service.createTutoringSession({ student: this.studentId, semester: Number(value.semester), fecha_sesion: value.fecha_sesion, modalidad: value.modalidad, resumen: value.resumen })
       .pipe(finalize(() => this.saving = false)).subscribe({ next: () => this.saved.emit(), error: err => this.error = err.error?.detail || err.error?.resumen?.[0] || err.error?.fecha_sesion?.[0] || err.error?.semester?.[0] || 'Error al registrar la sesión de tutoría.' });
   }
   private focusFirstInvalid(): void { queueMicrotask(() => document.querySelector<HTMLElement>('.tutoring-form [aria-invalid="true"]')?.focus()); }

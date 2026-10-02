@@ -15,7 +15,7 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
   styles: [`
     .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 24px}.tabs button{border:0;border-bottom:2px solid transparent;background:none;color:var(--text-muted);padding:13px 16px;font-weight:600;cursor:pointer}.tabs button.active{border-color:var(--brand);color:var(--brand)}
     form{display:grid;gap:15px;padding:24px;background:var(--surface-warm)}label{display:grid;gap:7px;color:var(--heading);font-size:13px;font-weight:700}.input{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 12px;color:var(--text);font:inherit}.input::placeholder{color:var(--placeholder)}textarea.input{min-height:72px;resize:vertical}
-    .dropzone{border:1.5px dashed var(--border);border-radius:8px;background:var(--surface-warm);padding:28px 16px;text-align:center;cursor:pointer}.dropzone input{position:absolute;opacity:0;pointer-events:none}.dropzone strong,.dropzone span{display:block}.dropzone strong{color:var(--heading);font-size:14px;margin:8px 0 4px}.dropzone span{color:var(--text-muted);font-size:12px}.file-icon{color:var(--brand);font-size:28px}.selected{color:var(--brand)!important}.error{color:var(--danger);font-size:13px}.actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);background:var(--surface);padding:16px 20px}.link-status{display:flex;align-items:center;gap:10px;font-size:13px}.link-kind{border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;padding:3px 9px}.test-link{color:var(--brand);font-weight:600}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .dropzone{border:1.5px dashed var(--border);border-radius:8px;background:var(--surface-warm);padding:28px 16px;text-align:center;cursor:pointer;position:relative}.dropzone input{position:absolute;opacity:0;pointer-events:none}.dropzone strong,.dropzone span{display:block}.dropzone strong{color:var(--heading);font-size:14px;margin:8px 0 4px}.dropzone span{color:var(--text-muted);font-size:12px}.file-icon{color:var(--brand);font-size:28px}.selected{color:var(--brand)!important}.error{color:var(--danger);font-size:13px}.pending{color:var(--text-secondary);font-size:13px;margin:0}.pending strong{color:var(--heading)}.actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);background:var(--surface);padding:16px 20px}.link-status{display:flex;align-items:center;gap:10px;font-size:13px}.link-kind{border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;padding:3px 9px}.test-link{color:var(--brand);font-weight:600}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   `],
   template: `
     <div class="tabs" role="tablist" aria-label="Tipo de evidencia">
@@ -28,8 +28,9 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
         <label>Título de Evidencia<input class="input" name="fileTitle" [(ngModel)]="title" required maxlength="255" placeholder="Ej. Certificado de Asistencia Congreso 2024"></label>
         <label>Descripción<textarea class="input" name="fileDescription" [(ngModel)]="description" placeholder="Descripción opcional de la evidencia"></textarea></label>
         <ng-container *ngTemplateOutlet="commonFields"></ng-container>
+        @if (pendingRequirements.length) { <p class="pending" id="evidence-pending-file"><strong>Para vincular la evidencia falta:</strong> {{ pendingRequirements.join(' ') }}</p> }
         @if (error) { <p id="evidence-file-error" class="error" role="alert">{{ error }}</p> }
-        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitFile" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitFile" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-file' : null" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
       </form>
     } @else {
       <form id="link-panel" role="tabpanel" aria-labelledby="link-tab" (ngSubmit)="submitLink()">
@@ -40,8 +41,9 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
         <label>Título de Evidencia<input class="input" name="linkTitle" [(ngModel)]="title" required maxlength="255" placeholder="Ej. Repositorio de datos experimentales"></label>
         <label>Descripción<textarea class="input" name="linkDescription" [(ngModel)]="description" placeholder="Descripción opcional de la evidencia"></textarea></label>
         <ng-container *ngTemplateOutlet="commonFields"></ng-container>
+        @if (pendingRequirements.length) { <p class="pending" id="evidence-pending-link"><strong>Para vincular la evidencia falta:</strong> {{ pendingRequirements.join(' ') }}</p> }
         @if (error) { <p class="error" role="alert">{{ error }}</p> }
-        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitLink" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitLink" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-link' : null" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
       </form>
     }
     <ng-template #commonFields>
@@ -75,6 +77,16 @@ export class EvidenceUploadComponent implements OnInit {
     return [];
   }
   get commonFieldsValid(): boolean { return !!this.title.trim() && this.semesterId !== null && (this.activityType === 'OTRO' || this.activityId !== null); }
+  /** Names what still blocks the submit button, so it is never disabled without an explanation. */
+  get pendingRequirements(): string[] {
+    const pending: string[] = [];
+    if (this.tab === 'file' && !this.file) pending.push('un archivo (PDF, JPG, PNG, DOCX o ZIP).');
+    if (this.tab === 'link' && this.linkKind === null) pending.push('un enlace válido (URL http/https o DOI).');
+    if (!this.title.trim()) pending.push('el título de la evidencia.');
+    if (this.semesterId === null) pending.push('el semestre.');
+    if (this.activityType !== 'OTRO' && this.activityId === null) pending.push('la actividad asociada.');
+    return pending;
+  }
   get canSubmitFile(): boolean { return !this.uploading && this.commonFieldsValid && !!this.file; }
   get linkKind(): 'DOI' | 'URL' | null {
     const value = this.link.trim();
