@@ -37,7 +37,7 @@ Backend: `http://127.0.0.1:8000/api/v1/`. Frontend: `http://localhost:4200/`.
 
 ```bash
 cd Backend/nexus && python manage.py test nexus
-cd FrontEnd/nexus_project && pnpm test -- --watch=false --browsers=ChromeHeadless
+cd FrontEnd/nexus_project && npx ng test --watch=false --browsers=ChromeHeadless
 cd FrontEnd/nexus_project && pnpm build
 ```
 
