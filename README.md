@@ -41,6 +41,17 @@ cd FrontEnd/nexus_project && pnpm test -- --watch=false --browsers=ChromeHeadles
 cd FrontEnd/nexus_project && pnpm build
 ```
 
+## Entorno de pruebas compartido
+
+Para que el equipo pruebe la aplicación completa desde fuera de la red local:
+
+```bash
+./dev-tunnel.sh
+```
+
+Levanta backend, frontend y un túnel público de Cloudflare, e imprime la URL.
+Detalles, cuentas de prueba y límites en [entorno-de-pruebas.md](docs/entorno-de-pruebas.md).
+
 ## Ramas
 
 - `Development`: integración continua.
@@ -55,3 +66,4 @@ cd FrontEnd/nexus_project && pnpm build
 - [Dependencias/HU](docs/architecture/dependencies_matrix.md)
 - [Diseño](docs/design/DESIGN.md)
 - [Equipos](docs/teams/)
+- [Entorno de pruebas compartido](docs/entorno-de-pruebas.md)

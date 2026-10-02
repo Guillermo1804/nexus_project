@@ -126,3 +126,6 @@ workspace/
 
 # Copia de referencia del sistema fuente (Syncify) usada para la adaptación
 referencia-syncify-workspace/
+
+# Logs del entorno de pruebas compartido (túnel de Cloudflare)
+.tunnel-logs/
