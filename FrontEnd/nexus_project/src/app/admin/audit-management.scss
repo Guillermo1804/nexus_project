@@ -15,16 +15,22 @@
 .section-header h2 { color: var(--heading); font-size: 20px; margin: 0 0 5px; }
 .table-scroll { overflow-x: auto; }
 
-table { border-collapse: collapse; min-width: 880px; width: 100%; }
+/* Anchos flexibles: con columnas fijas la tabla pedía 1145px y el espacio disponible
+   son ~890px con el menú lateral, así que obligaba a desplazar en horizontal. */
+table { border-collapse: collapse; min-width: 720px; width: 100%; }
 th { background: var(--surface-soft); color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 12px 20px; text-align: left; text-transform: uppercase; }
-th:nth-child(1) { width: 180px; }
-th:nth-child(2) { width: 230px; }
-th:nth-child(3) { width: 180px; }
-th:nth-child(4) { width: 200px; }
-td { border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; padding: 14px 20px; vertical-align: top; }
+td { border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; overflow-wrap: anywhere; padding: 14px 16px; vertical-align: top; }
 .date-cell { color: var(--text); font-size: 12px; white-space: nowrap; }
 .action-badge { background: var(--surface-soft); color: var(--brand); white-space: nowrap; }
-.details-cell { font-size: 12px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Los detalles ya no se recortan: cada campo es una fila etiquetada que se envuelve
+   y ocupa el ancho disponible. Antes esta celda tenía ancho fijo y `nowrap`, que era
+   justo lo que truncaba el contenido. */
+.details-cell { font-size: 12px; min-width: 210px; }
+.details-list { display: grid; gap: 6px; margin: 0; }
+.details-list > div { display: grid; gap: 1px; grid-template-columns: minmax(0, 1fr); }
+.details-list dt { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.details-list dd { color: var(--text); margin: 0; overflow-wrap: anywhere; }
+.no-details { color: var(--text-muted); font-style: italic; }
 
 .pagination {
   align-items: center;
@@ -43,6 +49,13 @@ td { border-top: 1px solid var(--border); color: var(--text-secondary); font-siz
 .feedback { border-radius: var(--radius-pill); font-size: 13px; margin: 16px 0 0; padding: 9px 14px; width: fit-content; }
 .feedback-error { background: var(--danger-bg); color: var(--danger); }
 .visually-hidden { height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; clip: rect(0 0 0 0); }
+
+@media (max-width: 1200px) {
+  /* La tabla se apila en fichas (patrón compartido en styles.scss). */
+  .table-scroll { overflow-x: visible; }
+  table { min-width: 0; }
+  .details-cell { min-width: 0; }
+}
 
 @media (max-width: 720px) {
   .page-shell { padding: 24px 16px; }

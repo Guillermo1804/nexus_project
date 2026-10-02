@@ -8,13 +8,22 @@ h2 { color: var(--heading); margin-bottom: 6px; }
 .eyebrow { color: var(--brand); display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; margin-bottom: 5px; }
 .controls { display: grid; gap: 8px; justify-items: end; }
 .filters, .order { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
-.filters button, .order button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-secondary); cursor: pointer; font-weight: 600; padding: 7px 12px; }
+.filters button, .order button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-secondary); cursor: pointer; font-weight: 600; padding: 7px 12px; transition: background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out); }
+.filters button:hover:not(.active), .order button:hover:not(.active) { border-color: var(--brand); color: var(--brand); }
+.filters button:active, .order button:active { transform: scale(.97); }
 .filters button.active, .order button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.filters button.active .count { background: rgb(255 255 255 / 22%); color: #fff; }
+.filters .count { background: var(--surface-soft); border-radius: 999px; color: var(--text-muted); font-size: 10px; font-weight: 700; margin-left: 6px; padding: 1px 6px; }
+.filters .clear { border-color: transparent; color: var(--brand); text-decoration: underline; }
 .order button { font-size: 12px; }
+.filter-note { color: var(--text-muted); font-size: 12px; margin: -14px 0 18px; }
+.filter-note .link { background: none; border: 0; color: var(--brand); cursor: pointer; font-weight: 700; padding: 0; text-decoration: underline; }
 ol { list-style: none; margin: 0; padding: 0; }
 ol[aria-label='Trayectoria cronológica del estudiante'] { margin-left: 17px; padding-left: 28px; border-left: 2px solid var(--border); }
 .event { position: relative; padding: 0 0 18px; animation: fade-in .24s ease-out both; }
-.node { position: absolute; left: -44px; top: 15px; width: 30px; height: 30px; display: grid; place-items: center; border: 3px solid var(--surface); border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
+/* `line-height: 1` hace que la caja de línea mida justo el tamaño de fuente; con la
+   altura heredada el glifo se sentaba bajo el centro del círculo en vez de en él. */
+.node { position: absolute; left: -44px; top: 15px; width: 30px; height: 30px; display: grid; place-items: center; border: 3px solid var(--surface); border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; line-height: 1; }
 .event.acuerdo .node { background: var(--warning); }.event.tesis .node { background: #6352a1; }.event.evidencia .node { background: var(--success); }
 .event article { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgb(34 27 56 / 5%); }
 .event-heading, .event footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }

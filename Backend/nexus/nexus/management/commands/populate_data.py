@@ -433,6 +433,17 @@ def populate():
                             "created_by": sdata["tutor"],
                         },
                     )
+                    # El alta siempre se anota, como hace la vista al crear el acuerdo:
+                    # si no, un acuerdo recién creado muestra la bitácora vacía.
+                    AgreementAuditLog.objects.get_or_create(
+                        agreement=acuerdo,
+                        estado_anterior="",
+                        estado_nuevo=acuerdo.estado,
+                        defaults={
+                            "user": sdata["tutor"],
+                            "comentario": f"Compromiso registrado en la sesión del {fecha_sesion.strftime('%d/%m/%Y')}.",
+                        },
+                    )
                     if estado_real == Agreement.Status.COMPLETED:
                         AgreementAuditLog.objects.get_or_create(
                             agreement=acuerdo,

@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import { TutoringObservation, TutoringSession } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
   selector: 'app-tutoring-observations',
@@ -19,6 +20,7 @@ export class TutoringObservationsComponent implements OnChanges {
   private readonly academic = inject(AcademicService);
   private readonly fb = inject(FormBuilder);
   protected readonly auth = inject(AuthService);
+  private readonly toasts = inject(ToastService);
 
   protected sessions: TutoringSession[] = [];
   /** Sesiones futuras que existen pero todavía no admiten observaciones. */
@@ -70,6 +72,7 @@ export class TutoringObservationsComponent implements OnChanges {
         next: () => {
           this.form.reset({ tema_revisado: '', observaciones_detalladas: '' });
           this.exito = 'Observación registrada correctamente.';
+          this.toasts.exito('Observación añadida a la bitácora de la tutoría.');
           this.cargarObservaciones();
         },
         error: (err) => {

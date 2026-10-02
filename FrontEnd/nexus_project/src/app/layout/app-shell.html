@@ -1,4 +1,17 @@
 <div class="shell">
+  <header class="topbar">
+    <div class="breadcrumb"><span>N.E.X.U.S.</span><b>/</b><strong>{{ viewTitle() }}</strong></div>
+    <div class="account">
+      <div class="identity">
+        <strong>{{ userName() }}</strong>
+        <span>{{ roleLabel() }}</span>
+      </div>
+      <button class="btn-secondary" type="button" (click)="logout()" [disabled]="isLeaving">
+        {{ isLeaving ? 'Cerrando...' : 'Cerrar sesión' }}
+      </button>
+    </div>
+  </header>
+
   <aside class="sidebar" aria-label="Navegación principal">
     <a class="logo" routerLink="/home" aria-label="N.E.X.U.S. Inicio">
       <svg viewBox="0 0 12 10" width="20" height="17" fill="none" aria-hidden="true">
@@ -35,21 +48,10 @@
   </aside>
 
   <div class="workspace">
-    <header class="topbar">
-      <div class="breadcrumb"><span>N.E.X.U.S.</span><b>/</b><strong>{{ viewTitle() }}</strong></div>
-      <div class="account">
-        <div class="identity">
-          <strong>{{ userName() }}</strong>
-          <span>{{ roleLabel() }}</span>
-        </div>
-        <button class="btn-secondary" type="button" (click)="logout()" [disabled]="isLeaving">
-          {{ isLeaving ? 'Cerrando...' : 'Cerrar sesión' }}
-        </button>
-      </div>
-    </header>
-
     <main class="content">
       <router-outlet />
     </main>
   </div>
+
+  <app-toast-host />
 </div>

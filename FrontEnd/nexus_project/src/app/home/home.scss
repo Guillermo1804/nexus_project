@@ -126,7 +126,7 @@ td:first-child .mono { color: var(--text-muted); font-size: 12px; font-weight: 7
 
 /* El apilado en fichas lo define styles.scss; aquí sólo se anula el ancho mínimo
    propio del componente, que al ser local ganaría a la regla global. */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .table-scroll { overflow-x: visible; }
   table { min-width: 0; }
 }

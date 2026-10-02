@@ -21,12 +21,22 @@
           </thead>
           <tbody>
             @for (log of logs; track log.id) {
-              <tr>
-                <td class="mono date-cell">{{ log.created_at | date:'medium' }}</td>
-                <td><span class="badge action-badge">{{ log.action }}</span></td>
-                <td>{{ log.actor_email }}</td>
-                <td>{{ log.target_user_email || 'Asociación académica' }}</td>
-                <td class="details-cell" [title]="detailsSummary(log)">{{ detailsSummary(log) }}</td>
+              <tr [class.expanded]="isExpanded(log)">
+                <td class="mono date-cell" data-label="Fecha">{{ log.created_at | date:'medium' }}</td>
+                <td data-label="Acción"><span class="badge action-badge">{{ actionLabel(log.action) }}</span></td>
+                <td data-label="Administrador">{{ log.actor_email }}</td>
+                <td data-label="Cuenta afectada">{{ log.target_user_email || 'Asociación académica' }}</td>
+                <td class="details-cell" data-label="Detalles">
+                  @if (detailRows(log).length === 0) {
+                    <span class="no-details">Sin detalle adicional</span>
+                  } @else {
+                    <dl class="details-list">
+                      @for (row of detailRows(log); track row.label) {
+                        <div><dt>{{ row.label }}</dt><dd>{{ row.value }}</dd></div>
+                      }
+                    </dl>
+                  }
+                </td>
               </tr>
             } @empty {
               <tr><td colspan="5" class="empty-state">No hay acciones registradas.</td></tr>

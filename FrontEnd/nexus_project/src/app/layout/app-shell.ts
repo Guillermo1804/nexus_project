@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ToastHostComponent } from '../shared/toast-host.component';
 import { filter, finalize } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AcademicService } from '../core/academic/academic.service';
@@ -12,7 +13,7 @@ const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PR
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, ToastHostComponent],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })

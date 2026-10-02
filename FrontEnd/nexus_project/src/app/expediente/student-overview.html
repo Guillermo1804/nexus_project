@@ -13,7 +13,7 @@
         <p class="program">{{ overview.programa_doctoral }}</p>
         <div class="student-meta"><span class="mono">{{ overview.matricula }}</span><span>Cohorte {{ overview.cohorte }}</span><span>Semestre {{ overview.current_semester?.numero ?? 'sin registrar' }}</span></div>
       </div>
-      <div class="header-actions"><button class="btn-secondary" disabled title="Próximamente">Descargar PDF</button>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
+      <div class="header-actions"><button class="btn-secondary" disabled title="Próximamente">Descargar PDF</button>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
     </section>
 
     @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
@@ -53,7 +53,7 @@
           </article>
 
           <article id="agreements" class="nexus-card content-card">
-            <div class="section-heading"><div><h2>Acuerdos y Compromisos Formales</h2><p>Compromisos registrados en las tutorías del semestre.</p></div>@if (canCreateAgreement) { <button class="btn-primary" [disabled]="semesterSessions.length === 0" (click)="abrirNuevoAcuerdo()">+ Nuevo Acuerdo</button> }</div>
+            <div class="section-heading"><div><h2>Acuerdos y Compromisos Formales</h2><p>Compromisos registrados en las tutorías del semestre.</p></div>@if (canCreateAgreement) { <button class="btn-primary" [disabled]="semesterSessions.length === 0" [title]="semesterSessions.length === 0 ? 'Los compromisos se registran sobre una tutoría: registra primero una sesión en este semestre.' : 'Registrar un nuevo acuerdo'" (click)="abrirNuevoAcuerdo()">+ Nuevo Acuerdo</button> }</div>
             @if (semesterAgreements.length) {
               <div class="agreement-table">
                 <div class="table-head"><span>Descripción</span><span>Responsable</span><span>Fecha límite</span><span>Estado</span><span></span></div>
@@ -88,11 +88,11 @@
 
       <aside class="side-column">
         <article class="nexus-card side-card thesis-card">
-          <div class="section-heading"><h2>Avance de Tesis</h2>@if (canRegisterThesisProgress) { <button class="icon-link" [disabled]="!overview.current_semester" (click)="openModal('avance')" aria-label="Registrar avance de tesis">↗</button> }</div>
+          <div class="section-heading"><h2>Avance de Tesis</h2>@if (canRegisterThesisProgress) { <button class="icon-link" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')" aria-label="Registrar avance de tesis">↗</button> }</div>
           <div class="progress-total"><strong>{{ overview.thesis_progress?.porcentaje_avance ?? 0 }}%</strong><span>Avance global</span></div>
           <div class="progress-track"><span [style.width.%]="overview.thesis_progress?.porcentaje_avance ?? 0"></span></div>
           @for (component of thesisComponents().slice(0, 4); track component.name) { <div class="component-progress"><div><span>{{ component.name }}</span>@if (component.percentage !== null) {<strong>{{ component.percentage }}%</strong>} @else {<span class="status-pill">{{ component.status }}</span>}</div>@if (component.percentage !== null) {<div class="progress-track"><span [style.width.%]="component.percentage"></span></div>} </div> }
-          @if (canRegisterThesisProgress) { <button class="btn-primary thesis-action" [disabled]="!overview.current_semester" (click)="openModal('avance')">Registrar avance de tesis</button> }
+          @if (canRegisterThesisProgress) { <button class="btn-primary thesis-action" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }
         </article>
 
         <article class="nexus-card side-card"><h2>Comité Tutorial</h2><div class="committee-list">@for (member of committeeMembers(); track member.id) { <div class="committee-member"><span class="member-avatar">{{ member.nombre_completo.charAt(0) }}</span><div><strong>{{ member.nombre_completo }}</strong><span>{{ member.etiqueta }}</span></div></div> } @empty { <p class="empty-state">Sin comité asignado.</p> }</div></article>

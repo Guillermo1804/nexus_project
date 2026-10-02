@@ -29,6 +29,20 @@ describe('TimelineComponent (HU-23)', () => {
   const titles = (): string[] =>
     [...fixture.nativeElement.querySelectorAll('li.event article h4')].map((h4: Element) => (h4.textContent ?? '').trim());
 
+  const clickFilter = (label: string): void => {
+    const button = [...fixture.nativeElement.querySelectorAll('.filters button')].find(
+      (b: Element) => (b.textContent ?? '').includes(label),
+    ) as HTMLButtonElement;
+    button.click();
+  };
+
+  const ariaPressed = (label: string): string | null => {
+    const button = [...fixture.nativeElement.querySelectorAll('.filters button')].find(
+      (b: Element) => (b.textContent ?? '').includes(label),
+    ) as HTMLButtonElement;
+    return button.getAttribute('aria-pressed');
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [TimelineComponent] }).compileComponents();
     fixture = TestBed.createComponent(TimelineComponent);
@@ -52,18 +66,51 @@ describe('TimelineComponent (HU-23)', () => {
     expect(titles()).toEqual(['Tutoria marzo', 'Acuerdo marzo', 'Evidencia mayo', 'Tutoria junio']);
   });
 
-  it('conserva el orden elegido al filtrar por tipo', () => {
-    const ascButton = [...fixture.nativeElement.querySelectorAll('.order button')].find((b: Element) =>
-      (b.textContent ?? '').includes('Más antiguo'),
-    ) as HTMLButtonElement;
-    ascButton.click();
-    const filterButton = [...fixture.nativeElement.querySelectorAll('.filters button')].find(
-      (b: Element) => (b.textContent ?? '').includes('Tutorías'),
-    ) as HTMLButtonElement;
-    filterButton.click();
+  it('acumula varios filtros a la vez', () => {
+    clickFilter('Tutorías');
+    clickFilter('Acuerdos');
     fixture.detectChanges();
 
-    expect(titles()).toEqual(['Tutoria marzo', 'Tutoria junio']);
+    expect(titles()).toEqual(['Tutoria junio', 'Acuerdo marzo', 'Tutoria marzo']);
+  });
+
+  it('desmarca un filtro sin tocar los demás', () => {
+    clickFilter('Tutorías');
+    clickFilter('Acuerdos');
+    clickFilter('Acuerdos');
+    fixture.detectChanges();
+
+    expect(titles()).toEqual(['Tutoria junio', 'Tutoria marzo']);
+  });
+
+  it('«Limpiar» restablece todos los tipos', () => {
+    clickFilter('Tutorías');
+    clickFilter('Tesis');
+    fixture.detectChanges();
+    expect(titles().length).toBeLessThan(4);
+
+    const limpiar = [...fixture.nativeElement.querySelectorAll('.filters button')].find(
+      (b: Element) => (b.textContent ?? '').trim() === 'Limpiar',
+    ) as HTMLButtonElement;
+    limpiar.click();
+    fixture.detectChanges();
+
+    expect(titles().length).toBe(4);
+    expect(ariaPressed('Todos')).toBe('true');
+  });
+
+  it('avisa de cuántos eventos se están ocultando', () => {
+    clickFilter('Tesis');
+    fixture.detectChanges();
+
+    const nota = fixture.nativeElement.querySelector('.filter-note');
+    expect(nota.textContent).toContain('Mostrando 0 de 4');
+    expect(ariaPressed('Tesis')).toBe('true');
+  });
+
+  it('el botón «Todos» se marca activo cuando no hay filtros', () => {
+    expect(ariaPressed('Todos')).toBe('true');
+    expect(ariaPressed('Tutorías')).toBe('false');
   });
 
   it('conserva el semestre de cada evento como referencia sin agrupar', () => {

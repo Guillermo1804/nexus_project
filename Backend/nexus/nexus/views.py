@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db import connection, transaction
+from django.db.models import CharField, Prefetch, Q
 from django.utils import timezone
 
 from .models import (
@@ -29,6 +29,7 @@ from .models import (
     Evidence,
 )
 from .services.alert_service import agreement_alerts_for_user
+from .text_utils import Unaccent, remove_accents
 from .permissions import (
     CanAssignRoles,
     CanCreateTutoring,
@@ -311,6 +312,22 @@ def can_access_student(user, student, write=False):
     return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
 
 
+def buscar_en_descripcion(queryset, termino):
+    """Filtra `queryset` por texto sobre la descripción, sin distinguir acentos ni mayúsculas.
+
+    SQLite sólo ignora mayúsculas en ASCII, así que sin normalizar «analisis» no
+    encontraría «análisis»; en otros motores `unaccent` no existe y cae al icontains.
+    """
+    limpio = remove_accents(termino.strip())
+    if not limpio:
+        return queryset
+    if connection.vendor != 'sqlite':
+        return queryset.filter(descripcion__icontains=limpio)
+    return queryset.annotate(
+        descripcion_plana=Unaccent('descripcion', output_field=CharField())
+    ).filter(descripcion_plana__icontains=limpio)
+
+
 class TimelineView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -431,6 +448,12 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         serializer = AgreementSerializer(data=request.data, context={'session': session})
         serializer.is_valid(raise_exception=True)
         agreement = serializer.save(session=session, student=session.student, created_by=request.user)
+        # El alta también es un movimiento de la bitácora: sin ella el acuerdo aparecía
+        # recién creado con «Sin cambios registrados aún», como si le faltara información.
+        AgreementAuditLog.objects.create(
+            agreement=agreement, user=request.user, estado_anterior='',
+            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
+        )
         return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
 
 
@@ -478,7 +501,35 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
             queryset = queryset.filter(fecha_limite__gte=fecha_desde)
         if fecha_hasta := self.request.query_params.get('fecha_hasta'):
             queryset = queryset.filter(fecha_limite__lte=fecha_hasta)
-        return queryset.select_related('student', 'responsable', 'session', 'session__semester').distinct().order_by('fecha_limite', 'id')
+        if busqueda := self.request.query_params.get('busqueda'):
+            queryset = buscar_en_descripcion(queryset, busqueda)
+        return (
+            queryset.select_related('student', 'responsable', 'session', 'session__semester')
+            .distinct()
+            .order_by(*self.ordenamiento())
+        )
+
+    #: Campos por los que se puede ordenar, con sufijo para invertir.
+    ORDENES = {
+        'fecha_limite': 'fecha_limite',
+        'fecha_limite_desc': '-fecha_limite',
+        'estado': 'estado',
+        'estado_desc': '-estado',
+        'estudiante': 'student__nombre_completo',
+        'estudiante_desc': '-student__nombre_completo',
+        'responsable': 'responsable__first_name',
+        'responsable_desc': '-responsable__first_name',
+        'creado': 'created_at',
+        'creado_desc': '-created_at',
+    }
+
+    def ordenamiento(self):
+        """Ordena por el campo pedido y, si no es válido, por fecha límite.
+
+        Antes sólo había fecha límite ascendente: los acuerdos vencidos quedaban
+        repartidos y sin forma de cambiarlo.
+        """
+        return (self.ORDENES.get(self.request.query_params.get('orden', ''), 'fecha_limite'), 'id')
 
     from rest_framework.decorators import action
 

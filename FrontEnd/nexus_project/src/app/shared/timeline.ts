@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { TimelineEvent, TimelineEventType, TimelineSemester } from '../core/academic/academic.models';
 
-type TimelineFilter = 'TODOS' | TimelineEventType;
 type TimelineOrder = 'DESC' | 'ASC';
 
 interface TimelineEntry {
@@ -28,10 +27,17 @@ function compareDates(a: string, b: string): number {
         </div>
         <div class="controls">
           <div class="filters" role="group" aria-label="Filtrar eventos de la línea de tiempo">
-            @for (option of filterOptions; track option.value) {
-              <button type="button" [class.active]="filter === option.value" [attr.aria-pressed]="filter === option.value" (click)="filter = option.value">
+            <button type="button" [class.active]="filters.length === 0" [attr.aria-pressed]="filters.length === 0" (click)="clearFilters()">
+              Todos
+            </button>
+            @for (option of typeOptions; track option.value) {
+              <button type="button" [class.active]="isFiltered(option.value)" [attr.aria-pressed]="isFiltered(option.value)" (click)="toggleFilter(option.value)">
                 {{ option.label }}
+                @if (countOf(option.value) > 0) { <span class="count">{{ countOf(option.value) }}</span> }
               </button>
+            }
+            @if (filters.length > 0) {
+              <button type="button" class="clear" (click)="clearFilters()">Limpiar</button>
             }
           </div>
           <div class="order" role="group" aria-label="Ordenar eventos de la línea de tiempo">
@@ -43,6 +49,13 @@ function compareDates(a: string, b: string): number {
           </div>
         </div>
       </header>
+
+      @if (visibleCount > 0 && entries.length < visibleCount) {
+        <p class="filter-note" role="status">
+          Mostrando {{ entries.length }} de {{ visibleCount }} eventos.
+          <button type="button" class="link" (click)="clearFilters()">Ver todos</button>
+        </p>
+      }
 
       @if (entries.length) {
         <ol aria-label="Trayectoria cronológica del estudiante">
@@ -79,20 +92,38 @@ function compareDates(a: string, b: string): number {
 export class TimelineComponent {
   @Input({ required: true }) semesters: TimelineSemester[] = [];
 
-  protected filter: TimelineFilter = 'TODOS';
+  /** Tipos marcados. Vacío significa «todos», que es el estado inicial. */
+  protected filters: TimelineEventType[] = [];
   /** Newest first by default, so the most recent progress is what the user sees. */
   protected order: TimelineOrder = 'DESC';
   protected readonly orderOptions: { value: TimelineOrder; label: string }[] = [
     { value: 'DESC', label: 'Más reciente primero' },
     { value: 'ASC', label: 'Más antiguo primero' },
   ];
-  protected readonly filterOptions: { value: TimelineFilter; label: string }[] = [
-    { value: 'TODOS', label: 'Todos' },
+  protected readonly typeOptions: { value: TimelineEventType; label: string }[] = [
     { value: 'TUTORIA', label: 'Tutorías' },
     { value: 'ACUERDO', label: 'Acuerdos' },
     { value: 'TESIS', label: 'Tesis' },
     { value: 'EVIDENCIA', label: 'Evidencias' },
   ];
+
+  protected isFiltered(type: TimelineEventType): boolean { return this.filters.includes(type); }
+
+  /** Los filtros se acumulan: cada pulsación suma o quita un tipo, sin excluir al resto. */
+  protected toggleFilter(type: TimelineEventType): void {
+    this.filters = this.isFiltered(type) ? this.filters.filter((item) => item !== type) : [...this.filters, type];
+  }
+
+  protected clearFilters(): void { this.filters = []; }
+
+  /** Cuántos eventos hay de ese tipo, para que el botón diga si filtraría con datos. */
+  protected countOf(type: TimelineEventType): number {
+    return this.semesters.reduce((total, semester) => total + semester.eventos.filter((event) => event.tipo === type).length, 0);
+  }
+
+  protected get visibleCount(): number {
+    return this.semesters.reduce((total, semester) => total + semester.eventos.length, 0);
+  }
 
   /**
    * One flat sequence: events are neither grouped by semester nor by day.
@@ -105,7 +136,7 @@ export class TimelineComponent {
    */
   protected get entries(): TimelineEntry[] {
     const all: TimelineEntry[] = this.semesters.flatMap((semester) => semester.eventos.map((event) => ({ event, semester })));
-    const filtered = this.filter === 'TODOS' ? all : all.filter((entry) => entry.event.tipo === this.filter);
+    const filtered = this.filters.length === 0 ? all : all.filter((entry) => this.filters.includes(entry.event.tipo));
     const direction = this.order === 'DESC' ? -1 : 1;
     return filtered
       .map((entry, position) => ({ entry, position }))

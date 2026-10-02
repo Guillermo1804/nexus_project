@@ -1,5 +1,22 @@
 :host { display: block; min-height: 100vh; }
 
+/* La barra superior va antes del menú en el DOM para que ambos puedan ser pegajosos
+   en móvil sin taparse; en escritorio ambos son fijos y el contenido los esquiva. */
+.topbar {
+  align-items: center;
+  background: var(--surface-warm);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  height: 64px;
+  justify-content: space-between;
+  left: 0;
+  padding: 0 24px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 30;
+}
+
 .sidebar {
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -7,7 +24,7 @@
   left: 0;
   padding: 24px 16px;
   position: fixed;
-  top: 0;
+  top: 64px;
   width: 260px;
   z-index: 20;
 }
@@ -58,19 +75,7 @@
   text-transform: uppercase;
 }
 
-.workspace { margin-left: 260px; min-height: 100vh; }
-.topbar {
-  align-items: center;
-  background: var(--surface-warm);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  height: 64px;
-  justify-content: space-between;
-  padding: 0 24px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
+.workspace { margin-left: 260px; min-height: 100vh; padding-top: 64px; }
 .breadcrumb { align-items: center; color: var(--text-muted); display: flex; font-size: 13px; gap: 8px; }
 .breadcrumb b { color: var(--placeholder); font-weight: 400; }
 .breadcrumb strong { color: var(--heading); font-size: 15px; }
@@ -81,24 +86,32 @@
 .account button { padding: 7px 14px; }
 .content { padding: 24px; }
 
+/* En móvil el menú deja de desplazarse en horizontal —eso escondía opciones sin avisar—
+   y pasa a envolver en varias filas, de modo que todas quedan a la vista. Se ancla bajo
+   la barra superior, que queda fija. */
 @media (max-width: 899px) {
+  .topbar { height: 56px; padding: 0 16px; position: sticky; }
   .sidebar {
     align-items: center;
     border-bottom: 1px solid var(--border);
     border-right: 0;
     display: flex;
-    height: 56px;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 2px;
+    height: auto;
+    left: 0;
     padding: 8px 12px;
+    position: sticky;
     right: 0;
+    top: 56px;
     width: auto;
+    z-index: 25;
   }
   .logo { font-size: 0; padding: 8px 12px; }
-  .nav-list { display: flex; gap: 2px; }
-  .nav-list a { font-size: 12px; padding: 8px 10px; white-space: nowrap; }
+  .nav-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 2px; }
+  .nav-list a { align-items: center; display: inline-flex; font-size: 13px; min-height: 44px; padding: 8px 12px; white-space: nowrap; }
   .nav-group { display: none; }
-  .workspace { margin-left: 0; padding-top: 56px; }
-  .topbar { height: auto; min-height: 64px; padding: 10px 16px; }
+  .workspace { margin-left: 0; min-height: auto; padding-top: 0; }
   .breadcrumb span, .breadcrumb b, .identity { display: none; }
   .content { padding: 16px; }
 }

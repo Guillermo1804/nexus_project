@@ -207,6 +207,10 @@ export interface AgreementFilters {
   fecha_limite?: string;
   fecha_desde?: string;
   fecha_hasta?: string;
+  /** Texto libre sobre la descripción del acuerdo. */
+  busqueda?: string;
+  /** Campo de ordenamiento; el sufijo `_desc` lo invierte. */
+  orden?: string;
 }
 
 export interface AgreementAlert {
@@ -232,10 +236,13 @@ export interface AgreementAlertsResponse {
 export interface AgreementAuditEntry {
   id: number;
   user: number | null;
+  user_email: string;
   estado_anterior: string;
   estado_nuevo: string;
   comentario: string;
   fecha_cambio: string;
+  /** `true` cuando el movimiento es el alta del acuerdo y no una transición. */
+  es_alta: boolean;
 }
 
 export interface CreateSessionAgreementData {

@@ -57,10 +57,33 @@
 }
 
 .filters-actions {
+  align-items: center;
   display: flex;
   flex-direction: row-reverse;
   gap: 12px;
   margin-top: 20px;
+}
+
+.filters-summary {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-right: auto;
+}
+
+/* La búsqueda ocupa el ancho completo: el resto de filtros son listas cortas. */
+.search-field { grid-column: 1 / -1; }
+
+.sort-field {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 6px;
+  min-width: 260px;
+}
+
+.sort-field > span {
+  color: var(--heading);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .results-panel { overflow: hidden; }
@@ -68,6 +91,8 @@
 .section-header {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
   justify-content: space-between;
   padding: 20px 24px;
 }
@@ -356,6 +381,8 @@
 .audit-list strong { color: var(--heading); font-size: 12px; font-weight: 700; }
 .audit-list time { color: var(--text-muted); font-size: 11px; }
 .audit-list p { color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 2px 0 0; }
+.audit-head { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: space-between; }
+.audit-author { color: var(--text-muted); display: block; font-size: 11px; margin-top: 2px; }
 .drawer-state { color: var(--text-muted); font-size: 13px; margin: 0; }
 .error-text,
 .save-error { color: var(--danger); }
@@ -380,13 +407,14 @@
 }
 
 @media (max-width: 900px) {
-  .filters-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+  .filters-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sort-field { flex: 1 1 100%; min-width: 0; }
 }
 
 /* El apilado en fichas lo define styles.scss; aquí sólo se anula el ancho mínimo
    propio del componente, que al ser local ganaría a la regla global. A 880px esta
    tabla ya no cabe ni en tablet, así que el corte sube más que en las demás. */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .table-container { overflow-x: visible; }
   .agreements-table { min-width: 0; }
   .row-actions { flex-wrap: wrap; }
@@ -394,9 +422,10 @@
 
 @media (max-width: 560px) {
   .agreements-page { padding: 24px 16px 36px; }
-  .filters-grid { grid-template-columns: 1fr; }
+  .filters-grid { grid-template-columns: minmax(0, 1fr); }
   .filters-actions { flex-direction: column; }
   .filters-actions button { width: 100%; }
+  .filters-summary { margin-right: 0; text-align: center; }
   .metadata-grid { grid-template-columns: 1fr; }
   .drawer-footer { padding: 16px; }
 }

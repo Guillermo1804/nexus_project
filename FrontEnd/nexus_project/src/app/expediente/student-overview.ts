@@ -15,6 +15,7 @@ import { TutoringConditionsComponent } from './tutoring-conditions';
 import { ThesisProgressFormComponent } from './thesis-progress-form';
 import { TimelineComponent } from '../shared/timeline';
 import { ModalFocusDirective } from '../shared/modal-focus.directive';
+import { ToastService } from '../shared/toast.service';
 
 type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semestre' | 'condiciones' | null;
 
@@ -28,6 +29,7 @@ export class StudentOverviewComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly academicService = inject(AcademicService);
   protected readonly auth = inject(AuthService);
+  private readonly toasts = inject(ToastService);
   protected studentId = 0;
   protected overview: StudentOverview | null = null;
   protected agreements: Agreement[] = [];
@@ -125,6 +127,9 @@ export class StudentOverviewComponent implements OnInit {
   protected get completedCount(): number { return this.semesterAgreements.filter(a => a.estado === 'CONCLUIDO').length; }
   protected get semesterOverdueCount(): number { return this.semesterAgreements.filter(a => a.is_vencido && a.estado !== 'CONCLUIDO').length; }
   protected get canCreateTutoring(): boolean { return this.auth.hasPermission('tutoring.create'); }
+  /** Explica por qué el avance de tesis queda apagado sin semestre activo. */
+  protected readonly motivoSinSemestreActivo =
+    'El avance de tesis se registra sobre el semestre en curso. Este expediente no tiene uno marcado como activo.';
   protected get canAccessStudent(): boolean {
     const user = this.auth.user();
     return !!user && (user.student_id === this.studentId || this.overview?.student.user_id === user.id || this.auth.hasPermission('records.read.assigned'));
@@ -198,8 +203,11 @@ export class StudentOverviewComponent implements OnInit {
     this.academicService.createSessionAgreement(this.acuerdo.sessionId, {
       descripcion: this.acuerdo.descripcion.trim(), responsable: this.acuerdo.responsable, fecha_limite: this.acuerdo.fecha_limite,
     }).pipe(finalize(() => this.guardandoAcuerdo = false)).subscribe({
-      next: () => { this.cerrarModal(); this.refrescar(); },
-      error: err => this.errorAcuerdo = err.error?.descripcion?.[0] || err.error?.responsable?.[0] || err.error?.fecha_limite?.[0] || err.error?.detail || 'No fue posible crear el acuerdo.',
+      next: () => { this.cerrarModal(); this.refrescar(); this.toasts.exito('Acuerdo registrado.'); },
+      error: err => {
+        this.errorAcuerdo = err.error?.descripcion?.[0] || err.error?.responsable?.[0] || err.error?.fecha_limite?.[0] || err.error?.detail || 'No fue posible crear el acuerdo.';
+        this.toasts.error(this.errorAcuerdo);
+      },
     });
   }
 
@@ -213,8 +221,11 @@ export class StudentOverviewComponent implements OnInit {
     if (!agreement || !next || !this.puedeActualizarAcuerdo(agreement) || this.guardandoEstado) return;
     this.guardandoEstado = true; this.errorEstado = '';
     this.academicService.updateAgreementStatus(agreement.id, next, this.comentarioEstado.trim()).pipe(finalize(() => this.guardandoEstado = false)).subscribe({
-      next: () => { this.cerrarModal(); this.refrescar(); },
-      error: err => this.errorEstado = err.status === 403 ? 'Sólo el responsable puede actualizar el estado.' : err.error?.estado?.[0] || err.error?.detail || 'No fue posible actualizar el estado del acuerdo.',
+      next: () => { this.cerrarModal(); this.refrescar(); this.toasts.exito('Estado del acuerdo actualizado.'); },
+      error: err => {
+        this.errorEstado = err.status === 403 ? 'Sólo el responsable puede actualizar el estado.' : err.error?.estado?.[0] || err.error?.detail || 'No fue posible actualizar el estado del acuerdo.';
+        this.toasts.error(this.errorEstado);
+      },
     });
   }
 
@@ -259,9 +270,9 @@ export class StudentOverviewComponent implements OnInit {
     if (semester) this.selectedSemesterId = semester.id;
     setTimeout(() => document.getElementById('agreements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
-  protected tutoriaGuardada(): void { this.cerrarModal(); this.exitoTutoria = 'Tutoría registrada correctamente.'; this.refrescar(); }
-  protected semestreGuardado(): void { this.cerrarModal(); this.refrescar(); }
-  protected evidenciaGuardada(): void { this.cerrarModal(); this.refrescar(); }
-  protected avanceGuardado(): void { this.cerrarModal(); this.refrescar(); }
-  protected proximaReunionGuardada(): void { this.refrescar(); }
+  protected tutoriaGuardada(): void { this.cerrarModal(); this.exitoTutoria = 'Tutoría registrada correctamente.'; this.refrescar(); this.toasts.exito('Tutoría registrada.'); }
+  protected semestreGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Semestre registrado.'); }
+  protected evidenciaGuardada(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Evidencia vinculada al expediente.'); }
+  protected avanceGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Avance de tesis registrado.'); }
+  protected proximaReunionGuardada(): void { this.refrescar(); this.toasts.exito('Condiciones de tutoría actualizadas.'); }
 }

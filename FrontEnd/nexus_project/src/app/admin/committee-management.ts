@@ -5,6 +5,7 @@ import { AdminService } from './admin.service';
 import { AcademicCommittee, AdminStudent, COMMITTEE_ROLE_LABELS, CommitteeMembership, CommitteeRole } from './admin.models';
 import { AuthenticatedUser, ROLE_LABELS, UserRole } from '../core/auth/auth.models';
 import { ConfirmDialogComponent, ConfirmRequest } from '../shared/confirm-dialog.component';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
   selector: 'app-committee-management',
@@ -14,6 +15,7 @@ import { ConfirmDialogComponent, ConfirmRequest } from '../shared/confirm-dialog
 })
 export class CommitteeManagement {
   private readonly admin = inject(AdminService);
+  private readonly toasts = inject(ToastService);
   protected committees: AcademicCommittee[] = [];
   protected users: AuthenticatedUser[] = [];
   protected students: AdminStudent[] = [];
@@ -67,10 +69,16 @@ export class CommitteeManagement {
     if (!pending) return;
     const { membership } = pending;
     this.admin.deleteCommitteeMembership(membership.id).subscribe({
-      next: () => this.committees = this.committees.map(committee => ({
-        ...committee, memberships: committee.memberships.filter(item => item.id !== membership.id),
-      })),
-      error: () => this.error = 'No fue posible eliminar la membresía.',
+      next: () => {
+        this.committees = this.committees.map(committee => ({
+          ...committee, memberships: committee.memberships.filter(item => item.id !== membership.id),
+        }));
+        this.toasts.exito('Membresía retirada del comité.');
+      },
+      error: () => {
+        this.error = 'No fue posible eliminar la membresía.';
+        this.toasts.error(this.error);
+      },
     });
   }
 

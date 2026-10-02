@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { AuthenticatedUser, AuthResponse, LoginCredentials, Permission, RoleAssignment, UserRole } from './auth.models';
@@ -43,7 +43,14 @@ export class AuthService {
     this.validationRequest = this.http.get<AuthenticatedUser>(`${AUTH_API}/me/`).pipe(
       tap(user => this.setUser(user)),
       map(() => true),
-      catchError(() => { this.handleSessionExpired(); return of(false); }),
+      // Sólo un 401/403 significa que el token dejó de valer. Con cualquier otro
+      // error —red caída, servidor saturado— cerrar la sesión expulsaba al usuario
+      // sin motivo, y era lo que hacía que «la sesión se acabara sola».
+      catchError((error: unknown) => {
+        const status = error instanceof HttpErrorResponse ? error.status : 0;
+        if (status === 401 || status === 403) this.handleSessionExpired();
+        return of(false);
+      }),
       finalize(() => this.validationRequest = undefined),
       shareReplay(1),
     );

@@ -32,6 +32,14 @@
   --shadow-modal: 0 12px 42px -12px rgba(44, 24, 103, .15);
   --shadow-drawer: -4px 0 21px rgba(44, 24, 103, .08);
 
+  /* Escala única de movimiento. Sin ella cada componente elegía su propia duración y
+     la interfaz se sentía disparareja; con tres pasos y 220ms como techo, ninguna
+     acción se siente lenta. */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 220ms;
+  --ease-out: cubic-bezier(.2, .8, .3, 1);
+
   /* Legacy aliases retained for existing page styles. */
   --primary: var(--cta);
   --primary-hover: #4E50DC;
@@ -135,6 +143,60 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .btn-secondary:disabled,
 .btn-danger:disabled { cursor: not-allowed; opacity: .6; }
 
+/* Movimiento común a los controles y superficies. Todo lo interactivo reacciona
+   igual: al pasar el puntero, al pulsarse y al recibir el foco. */
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.input-field,
+select.input-field,
+.nexus-card,
+.status-pill,
+.badge {
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
+}
+
+.btn-primary:not(:disabled):hover,
+.btn-secondary:not(:disabled):hover,
+.btn-danger:not(:disabled):hover { transform: translateY(-1px); }
+
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-danger:not(:disabled):active { transform: translateY(0) scale(.985); }
+
+.nexus-card { transition: box-shadow var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out); }
+.nexus-card:has(a:hover, button:hover) { box-shadow: var(--shadow-card); }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}
+
+.input-field:focus { box-shadow: 0 0 0 3px rgb(73 74 213 / 12%); }
+
+/* Entrada de capas: modales y paneles laterales aparecen desde su borde. */
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes panel-rise { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
+@keyframes drawer-slide-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes row-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.modal-backdrop, .drawer-backdrop { animation: overlay-in var(--motion-base) var(--ease-out) both; }
+.modal-panel { animation: panel-rise var(--motion-slow) var(--ease-out) both; }
+.agreement-drawer { animation: drawer-slide-in var(--motion-slow) var(--ease-out) both; }
+tbody tr, .state-container, .feedback { animation: row-in var(--motion-base) var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop, .drawer-backdrop, .modal-panel, .agreement-drawer, tbody tr,
+  .state-container, .feedback, .btn-primary, .btn-secondary, .btn-danger,
+  .input-field, .nexus-card, .status-pill, .badge { animation: none; transition: none; transform: none; }
+}
+
 .input-field {
   background: var(--surface-warm);
   border: 1px solid var(--border);
@@ -204,11 +266,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .agreement-alert-banner > button { grid-column: 3; grid-row: 1; }
 }
 
-/* Tablas apiladas. Por debajo de 900px ninguna de las tablas de la aplicación cabe
-   ya en su columna, y el arrastre horizontal que las salva se pierde en móvil; cada
-   fila pasa a ser una ficha y `data-label` rotula la celda, porque la cabecera deja
-   de estar sobre los datos. */
-@media (max-width: 900px) {
+/* Tablas apiladas. Con el menú lateral de 260px, por debajo de 1200px ninguna de las
+   tablas de la aplicación cabe en su columna y el arrastre horizontal se pierde en
+   móvil; cada fila pasa a ser una ficha y `data-label` rotula la celda, porque la
+   cabecera deja de estar sobre los datos. */
+@media (max-width: 1200px) {
   .table-scroll,
   .table-container { overflow-x: visible; }
   .table-scroll table,

@@ -566,11 +566,17 @@ class TutoringSessionCreateSerializer(serializers.ModelSerializer):
 
 class AgreementAuditLogSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
+    # El alta del acuerdo se registra con `estado_anterior` vacío; la interfaz lo
+    # muestra como «Acuerdo creado» en vez de como una transición de estado.
+    es_alta = serializers.SerializerMethodField()
 
     class Meta:
         model = AgreementAuditLog
-        fields = ('id', 'user', 'user_email', 'estado_anterior', 'estado_nuevo', 'comentario', 'fecha_cambio')
+        fields = ('id', 'user', 'user_email', 'estado_anterior', 'estado_nuevo', 'comentario', 'fecha_cambio', 'es_alta')
         read_only_fields = fields
+
+    def get_es_alta(self, entry):
+        return not entry.estado_anterior
 
 
 class AgreementStatusSerializer(serializers.Serializer):

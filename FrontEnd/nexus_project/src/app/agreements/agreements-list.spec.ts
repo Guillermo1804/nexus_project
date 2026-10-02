@@ -101,7 +101,8 @@ describe('AgreementsListComponent (HU-14)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent || '';
     expect(academicStub.getAgreements).toHaveBeenCalled();
     expect(text).toContain('Entregar capítulo 3');
-    expect(text).toContain('VENCIDO');
+    // Los estados se muestran en lenguaje natural, no como la constante del backend.
+    expect(text).toContain('Vencido');
     expect(text).toContain('Diego Fuentes');
   });
 

@@ -14,6 +14,7 @@ import {
 import { AuthService } from '../core/auth/auth.service';
 import { StudentService } from '../core/students/student.service';
 import { ModalFocusDirective } from '../shared/modal-focus.directive';
+import { ToastService } from '../shared/toast.service';
 
 interface ResponsableOption {
   id: number;
@@ -34,6 +35,7 @@ export class AgreementsListComponent implements OnInit {
   private readonly studentsApi = inject(StudentService);
   private readonly route = inject(ActivatedRoute);
   protected readonly auth = inject(AuthService);
+  private readonly toasts = inject(ToastService);
   private triggerElement: HTMLElement | null = null;
 
   @ViewChild('drawerClose') private drawerClose?: ElementRef<HTMLButtonElement>;
@@ -49,6 +51,20 @@ export class AgreementsListComponent implements OnInit {
   protected filtroResponsable = '';
   protected filtroFechaDesde = '';
   protected filtroFechaHasta = '';
+  protected filtroBusqueda = '';
+  /** Orden por fecha límite ascendente: lo más urgente, vencidos incluidos, va primero. */
+  protected filtroOrden = 'fecha_limite';
+  protected readonly ordenes: { value: string; label: string }[] = [
+    { value: 'fecha_limite', label: 'Fecha límite (más próxima primero)' },
+    { value: 'fecha_limite_desc', label: 'Fecha límite (más lejana primero)' },
+    { value: 'estado', label: 'Estado (A–Z)' },
+    { value: 'estado_desc', label: 'Estado (Z–A)' },
+    { value: 'estudiante', label: 'Estudiante (A–Z)' },
+    { value: 'estudiante_desc', label: 'Estudiante (Z–A)' },
+    { value: 'responsable', label: 'Responsable (A–Z)' },
+    { value: 'responsable_desc', label: 'Responsable (Z–A)' },
+    { value: 'creado_desc', label: 'Añadidos recientemente' },
+  ];
 
   protected pagina = 1;
   protected total = 0;
@@ -96,9 +112,25 @@ export class AgreementsListComponent implements OnInit {
     this.filtroResponsable = '';
     this.filtroFechaDesde = '';
     this.filtroFechaHasta = '';
+    this.filtroBusqueda = '';
+    this.filtroOrden = 'fecha_limite';
     this.semesters = [];
     this.pagina = 1;
     this.cargarAcuerdos();
+  }
+
+  /** Cambiar el orden vuelve a la primera página: en la 5 el sentido ya no se percibe. */
+  protected cambiarOrden(orden: string): void {
+    this.filtroOrden = orden;
+    this.pagina = 1;
+    this.cargarAcuerdos();
+  }
+
+  protected get filtrosActivos(): number {
+    return [
+      this.filtroStudent, this.filtroSemester, this.filtroEstado, this.filtroResponsable,
+      this.filtroFechaDesde, this.filtroFechaHasta, this.filtroBusqueda.trim(),
+    ].filter((value) => !!value).length;
   }
 
   protected onStudentChange(): void {
@@ -127,8 +159,15 @@ export class AgreementsListComponent implements OnInit {
     return a.is_vencido && a.estado !== 'CONCLUIDO' ? 'VENCIDO' : a.estado;
   }
 
+  /** Los estados se muestran en lenguaje natural, no como la constante del backend. */
   protected estadoLabel(estado: string): string {
-    return estado === 'EN_PROCESO' ? 'EN PROCESO' : estado;
+    const etiquetas: Record<string, string> = {
+      PENDIENTE: 'Pendiente',
+      EN_PROCESO: 'En proceso',
+      CONCLUIDO: 'Concluido',
+      VENCIDO: 'Vencido',
+    };
+    return etiquetas[estado] ?? (estado ? estado.replaceAll('_', ' ').toLowerCase() : '—');
   }
 
   protected badgeClass(a: Agreement): string {
@@ -168,6 +207,24 @@ export class AgreementsListComponent implements OnInit {
     return !this.drawerAgreement?.is_vencido && (status === this.nextStatus() || status === this.selectedStatus);
   }
 
+  /**
+   * Explica por qué un estado no se puede elegir. Los botones salen apagados y, sin
+   * esto, el usuario sólo veía una pantalla que parecía no responder.
+   *
+   * Sin argumento devuelve la regla general —la que se muestra bajo los botones—;
+   * con el estado concreto, el motivo de ese botón en particular.
+   */
+  protected motivoBloqueoEstado(status?: string): string {
+    const agreement = this.drawerAgreement;
+    if (!agreement) return '';
+    if (agreement.is_vencido) return 'Este acuerdo está vencido: los compromisos vencidos quedan cerrados y no admiten cambios de estado.';
+    if (this.saveDisabled) return 'Sólo la persona responsable del acuerdo puede cambiar su estado.';
+    if (agreement.estado === 'CONCLUIDO') return 'El acuerdo ya está concluido y no admite más cambios.';
+    if (!status) return `Sólo se puede pasar de «${this.estadoLabel(agreement.estado)}» a «${this.estadoLabel(this.nextStatus() ?? '')}».`;
+    if (status === this.nextStatus() || status === this.selectedStatus) return '';
+    return `Desde «${this.estadoLabel(agreement.estado)}» sólo se puede pasar a «${this.estadoLabel(this.nextStatus() ?? '')}».`;
+  }
+
   protected selectStatus(status: string): void {
     if (status === this.nextStatus()) this.selectedStatus = status as EditableAgreementStatus;
   }
@@ -184,6 +241,7 @@ export class AgreementsListComponent implements OnInit {
         next: () => {
           this.cargarAcuerdos();
           this.cerrarDrawer();
+          this.toasts.exito('Estado actualizado y anotado en la bitácora.');
         },
         error: (err) => {
           this.saveError =
@@ -191,6 +249,7 @@ export class AgreementsListComponent implements OnInit {
             err.error?.detail ||
             'No fue posible actualizar el estado del acuerdo.';
           if (err.status === 403) this.saveDisabled = true;
+          this.toasts.error(this.saveError);
         },
       });
   }
@@ -286,6 +345,8 @@ export class AgreementsListComponent implements OnInit {
     else if (this.filtroEstado) filters.estado = this.filtroEstado;
     if (this.filtroFechaDesde) filters.fecha_desde = this.filtroFechaDesde;
     if (this.filtroFechaHasta) filters.fecha_hasta = this.filtroFechaHasta;
+    if (this.filtroBusqueda.trim()) filters.busqueda = this.filtroBusqueda.trim();
+    if (this.filtroOrden) filters.orden = this.filtroOrden;
 
     this.academic
       .getAgreements(filters)

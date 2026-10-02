@@ -107,3 +107,61 @@ class AgreementQueryHu14Tests(APITestCase):
         self.assertEqual(len(self.client.get(url).data), 1)
         for method in ('post', 'put', 'patch', 'delete'):
             self.assertEqual(getattr(self.client, method)(url, {}, format='json').status_code, 405)
+
+class AgreementOrderingAndSearchTests(APITestCase):
+    """Ordenamiento y búsqueda de la lista de acuerdos."""
+
+    def setUp(self):
+        U = get_user_model()
+        self.admin = U.objects.create_user(
+            email='orden@x.co', password='x', role=U.Role.SYSTEM_ADMIN, is_staff=True,
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.admin)}')
+        hoy = timezone.localdate()
+        self.student = Student.objects.create(
+            user=self.admin, matricula='ORD', nombre_completo='Estudiante Prueba', cohorte='2026',
+        )
+        self.lejano = Agreement.objects.create(
+            student=self.student, descripcion='Analisis del segundo capitulo', responsable=self.admin,
+            fecha_limite=hoy + timedelta(days=30), estado=Agreement.Status.PENDING,
+        )
+        self.cercano = Agreement.objects.create(
+            student=self.student, descripcion='Borrador del protocolo', responsable=self.admin,
+            fecha_limite=hoy + timedelta(days=2), estado=Agreement.Status.COMPLETED,
+            fecha_conclusion=hoy,
+        )
+
+    def descripciones(self, url):
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        return [item['descripcion'] for item in response.data['results']]
+
+    def test_por_defecto_ordena_por_fecha_limite_ascendente(self):
+        self.assertEqual(
+            self.descripciones('/api/v1/agreements/'),
+            ['Borrador del protocolo', 'Analisis del segundo capitulo'],
+        )
+
+    def test_ordena_por_fecha_limite_descendente(self):
+        self.assertEqual(
+            self.descripciones('/api/v1/agreements/?orden=fecha_limite_desc'),
+            ['Analisis del segundo capitulo', 'Borrador del protocolo'],
+        )
+
+    def test_un_orden_desconocido_cae_al_orden_por_defecto(self):
+        self.assertEqual(
+            self.descripciones('/api/v1/agreements/?orden=campo_inventado'),
+            ['Borrador del protocolo', 'Analisis del segundo capitulo'],
+        )
+
+    def test_la_busqueda_ignora_acentos_y_mayusculas(self):
+        # Sin normalizar, SQLite no encuentra «análisis» al escribir «analisis».
+        self.assertEqual(self.descripciones('/api/v1/agreements/?busqueda=analisis'),
+                         ['Analisis del segundo capitulo'])
+        self.assertEqual(self.descripciones('/api/v1/agreements/?busqueda=ANÁLISIS'),
+                         ['Analisis del segundo capitulo'])
+        self.assertEqual(self.descripciones('/api/v1/agreements/?busqueda=Protocolo'),
+                         ['Borrador del protocolo'])
+
+    def test_la_busqueda_sin_coincidencias_devuelve_lista_vacia(self):
+        self.assertEqual(self.descripciones('/api/v1/agreements/?busqueda=inexistente'), [])

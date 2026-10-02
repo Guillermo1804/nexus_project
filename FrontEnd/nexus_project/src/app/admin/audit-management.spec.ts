@@ -42,8 +42,29 @@ describe('AuditManagement', () => {
   afterEach(() => http.verify());
 
   it('loads and displays administrative history', () => {
-    expect(fixture.nativeElement.textContent).toContain('ROLE_ASSIGNED');
+    expect(fixture.nativeElement.textContent).toContain('Rol asignado');
     expect(fixture.nativeElement.textContent).toContain('admin@example.com');
     expect(fixture.nativeElement.textContent).toContain('tutor@example.com');
+  });
+
+  it('muestra los detalles como campos etiquetados y no como JSON recortado', () => {
+    const rows = [...fixture.nativeElement.querySelectorAll('.details-list > div')].map((div: Element) => [
+      div.querySelector('dt')?.textContent?.trim(),
+      div.querySelector('dd')?.textContent?.trim(),
+    ]);
+
+    expect(rows).toEqual([
+      ['Rol anterior', 'Estudiante'],
+      ['Rol nuevo', 'Tutor'],
+    ]);
+    expect(fixture.nativeElement.textContent).not.toContain('previous_role');
+  });
+
+  it('traduce los roles conocidos en lugar de mostrar la constante', () => {
+    const detalle = (fixture.nativeElement.querySelector('.details-cell') as HTMLElement).textContent ?? '';
+    expect(detalle).toContain('Estudiante');
+    expect(detalle).toContain('Tutor');
+    expect(detalle).not.toContain('STUDENT');
+    expect(detalle).not.toContain('new_role');
   });
 });

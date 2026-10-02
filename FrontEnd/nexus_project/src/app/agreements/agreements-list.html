@@ -51,8 +51,21 @@
         <span>Fecha hasta</span>
         <input class="input-field" type="date" [(ngModel)]="filtroFechaHasta" />
       </label>
+      <label class="search-field">
+        <span>Buscar</span>
+        <input
+          class="input-field"
+          type="search"
+          placeholder="Texto del acuerdo…"
+          [(ngModel)]="filtroBusqueda"
+          (keyup.enter)="aplicarFiltros()"
+        />
+      </label>
     </div>
     <div class="filters-actions">
+      @if (filtrosActivos > 0) {
+        <span class="filters-summary" role="status">{{ filtrosActivos }} {{ filtrosActivos === 1 ? 'filtro activo' : 'filtros activos' }}</span>
+      }
       <button type="button" class="btn-secondary" (click)="limpiarFiltros()">Limpiar</button>
       <button type="button" class="btn-primary" (click)="aplicarFiltros()">Aplicar filtros</button>
     </div>
@@ -64,6 +77,19 @@
         <h2>Acuerdos registrados</h2>
         <p>{{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}</p>
       </div>
+      <label class="sort-field">
+        <span>Ordenar por</span>
+        <select
+          class="input-field"
+          [ngModel]="filtroOrden"
+          (ngModelChange)="cambiarOrden($event)"
+          aria-label="Ordenar acuerdos"
+        >
+          @for (opcion of ordenes; track opcion.value) {
+            <option [value]="opcion.value">{{ opcion.label }}</option>
+          }
+        </select>
+      </label>
     </div>
 
     @if (cargando) {
@@ -182,10 +208,15 @@
                 [class.current]="isStatusCurrent(status)"
                 [class.next]="isStatusEnabled(status)"
                 [disabled]="!isStatusEnabled(status)"
+                [attr.aria-describedby]="!isStatusEnabled(status) ? 'status-blocked' : null"
+                [title]="!isStatusEnabled(status) ? motivoBloqueoEstado(status) : null"
                 (click)="selectStatus(status)"
               >{{ estadoLabel(status) }}</button>
             }
           </div>
+          @if (motivoBloqueoEstado()) {
+            <p class="status-hint" id="status-blocked">{{ motivoBloqueoEstado() }}</p>
+          }
         </section>
 
         <label class="notes-field">
@@ -206,13 +237,25 @@
         } @else if (auditError) {
           <p class="drawer-state error-text" role="alert">{{ auditError }}</p>
         } @else if (auditEntries.length === 0) {
-          <p class="drawer-state">Sin cambios registrados aún.</p>
+          <p class="drawer-state">
+            Este acuerdo aún no tiene movimientos registrados. Cada cambio de estado y
+            el propio alta quedan anotados aquí.
+          </p>
         } @else {
           <ul class="audit-list">
             @for (entry of auditEntries; track entry.id) {
               <li>
-                <strong>{{ estadoLabel(entry.estado_anterior) }} → {{ estadoLabel(entry.estado_nuevo) }}</strong>
-                <time [attr.datetime]="entry.fecha_cambio">{{ entry.fecha_cambio | date: 'medium' }}</time>
+                <div class="audit-head">
+                  <strong>
+                    @if (entry.es_alta) {
+                      Acuerdo creado
+                    } @else {
+                      {{ estadoLabel(entry.estado_anterior) }} → {{ estadoLabel(entry.estado_nuevo) }}
+                    }
+                  </strong>
+                  <time [attr.datetime]="entry.fecha_cambio">{{ entry.fecha_cambio | date: 'medium' }}</time>
+                </div>
+                <span class="audit-author">{{ entry.user_email || 'Sistema' }}</span>
                 @if (entry.comentario) { <p>{{ entry.comentario }}</p> }
               </li>
             }
