@@ -16,6 +16,13 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
     .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 24px}.tabs button{border:0;border-bottom:2px solid transparent;background:none;color:var(--text-muted);padding:13px 16px;font-weight:600;cursor:pointer}.tabs button.active{border-color:var(--brand);color:var(--brand)}
     form{display:grid;gap:15px;padding:24px;background:var(--surface-warm)}label{display:grid;gap:7px;color:var(--heading);font-size:13px;font-weight:700}.input{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 12px;color:var(--text);font:inherit}.input::placeholder{color:var(--placeholder)}textarea.input{min-height:72px;resize:vertical}
     .dropzone{border:1.5px dashed var(--border);border-radius:8px;background:var(--surface-warm);padding:28px 16px;text-align:center;cursor:pointer;position:relative}.dropzone input{position:absolute;opacity:0;pointer-events:none}.dropzone strong,.dropzone span{display:block}.dropzone strong{color:var(--heading);font-size:14px;margin:8px 0 4px}.dropzone span{color:var(--text-muted);font-size:12px}.file-icon{color:var(--brand);font-size:28px}.selected{color:var(--brand)!important}.error{color:var(--danger);font-size:13px}.pending{color:var(--text-secondary);font-size:13px;margin:0}.pending strong{color:var(--heading)}.actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);background:var(--surface);padding:16px 20px}.link-status{display:flex;align-items:center;gap:10px;font-size:13px}.link-kind{border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;padding:3px 9px}.test-link{color:var(--brand);font-weight:600}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .spinner{display:inline-block;width:14px;height:14px;margin-right:7px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:nexus-spin .7s linear infinite}
+    .upload-progress{display:grid;gap:8px;margin:0;padding:12px 20px;background:var(--surface-soft);border-top:1px solid var(--border);color:var(--text-secondary);font-size:13px}
+    .upload-progress .bar{height:6px;overflow:hidden;border-radius:999px;background:var(--border)}
+    .upload-progress .bar span{display:block;width:40%;height:100%;border-radius:inherit;background:var(--brand);animation:nexus-indeterminate 1.2s ease-in-out infinite}
+    @keyframes nexus-spin{to{transform:rotate(360deg)}}
+    @keyframes nexus-indeterminate{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+    @media (prefers-reduced-motion: reduce){.spinner,.upload-progress .bar span{animation:none}}
   `],
   template: `
     <div class="tabs" role="tablist" aria-label="Tipo de evidencia">
@@ -30,7 +37,8 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
         <ng-container *ngTemplateOutlet="commonFields"></ng-container>
         @if (pendingRequirements.length) { <p class="pending" id="evidence-pending-file"><strong>Para vincular la evidencia falta:</strong> {{ pendingRequirements.join(' ') }}</p> }
         @if (error) { <p id="evidence-file-error" class="error" role="alert">{{ error }}</p> }
-        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitFile" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-file' : null" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        <footer class="actions"><button type="button" class="btn-secondary" [disabled]="uploading" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitFile" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-file' : null" [attr.aria-busy]="uploading">@if (uploading) { <span class="spinner" aria-hidden="true"></span> }{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        @if (uploading) { <p class="upload-progress" role="status">Vinculando la evidencia con el expediente. No cierres esta ventana.<span class="bar" aria-hidden="true"><span></span></span></p> }
       </form>
     } @else {
       <form id="link-panel" role="tabpanel" aria-labelledby="link-tab" (ngSubmit)="submitLink()">
@@ -43,7 +51,8 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
         <ng-container *ngTemplateOutlet="commonFields"></ng-container>
         @if (pendingRequirements.length) { <p class="pending" id="evidence-pending-link"><strong>Para vincular la evidencia falta:</strong> {{ pendingRequirements.join(' ') }}</p> }
         @if (error) { <p class="error" role="alert">{{ error }}</p> }
-        <footer class="actions"><button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitLink" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-link' : null" [attr.aria-busy]="uploading">{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        <footer class="actions"><button type="button" class="btn-secondary" [disabled]="uploading" (click)="cancelled.emit()">Cancelar</button><button type="submit" class="btn-primary" [disabled]="!canSubmitLink" [attr.aria-describedby]="pendingRequirements.length ? 'evidence-pending-link' : null" [attr.aria-busy]="uploading">@if (uploading) { <span class="spinner" aria-hidden="true"></span> }{{ uploading ? 'Vinculando…' : 'Vincular Evidencia' }}</button></footer>
+        @if (uploading) { <p class="upload-progress" role="status">Vinculando la evidencia con el expediente. No cierres esta ventana.<span class="bar" aria-hidden="true"><span></span></span></p> }
       </form>
     }
     <ng-template #commonFields>

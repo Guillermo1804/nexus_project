@@ -88,4 +88,24 @@ describe('EvidenceUploadComponent', () => {
     expect(fixture.nativeElement.querySelector('#evidence-pending-file')).toBeNull();
     expect((fixture.nativeElement.querySelector('button[type=submit]') as HTMLButtonElement).disabled).toBeFalse();
   });
+
+  it('muestra un indicador de carga mientras vincula la evidencia', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.upload-progress')).toBeNull();
+
+    fixture.componentInstance.uploading = true;
+    fixture.detectChanges();
+
+    const indicator = fixture.nativeElement.querySelector('.upload-progress') as HTMLElement;
+    expect(indicator).withContext('indicador de carga').toBeTruthy();
+    expect(indicator.getAttribute('role')).toBe('status');
+    expect(indicator.textContent).toContain('Vinculando');
+    expect(fixture.nativeElement.querySelector('.spinner')).withContext('spinner').toBeTruthy();
+    expect((fixture.nativeElement.querySelector('.actions .btn-secondary') as HTMLButtonElement).disabled)
+      .withContext('cancelar bloqueado durante la subida').toBeTrue();
+
+    fixture.componentInstance.uploading = false;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.upload-progress')).toBeNull();
+  });
 });

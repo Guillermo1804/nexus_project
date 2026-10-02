@@ -155,6 +155,15 @@ export class StudentOverviewComponent implements OnInit {
     this.errorEstado = ''; this.errorAcuerdo = ''; this.comentarioEstado = '';
   }
 
+  /**
+   * Cierra el modal al pulsar el fondo. Devuelve void a propósito: un binding de
+   * Angular que evalúa a false llama a preventDefault(), lo que anularía el clic
+   * y el mousedown de todos los campos del modal.
+   */
+  protected onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.cerrarModal();
+  }
+
   protected abrirCondiciones(session: SemesterTutoringSession): void { this.selectedTutoring = session; this.modal = 'condiciones'; }
   protected abrirEstado(agreement: Agreement): void {
     if (agreement.estado === 'CONCLUIDO') return;

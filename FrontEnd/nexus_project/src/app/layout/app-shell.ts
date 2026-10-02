@@ -3,8 +3,12 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, finalize } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AcademicService } from '../core/academic/academic.service';
+import { UserRole } from '../core/auth/auth.models';
 import { AuthService } from '../core/auth/auth.service';
 import { getRoleLabelByGender } from '../shared/presentation/role-labels';
+
+/** Mirrors the `allowedRoles` of the agreements route so the link never leads to a redirect. */
+const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
 
 @Component({
   selector: 'app-shell',
@@ -37,7 +41,7 @@ export class AppShell implements OnInit {
   });
 
   ngOnInit(): void {
-    if (!this.auth.isAuthenticated()) return;
+    if (!this.auth.isAuthenticated() || !this.canViewAgreements()) return;
     this.academic.getAgreementAlerts().subscribe({
       next: response => this.agreementAlertCount.set(response.total_alertas),
       error: () => this.agreementAlertCount.set(0),
@@ -56,6 +60,11 @@ export class AppShell implements OnInit {
 
   protected isSystemAdmin(): boolean {
     return this.auth.user()?.role === 'SYSTEM_ADMIN';
+  }
+
+  protected canViewAgreements(): boolean {
+    const role = this.auth.user()?.role;
+    return !!role && AGREEMENT_ROLES.includes(role);
   }
 
   protected logout(): void {

@@ -409,4 +409,69 @@ describe('StudentOverviewComponent', () => {
     expect(error?.getAttribute('role')).toBe('alert');
     expect(http.match((request) => request.method === 'POST').length).toBe(0);
   });
+
+  it('no cancela los eventos del ratón dentro de los modales para que los campos reciban foco y el envío funcione', () => {
+    authService.user.set({
+      id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
+      role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'],
+      permissions: ['semesters.manage', 'tutoring.create', 'academic.read.global', 'students.create'],
+    });
+    fixture.detectChanges();
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+
+    const panelClass: Record<string, string> = {
+      evidencia: 'evidence-modal',
+      tutoria: 'tutoring-modal',
+      avance: 'progress-modal',
+    };
+
+    for (const modal of ['evidencia', 'tutoria', 'avance'] as const) {
+      fixture.componentInstance['openModal'](modal);
+      fixture.detectChanges();
+
+      const panel = fixture.nativeElement.querySelector(`.${panelClass[modal]}`);
+      expect(panel).withContext(`modal ${modal}`).toBeTruthy();
+
+      // A binding that evaluates to false makes Angular call preventDefault(), which
+      // would leave every field unfocusable and stop the submit button from submitting.
+      for (const type of ['mousedown', 'click'] as const) {
+        const field = panel.querySelector('input, textarea, select');
+        const event = new MouseEvent(type, { bubbles: true, cancelable: true });
+        field.dispatchEvent(event);
+        expect(event.defaultPrevented).withContext(`${type} en ${modal}`).toBeFalse();
+      }
+
+      fixture.componentInstance['cerrarModal']();
+      fixture.detectChanges();
+    }
+  });
+
+  it('sigue cerrando el modal al pulsar el fondo, no los controles de dentro', () => {
+    authService.user.set({
+      id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
+      role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'],
+      permissions: ['semesters.manage', 'tutoring.create', 'academic.read.global', 'students.create'],
+    });
+    fixture.detectChanges();
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+
+    fixture.componentInstance['openModal']('semestre');
+    fixture.detectChanges();
+    const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
+    expect(backdrop).withContext('fondo del modal').toBeTruthy();
+
+    backdrop.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(fixture.componentInstance['modal']).withContext('clic en el fondo').toBeNull();
+
+    fixture.componentInstance['openModal']('semestre');
+    fixture.detectChanges();
+    fixture.nativeElement
+      .querySelector('.modal-backdrop .embedded-form')
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(fixture.componentInstance['modal']).withContext('clic dentro del panel').toBe('semestre');
+  });
 });

@@ -65,6 +65,25 @@ describe('ThesisProgressFormComponent (HU-15)', () => {
     expect(component.form.getRawValue().componentes_json.metodologia).toBe(42);
   });
 
+  it('refleja en el campo numérico el valor movido con el deslizador', () => {
+    component.form.controls.componentes_json.controls.metodologia.setValue(55);
+    fixture.detectChanges();
+
+    expect(numbers()[2].value).toBe('55');
+    expect(sliders()[2].value).toBe('55');
+  });
+
+  it('no sobrescribe lo que se está escribiendo en el campo numérico', () => {
+    const input = numbers()[2];
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
+    type(input, '7');
+
+    expect(component.form.controls.componentes_json.controls.metodologia.value).toBe(7);
+    expect(numbers()[2].value).toBe('7');
+  });
+
   it('acota los valores escritos fuera del rango 0 a 100', () => {
     type(numbers()[2], '150');
     expect(component.form.controls.componentes_json.controls.metodologia.value).toBe(100);
@@ -75,6 +94,8 @@ describe('ThesisProgressFormComponent (HU-15)', () => {
 
   it('descarta la edición abandonada y vuelve al valor guardado al salir del campo', () => {
     const input = numbers()[2];
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
     type(input, '');
     expect(component.form.controls.componentes_json.controls.metodologia.value).toBe(30);
 

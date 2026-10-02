@@ -41,6 +41,7 @@ const COMPONENTS: { key: ThesisComponentKey; label: string }[] = [
                   [attr.aria-labelledby]="componentLabelId(component.key)"
                   aria-describedby="components-hint"
                   [value]="draftValue(component.key)"
+                  (focus)="startEditing(component.key)"
                   (input)="setComponentValue(component.key, $any($event.target).value)"
                   (blur)="normalizeComponent(component.key)"
                 /><span aria-hidden="true">%</span>
@@ -79,6 +80,8 @@ export class ThesisProgressFormComponent implements OnInit {
   protected readonly componentKeys = COMPONENTS.map(({ key }) => key);
   /** Raw text of the numeric inputs, so an in-progress edit is not overwritten by the bound value. */
   protected readonly drafts: Partial<Record<ThesisComponentKey, string>> = {};
+  /** Which numeric inputs the user is currently editing; only those show their draft. */
+  protected readonly editing: Partial<Record<ThesisComponentKey, boolean>> = {};
   protected saving = false;
   protected error = '';
   protected readonly form = this.fb.nonNullable.group({
@@ -103,7 +106,11 @@ export class ThesisProgressFormComponent implements OnInit {
   protected get globalPercentage(): number { return this.validPercentage(this.form.controls.porcentaje_avance.value); }
   protected componentValue(key: ThesisComponentKey): number { return this.form.controls.componentes_json.controls[key].value; }
   protected componentLabelId(key: ThesisComponentKey): string { return `thesis-${key}-label`; }
-  protected draftValue(key: ThesisComponentKey): string { return this.drafts[key] ?? String(this.componentValue(key)); }
+  protected draftValue(key: ThesisComponentKey): string {
+    return this.editing[key] ? this.drafts[key] ?? '' : String(this.componentValue(key));
+  }
+
+  protected startEditing(key: ThesisComponentKey): void { this.editing[key] = true; }
 
   protected setComponentValue(key: ThesisComponentKey, raw: string): void {
     const text = String(raw ?? '').trim();
@@ -114,8 +121,11 @@ export class ThesisProgressFormComponent implements OnInit {
     this.form.controls.componentes_json.controls[key].setValue(Math.min(100, Math.max(0, Math.round(parsed))));
   }
 
-  /** Drops an edit the user abandoned (empty or out of range) so the field matches the stored value. */
-  protected normalizeComponent(key: ThesisComponentKey): void { this.drafts[key] = String(this.componentValue(key)); }
+  /** Ends the edit: the field goes back to showing the stored value, so the slider stays in sync. */
+  protected normalizeComponent(key: ThesisComponentKey): void {
+    this.editing[key] = false;
+    this.drafts[key] = String(this.componentValue(key));
+  }
 
   protected submit(): void {
     if (this.form.invalid || this.saving) { this.form.markAllAsTouched(); return; }
