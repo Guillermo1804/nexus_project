@@ -299,6 +299,22 @@ describe('StudentOverviewComponent', () => {
     );
   });
 
+  it('excluye tutorías futuras del selector de acuerdos', () => {
+    component['overview'] = {
+      ...mockOverview,
+      semesters: [{
+        ...mockOverview.semesters[0],
+        tutoring_sessions: [
+          { id: 1, fecha_sesion: '2026-10-05', modalidad: 'PRESENCIAL', resumen: 'Sesión realizada' },
+          { id: 2, fecha_sesion: '2026-12-01', modalidad: 'VIRTUAL', resumen: 'Sesión futura' },
+        ],
+      }],
+    };
+    component['selectedSemesterId'] = 1;
+
+    expect(component['semesterSessions'].map(session => session.id)).toEqual([1]);
+  });
+
   it('maneja estados vacíos (sin asesor, sin acuerdos, sin tutoría) sin fallar', () => {
     fixture.detectChanges();
     const req = http.expectOne('http://localhost:8000/api/v1/students/10/overview/');

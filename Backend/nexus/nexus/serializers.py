@@ -629,6 +629,8 @@ class AgreementSerializer(serializers.ModelSerializer):
         session = attrs.get('session', self.instance.session if self.instance else None) or self.context.get('session')
         responsable = attrs.get('responsable', self.instance.responsable if self.instance else None)
         fecha_limite = attrs.get('fecha_limite', self.instance.fecha_limite if self.instance else None)
+        if session and session.fecha_sesion > timezone.localdate():
+            raise serializers.ValidationError({'session': 'No se pueden crear acuerdos para una tutoría que aún no se ha realizado.'})
         if session and not (responsable.id == session.student.user_id or CommitteeMembership.objects.filter(
             committee__student=session.student, user=responsable
         ).exists()):

@@ -134,7 +134,7 @@
                   <tr>
                     <td><strong>{{ evidence.actividad?.titulo || 'Sin actividad asociada' }}</strong></td>
                     <td>{{ evidence.actividad?.etiqueta || 'Otro' }}</td>
-                    <td>@if (evidence.actividad?.fecha) { <time [attr.datetime]="evidence.actividad.fecha">{{ evidence.actividad.fecha | date:'longDate' }}</time> } @else { <span class="muted-value">No disponible</span> }</td>
+                    <td>@if (evidence.actividad; as activity) { @if (activity.fecha) { <time [attr.datetime]="activity.fecha">{{ activity.fecha | date:'longDate' }}</time> } @else { <span class="muted-value">No disponible</span> } } @else { <span class="muted-value">No disponible</span> }</td>
                     <td><time [attr.datetime]="evidence.fecha">{{ evidence.fecha | date:'longDate' }}</time></td>
                     <td>@if (evidence.archivo_url) { <a [href]="evidence.archivo_url" target="_blank" rel="noopener">Abrir archivo</a> } @else if (evidence.enlace_url) { <a [href]="evidence.enlace_url" target="_blank" rel="noopener">Abrir enlace</a> } @else { <span class="muted-value">No disponible</span> }</td>
                   </tr>

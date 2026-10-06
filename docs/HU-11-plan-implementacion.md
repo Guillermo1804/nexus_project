@@ -25,6 +25,13 @@
 - **CA-11.4:** El acuerdo inicia obligatoriamente en estado `PENDIENTE`.
 - **CA-11.5:** Se registra de forma automática el usuario creador (`created_by`) y la fecha/hora de creación.
 - **CA-11.6:** Al crearse un acuerdo, se genera automáticamente una entrada inicial en la bitácora de auditoría (`AgreementAuditLog`) con `estado_nuevo = 'PENDIENTE'`.
+- **CA-11.7:** No se pueden crear acuerdos asociados a tutorías futuras o a reuniones que todavía no se han realizado.
+
+### Regla para la sesión de origen
+
+El selector **Sesión de tutoría** del modal de creación de acuerdos solo debe mostrar sesiones cuya `fecha_sesion` sea menor o igual a la fecha actual del sistema. Las sesiones futuras no deben aparecer como opciones seleccionables.
+
+La regla debe reforzarse en el backend: al recibir la solicitud de creación, se debe comprobar nuevamente la fecha de la sesión usando la fecha local del servidor (`timezone.localdate()`). Si la sesión es futura, la API debe responder `400 Bad Request` con un error de validación claro y no crear el acuerdo.
 
 ---
 
@@ -60,6 +67,7 @@
 
 #### Respuestas de Error:
 - `400 Bad Request`: Descripción menor a 10 caracteres o inválida.
+- `400 Bad Request`: La sesión de tutoría aún no se ha realizado.
 - `403 Forbidden`: Usuario no vinculado al comité de la sesión.
 - `404 Not Found`: Sesión de tutoría inexistente.
 
@@ -101,6 +109,7 @@
 - Creación de acuerdo desde sesión autorizada $\rightarrow$ `201 Created` y verificación de `student_id` heredado.
 - Verificación de creación automática de registro en `AgreementAuditLog`.
 - Creación múltiple de acuerdos en una sola sesión $\rightarrow$ todos asociados a la misma `session_id`.
+- Intento de crear un acuerdo desde una sesión futura $\rightarrow$ `400 Bad Request` y sin persistir el acuerdo.
 - Intento por usuario no asignado al comité $\rightarrow$ `403 Forbidden`.
 
 ---
@@ -113,6 +122,7 @@
   - Textarea para capturar descripción.
   - Botón "Agregar a la minuta".
   - Lista interactiva de acuerdos pendientes por guardar.
+- Todos los selectores de sesión usados para crear acuerdos deben filtrar las tutorías futuras antes de renderizar sus opciones, incluido el modal del expediente y `TutoringAgreementsComponent`.
 
 ### 5.2. Accesibilidad (WCAG 2.1 AA)
 - Lista de acuerdos anunciada con `aria-live="polite"`.
@@ -123,5 +133,6 @@
 ## 6. Definition of Done (DoD)
 - [ ] Endpoint `POST /api/v1/tutoring-sessions/{id}/agreements/` validado y probado.
 - [ ] Creación automática de la bitácora de auditoría en estado `PENDIENTE`.
+- [ ] Las sesiones futuras no aparecen en el selector y el backend rechaza cualquier intento de asociarles un acuerdo.
 - [ ] Pruebas unitarias backend (`test_hu11.py`) aprobadas al 100%.
 - [ ] Captura de acuerdos integrada en la interfaz de tutoría del frontend.

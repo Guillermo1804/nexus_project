@@ -123,6 +123,24 @@ describe('TutoringAgreementsComponent (HU-11 / HU-12)', () => {
     expect(text).toContain('Pasar a EN PROCESO');
   });
 
+  it('no muestra tutorías futuras en el selector de acuerdos', () => {
+    academicStub.getTutoringSessions.and.returnValue(of({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        { id: 12, student: 4, semester: 1, fecha_sesion: '2026-10-02', modalidad: 'PRESENCIAL', resumen: 'Avance', created_by: 2 },
+        { id: 13, student: 4, semester: 1, fecha_sesion: '2026-10-14', modalidad: 'PRESENCIAL', resumen: 'Sesión futura', created_by: 2 },
+      ],
+    }));
+    component['cargarSesiones']();
+    fixture.detectChanges();
+
+    const options = [...fixture.nativeElement.querySelectorAll('.session-picker option')]
+      .map((option: Element) => option.textContent?.trim());
+    expect(options).toEqual(['2026-10-02 — PRESENCIAL']);
+  });
+
   it('crea acuerdo con responsable y fecha explícitos (HU-12)', () => {
     academicStub.createSessionAgreement.calls.reset();
     component['form'].setValue({

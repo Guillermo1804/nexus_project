@@ -203,7 +203,7 @@ export class TutoringAgreementsComponent implements OnChanges {
       .subscribe({
         next: (data) => {
           this.sessions = data.results
-            .filter((s) => s.student === this.studentId)
+            .filter((s) => s.student === this.studentId && s.fecha_sesion <= this.localDateString())
             .sort((a, b) => b.fecha_sesion.localeCompare(a.fecha_sesion) || b.id - a.id);
           const preferred = this.preferredSessionId;
           const exists = preferred != null && this.sessions.some((s) => s.id === preferred);
@@ -218,6 +218,12 @@ export class TutoringAgreementsComponent implements OnChanges {
           this.error = 'No fue posible cargar las tutorías para acuerdos.';
         },
       });
+  }
+
+  private localDateString(): string {
+    const today = new Date();
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   }
 
   private cargarAcuerdos(): void {

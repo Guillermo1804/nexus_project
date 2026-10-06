@@ -115,7 +115,10 @@ export class StudentOverviewComponent implements OnInit {
     return this.overview?.semesters.find(s => s.id === this.selectedSemesterId) ?? null;
   }
 
-  protected get semesterSessions(): SemesterTutoringSession[] { return this.selectedSemester?.tutoring_sessions ?? []; }
+  protected get semesterSessions(): SemesterTutoringSession[] {
+    const today = this.localDateString();
+    return (this.selectedSemester?.tutoring_sessions ?? []).filter(session => session.fecha_sesion <= today);
+  }
   protected get tutoringSessions(): SemesterTutoringSession[] { return this.overview?.semesters.flatMap(semester => semester.tutoring_sessions ?? []) ?? []; }
   protected get semesterAgreements(): Agreement[] {
     const semester = this.selectedSemester;
@@ -201,6 +204,12 @@ export class StudentOverviewComponent implements OnInit {
     const responsible = this.responsibleOptions()[0];
     this.acuerdo = { sessionId: session?.id ?? 0, descripcion: '', responsable: responsible?.id ?? 0, fecha_limite: this.defaultDeadline() };
     this.errorAcuerdo = ''; this.modal = 'acuerdo';
+  }
+
+  private localDateString(): string {
+    const today = new Date();
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   }
 
   protected crearAcuerdo(): void {
