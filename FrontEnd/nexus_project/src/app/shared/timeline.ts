@@ -91,6 +91,12 @@ function compareDates(a: string, b: string): number {
 })
 export class TimelineComponent {
   @Input({ required: true }) semesters: TimelineSemester[] = [];
+  private selectedInitialFilter: TimelineEventType | null = null;
+  @Input() set initialFilter(value: TimelineEventType | null) {
+    this.selectedInitialFilter = value;
+    this.filters = value ? [value] : [];
+  }
+  get initialFilter(): TimelineEventType | null { return this.selectedInitialFilter; }
 
   /** Tipos marcados. Vacío significa «todos», que es el estado inicial. */
   protected filters: TimelineEventType[] = [];

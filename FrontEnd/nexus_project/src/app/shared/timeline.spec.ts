@@ -113,6 +113,15 @@ describe('TimelineComponent (HU-23)', () => {
     expect(ariaPressed('Tutorías')).toBe('false');
   });
 
+  it('puede iniciar con el filtro de evidencias aplicado', () => {
+    fixture.componentRef.setInput('initialFilter', 'EVIDENCIA');
+    fixture.detectChanges();
+
+    expect(titles()).toEqual(['Evidencia mayo']);
+    expect(ariaPressed('Evidencias')).toBe('true');
+    expect(ariaPressed('Todos')).toBe('false');
+  });
+
   it('conserva el semestre de cada evento como referencia sin agrupar', () => {
     const perEvent = [...fixture.nativeElement.querySelectorAll('li.event')].map((li: Element) =>
       [...li.querySelectorAll('.semester-badge')].map((badge: Element) => (badge.textContent ?? '').replace(/\s+/g, ' ').trim()),

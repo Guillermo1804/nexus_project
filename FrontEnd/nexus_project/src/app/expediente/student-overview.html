@@ -103,7 +103,7 @@
           <div class="section-heading"><h2>Última Tutoría</h2>@if (canCreateTutoring) { <button class="link-button" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
           @if (overview.last_tutoring; as last) { <time>{{ last.fecha_sesion | date:'longDate' }}</time><span class="status-pill">{{ last.modalidad }}</span><p>{{ last.resumen }}</p><app-tutoring-observations [studentId]="studentId" [preferredSessionId]="last.id" /> } @else { <p class="empty-state">Aún no hay tutorías registradas.</p> }
         </article>
-        @if (canUploadEvidence) { <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button> }
+        @if (canUploadEvidence) { <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button><button type="button" class="btn-primary evidence-timeline-button" (click)="openEvidenceTimeline()">Ver evidencias en línea de tiempo</button> }
       </aside>
     </div>
     } @else {
@@ -113,7 +113,7 @@
         } @else if (timelineError) {
           <div class="timeline-state" role="alert"><p>{{ timelineError }}</p><button class="btn-secondary" (click)="loadTimeline()">Reintentar</button></div>
         } @else if (timeline) {
-          <app-timeline [semesters]="timeline.semestres" />
+          <app-timeline [semesters]="timeline.semestres" [initialFilter]="timelineInitialFilter" />
         }
       </section>
     }

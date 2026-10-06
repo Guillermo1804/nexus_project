@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -47,6 +47,7 @@ export class StudentOverviewComponent implements OnInit {
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
   protected activeView: 'resumen' | 'timeline' = 'resumen';
+  protected timelineInitialFilter: TimelineEventType | null = null;
   protected timeline: TimelineResponse | null = null;
   protected timelineLoading = false;
   protected timelineError = '';
@@ -142,10 +143,12 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected selectSemester(id: number): void { this.selectedSemesterId = id; }
-  protected selectView(view: 'resumen' | 'timeline'): void {
+  protected selectView(view: 'resumen' | 'timeline', initialFilter: TimelineEventType | null = null): void {
     this.activeView = view;
+    this.timelineInitialFilter = view === 'timeline' ? initialFilter : null;
     if (view === 'timeline' && !this.timelineLoaded) this.loadTimeline();
   }
+  protected openEvidenceTimeline(): void { this.selectView('timeline', 'EVIDENCIA'); }
   protected loadTimeline(force = false): void {
     if (this.timelineLoading || (this.timelineLoaded && !force)) return;
     this.timelineLoading = true; this.timelineError = '';
