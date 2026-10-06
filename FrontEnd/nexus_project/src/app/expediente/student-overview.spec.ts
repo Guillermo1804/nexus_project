@@ -484,7 +484,21 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
 
   const MOCK_TIMELINE = {
     student: { id: 10, matricula: 'DOC-2026-010', nombre_completo: 'Laura Méndez' },
-    semestres: [] as unknown[],
+    semestres: [{
+      id: 2,
+      numero: 2,
+      activo: true,
+      eventos: [{
+        id: 'E-1',
+        tipo: 'EVIDENCIA',
+        fecha: '2026-09-10',
+        titulo: 'Certificado de asistencia',
+        descripcion: '',
+        archivo_url: 'https://example.org/evidence.pdf',
+        metadata: {},
+        actividad: { tipo: 'TUTORIA', id: 5, etiqueta: 'Tutoría', titulo: 'Sesión de tutoría', fecha: '2026-09-05' },
+      }],
+    }],
   };
 
   beforeEach(async () => {
@@ -572,6 +586,22 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
     http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
     fixture.detectChanges();
     http.verify();
+  });
+
+  it('muestra la pestaña de evidencias y filtra la tabla desde la trayectoria', () => {
+    cargarInicial();
+
+    component['selectView']('evidencias');
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
+    fixture.detectChanges();
+
+    const tab = [...fixture.nativeElement.querySelectorAll('.overview-tabs button')]
+      .find((button: Element) => button.textContent?.trim() === 'Evidencias') as HTMLButtonElement;
+    expect(tab.getAttribute('aria-selected')).toBe('true');
+    expect(fixture.nativeElement.querySelectorAll('.evidence-table tbody tr').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.evidence-table').textContent).toContain('Sesión de tutoría');
+    expect(fixture.nativeElement.querySelector('.evidence-table a').textContent).toContain('Abrir');
   });
 
   it('descarta la línea de tiempo vieja si no está a la vista', () => {

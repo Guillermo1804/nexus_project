@@ -4,6 +4,21 @@
 
 Permitir que cada evento de tipo **Evidencia** muestre claramente a qué actividad está ligado: una tutoría, un acuerdo, un avance de tesis u otra actividad. También se debe mostrar la fecha de la actividad relacionada cuando exista, sin confundirla con la fecha de carga de la evidencia.
 
+## Nueva vista de evidencias
+
+Agregar una tercera opción de navegación llamada **Evidencias**, junto a **Resumen académico** y **Línea de Tiempo**. Al seleccionarla, debe mostrarse una tabla con las evidencias registradas para el estudiante.
+
+La tabla debe incluir como mínimo:
+
+- **Actividad:** nombre, título o descripción breve de la actividad relacionada.
+- **Tipo de actividad:** Tutoría, Acuerdo, Tesis u Otro.
+- **Fecha de reunión o actividad:** fecha de la tutoría, del acuerdo o del avance de tesis cuando exista.
+- **Evidencia:** enlace para abrir o consultar el archivo, DOI o URL registrada.
+
+La fecha de reunión o actividad debe mantenerse diferenciada de la fecha de carga de la evidencia. Cuando una evidencia no tenga actividad relacionada o fecha disponible, la tabla debe mostrar un valor neutro y conservar el acceso a la evidencia. Los enlaces a archivos deben abrir el recurso disponible y los enlaces digitales deben abrir la URL o DOI correspondiente.
+
+La vista debe conservar los permisos existentes del expediente, mostrar un estado vacío cuando no haya evidencias y contemplar estados de carga y error.
+
 ## Regla adicional para el modal de carga
 
 El campo **Semestre** del modal **Carga de Evidencias** debe estar limitado exclusivamente al semestre académico en curso. No se deben ofrecer semestres anteriores en el selector ni permitir registrar una evidencia asociada a ellos.
@@ -74,6 +89,10 @@ Por eso la línea de tiempo no puede indicar si la evidencia corresponde a una t
 - El modal de carga solo permite seleccionar el semestre académico en curso.
 - El campo de semestre se muestra bloqueado porque no existen alternativas válidas para el usuario.
 - El backend rechaza evidencias con un semestre pasado o sin un semestre vigente configurado.
+- Existe una opción de navegación **Evidencias** junto a **Resumen académico** y **Línea de Tiempo**.
+- La vista **Evidencias** muestra una tabla con actividad, tipo, fecha de reunión o actividad y enlace a la evidencia.
+- La tabla diferencia la fecha de actividad de la fecha de carga y maneja correctamente evidencias sin actividad o fecha relacionada.
+- La vista respeta permisos y contempla estados vacío, carga y error.
 
 ## Archivos previstos
 

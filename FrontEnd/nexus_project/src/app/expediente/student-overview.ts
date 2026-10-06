@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineEvent, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -46,7 +46,7 @@ export class StudentOverviewComponent implements OnInit {
   protected guardandoAcuerdo = false;
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
-  protected activeView: 'resumen' | 'timeline' = 'resumen';
+  protected activeView: 'resumen' | 'timeline' | 'evidencias' = 'resumen';
   protected timelineInitialFilter: TimelineEventType | null = null;
   protected timeline: TimelineResponse | null = null;
   protected timelineLoading = false;
@@ -143,12 +143,15 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected selectSemester(id: number): void { this.selectedSemesterId = id; }
-  protected selectView(view: 'resumen' | 'timeline', initialFilter: TimelineEventType | null = null): void {
+  protected selectView(view: 'resumen' | 'timeline' | 'evidencias', initialFilter: TimelineEventType | null = null): void {
     this.activeView = view;
     this.timelineInitialFilter = view === 'timeline' ? initialFilter : null;
-    if (view === 'timeline' && !this.timelineLoaded) this.loadTimeline();
+    if ((view === 'timeline' || view === 'evidencias') && !this.timelineLoaded) this.loadTimeline();
   }
   protected openEvidenceTimeline(): void { this.selectView('timeline', 'EVIDENCIA'); }
+  protected get evidenceEntries(): TimelineEvent[] {
+    return this.timeline?.semestres.flatMap(semester => semester.eventos).filter(event => event.tipo === 'EVIDENCIA') ?? [];
+  }
   protected loadTimeline(force = false): void {
     if (this.timelineLoading || (this.timelineLoaded && !force)) return;
     this.timelineLoading = true; this.timelineError = '';
@@ -166,7 +169,7 @@ export class StudentOverviewComponent implements OnInit {
    */
   protected refrescar(): void {
     this.cargarExpediente(true);
-    if (this.activeView === 'timeline') this.loadTimeline(true);
+    if (this.activeView === 'timeline' || this.activeView === 'evidencias') this.loadTimeline(true);
     else this.timelineLoaded = false;
   }
   protected isCurrentSemester(semester: Semester): boolean { return semester.id === this.overview?.current_semester?.id; }
