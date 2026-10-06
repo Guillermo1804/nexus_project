@@ -143,8 +143,15 @@ class EvidenceSerializer(serializers.ModelSerializer):
 
         semester = attrs.get('semester')
         student = attrs.get('student')
-        if semester and semester.student_id != student.id:
+        current_semester = student.semesters.filter(is_active=True).order_by('-numero', '-id').first() if student else None
+        if current_semester is None:
+            raise serializers.ValidationError({'semester': 'El estudiante no tiene un semestre vigente.'})
+        if semester is None:
+            attrs['semester'] = current_semester
+        elif semester.student_id != student.id:
             raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
+        elif semester.id != current_semester.id:
+            raise serializers.ValidationError({'semester': 'Solo se pueden registrar evidencias en el semestre vigente.'})
 
         activity_id = attrs.get('actividad_id')
         activity_type = attrs.get('actividad_tipo')

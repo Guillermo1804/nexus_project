@@ -56,6 +56,23 @@ class EvidenceUploadHu21Tests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.student_user)}')
         self.assertEqual(self.client.post('/api/v1/evidence/', data, format='multipart').status_code, 400)
 
+    def test_rejects_past_semester(self):
+        self.semester.is_active = False
+        self.semester.save(update_fields=['is_active'])
+        current = Semester.objects.create(student=self.student, numero=2, fecha_inicio=date(2026, 7, 1), fecha_fin=date(2026, 12, 31))
+        data = self.payload()
+        data['semester'] = self.semester.id
+        response = self.client.post('/api/v1/evidence/', data, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('semestre vigente', str(response.data['semester']))
+
+    def test_rejects_when_no_current_semester_exists(self):
+        self.semester.is_active = False
+        self.semester.save(update_fields=['is_active'])
+        response = self.client.post('/api/v1/evidence/', self.payload(), format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('no tiene un semestre vigente', str(response.data['semester']))
+
     def test_rejects_activity_from_another_student(self):
         other = Student.objects.create(matricula='HU21C', nombre_completo='Other', cohorte='2026')
         semester = Semester.objects.create(student=other, numero=1, fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 30))

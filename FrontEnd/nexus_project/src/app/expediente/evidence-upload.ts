@@ -61,7 +61,7 @@ type ActivityType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'OTRO';
         <label>Actividad<select class="input" name="activityId" [(ngModel)]="activityId" required><option [ngValue]="null" disabled>Seleccione una actividad</option>@for (activity of activities; track activity.id) { <option [ngValue]="activity.id">{{ activity.label }}</option> }</select></label>
         @if (!activities.length) { <p class="error" role="status">No hay actividades de este tipo registradas para el estudiante.</p> }
       }
-      <label>Semestre<select class="input" name="semester" [(ngModel)]="semesterId" required><option [ngValue]="null" disabled>Seleccione un semestre</option>@for (semester of semesters; track semester.id) { <option [ngValue]="semester.id">Semestre {{ semester.numero }}</option> }</select></label>
+      <label>Semestre<input class="input" name="semester" [value]="currentSemesters.length ? 'Semestre ' + currentSemesters[0].numero : 'No hay semestre vigente'" readonly aria-readonly="true"></label>
     </ng-template>
   `,
 })
@@ -79,20 +79,21 @@ export class EvidenceUploadComponent implements OnInit {
   error = ''; uploading = false;
 
   ngOnInit(): void { this.semesterId = this.currentSemesterId; }
+  get currentSemesters(): Semester[] { return this.semesters.filter(semester => semester.id === this.currentSemesterId); }
   get activities(): { id: number; label: string }[] {
     if (this.activityType === 'TUTORIA') return this.tutoringSessions.map(session => ({ id: session.id, label: `${session.fecha_sesion} — ${session.modalidad}` }));
     if (this.activityType === 'ACUERDO') return this.agreements.map(agreement => ({ id: agreement.id, label: agreement.descripcion }));
     if (this.activityType === 'TESIS' && this.thesisProgress) return [{ id: this.thesisProgress.id, label: `Avance del ${this.thesisProgress.fecha_registro ?? 'semestre actual'}` }];
     return [];
   }
-  get commonFieldsValid(): boolean { return !!this.title.trim() && this.semesterId !== null && (this.activityType === 'OTRO' || this.activityId !== null); }
+  get commonFieldsValid(): boolean { return !!this.title.trim() && this.semesterId !== null && this.semesterId === this.currentSemesterId && (this.activityType === 'OTRO' || this.activityId !== null); }
   /** Names what still blocks the submit button, so it is never disabled without an explanation. */
   get pendingRequirements(): string[] {
     const pending: string[] = [];
     if (this.tab === 'file' && !this.file) pending.push('un archivo (PDF, JPG, PNG, DOCX o ZIP).');
     if (this.tab === 'link' && this.linkKind === null) pending.push('un enlace válido (URL http/https o DOI).');
     if (!this.title.trim()) pending.push('el título de la evidencia.');
-    if (this.semesterId === null) pending.push('el semestre.');
+    if (this.semesterId === null || this.semesterId !== this.currentSemesterId) pending.push('el semestre vigente.');
     if (this.activityType !== 'OTRO' && this.activityId === null) pending.push('la actividad asociada.');
     return pending;
   }
@@ -110,7 +111,7 @@ export class EvidenceUploadComponent implements OnInit {
   dropFile(event: DragEvent): void { event.preventDefault(); this.validateFile(event.dataTransfer?.files[0] ?? null); }
   private validateFile(file: File | null, input?: HTMLInputElement): void { this.error = ''; const extension = file?.name.split('.').pop()?.toLowerCase() ?? ''; if (file && file.size > MAX_EVIDENCE_BYTES) this.error = 'El archivo no puede superar 15 MiB.'; else if (file && !EXTENSIONS.includes(extension)) this.error = 'Formato de archivo no permitido.'; else this.file = file; if (this.error) { this.file = null; if (input) input.value = ''; } }
   private commonPayload() { return { student: this.studentId, semester: this.semesterId, actividad_tipo: this.activityType, ...(this.activityId !== null && { actividad_id: this.activityId }), titulo: this.title.trim(), descripcion: this.description.trim() }; }
-  private apiError(err: any): void { this.error = err.error?.enlace_url?.[0] ?? err.error?.actividad_id?.[0] ?? err.error?.archivo_adjunto?.[0] ?? err.error?.detail ?? 'No se pudo vincular la evidencia.'; }
+  private apiError(err: any): void { this.error = err.error?.semester?.[0] ?? err.error?.enlace_url?.[0] ?? err.error?.actividad_id?.[0] ?? err.error?.archivo_adjunto?.[0] ?? err.error?.detail ?? 'No se pudo vincular la evidencia.'; }
   submitFile(): void {
     if (!this.canSubmitFile || !this.file) { this.error = 'Complete los campos requeridos y seleccione un archivo válido.'; return; }
     this.uploading = true; this.error = '';

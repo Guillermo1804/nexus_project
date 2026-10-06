@@ -53,6 +53,7 @@ describe('EvidenceUploadComponent', () => {
   it('submits link evidence as ENLACE_DOI and emits saved', () => {
     academic.linkEvidence.and.returnValue(of({} as any));
     const component = fixture.componentInstance;
+    fixture.componentRef.setInput('currentSemesterId', 2);
     component.title = 'Repositorio';
     component.semesterId = 2;
     component.link = '10.1000/182';
@@ -71,13 +72,13 @@ describe('EvidenceUploadComponent', () => {
 
   it('explica qué falta en lugar de dejar el botón deshabilitado en silencio', () => {
     fixture.componentRef.setInput('semesters', [{ id: 1, numero: 1, is_active: true } as any]);
+    fixture.componentRef.setInput('currentSemesterId', 1);
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
     const pending = fixture.nativeElement.querySelector('#evidence-pending-file') as HTMLElement;
     expect(pending.textContent).toContain('un archivo');
     expect(pending.textContent).toContain('el título de la evidencia');
-    expect(pending.textContent).toContain('el semestre');
     expect((fixture.nativeElement.querySelector('.evidence-modal button[type=submit], button[type=submit]') as HTMLButtonElement).disabled).toBeTrue();
 
     component.title = 'Bitácora';
@@ -87,6 +88,26 @@ describe('EvidenceUploadComponent', () => {
 
     expect(fixture.nativeElement.querySelector('#evidence-pending-file')).toBeNull();
     expect((fixture.nativeElement.querySelector('button[type=submit]') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('muestra y acepta únicamente el semestre vigente', () => {
+    fixture.componentRef.setInput('semesters', [
+      { id: 1, numero: 1, is_active: false },
+      { id: 2, numero: 2, is_active: true },
+    ] as any);
+    fixture.componentRef.setInput('currentSemesterId', 2);
+    fixture.detectChanges();
+
+    const semesterInput = fixture.nativeElement.querySelector('input[name="semester"]') as HTMLInputElement;
+    expect(semesterInput.value).toBe('Semestre 2');
+    expect(semesterInput.readOnly).toBeTrue();
+
+    const component = fixture.componentInstance;
+    component.title = 'Bitácora';
+    component.semesterId = 1;
+    expect(component.commonFieldsValid).toBeFalse();
+    component.semesterId = 2;
+    expect(component.commonFieldsValid).toBeTrue();
   });
 
   it('muestra un indicador de carga mientras vincula la evidencia', () => {

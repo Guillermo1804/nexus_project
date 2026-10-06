@@ -4,6 +4,17 @@
 
 Permitir que cada evento de tipo **Evidencia** muestre claramente a qué actividad está ligado: una tutoría, un acuerdo, un avance de tesis u otra actividad. También se debe mostrar la fecha de la actividad relacionada cuando exista, sin confundirla con la fecha de carga de la evidencia.
 
+## Regla adicional para el modal de carga
+
+El campo **Semestre** del modal **Carga de Evidencias** debe estar limitado exclusivamente al semestre académico en curso. No se deben ofrecer semestres anteriores en el selector ni permitir registrar una evidencia asociada a ellos.
+
+La restricción debe aplicarse en ambos niveles:
+
+- **Frontend:** mostrar el semestre vigente en un campo bloqueado, sin permitir que el usuario abra un selector o elija otro semestre. El valor debe permanecer asociado internamente al identificador del semestre activo para incluirlo en la carga.
+- **Backend:** validar nuevamente que el semestre recibido sea el vigente antes de crear o actualizar la evidencia, para impedir que la regla pueda omitirse mediante una petición directa.
+
+Si no existe un semestre académico vigente configurado, la operación debe rechazarse con un error de validación claro y no crear la evidencia.
+
 ## Problema actual
 
 El modelo `Evidence` ya almacena `actividad_tipo` y `actividad_id`, pero el servicio de trayectoria actualmente solo expone en el evento:
@@ -60,11 +71,15 @@ Por eso la línea de tiempo no puede indicar si la evidencia corresponde a una t
 - La fecha de carga permanece visible y diferenciada de la fecha de actividad.
 - Las evidencias tipo `OTRO` y los eventos antiguos no rompen la línea de tiempo.
 - La solución no agrega consultas N+1 ni modifica el filtro de evidencias existente.
+- El modal de carga solo permite seleccionar el semestre académico en curso.
+- El campo de semestre se muestra bloqueado porque no existen alternativas válidas para el usuario.
+- El backend rechaza evidencias con un semestre pasado o sin un semestre vigente configurado.
 
 ## Archivos previstos
 
 - `Backend/nexus/nexus/services/timeline_service.py`
 - `Backend/nexus/nexus/test_hu21.py` y/o pruebas del servicio de trayectoria
+- `Backend/nexus/nexus/serializers.py` y/o la validación que controle la creación o actualización de evidencias
 - `FrontEnd/nexus_project/src/app/core/academic/academic.models.ts`
 - `FrontEnd/nexus_project/src/app/shared/timeline.ts`
 - `FrontEnd/nexus_project/src/app/shared/timeline.spec.ts`
