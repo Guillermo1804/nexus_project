@@ -287,6 +287,14 @@ export interface Evidence {
 
 export type TimelineEventType = 'TUTORIA' | 'ACUERDO' | 'TESIS' | 'EVIDENCIA';
 
+export interface TimelineActivity {
+  tipo: string;
+  id: number | null;
+  etiqueta: string;
+  titulo: string | null;
+  fecha: string | null;
+}
+
 export interface TimelineEvent {
   id: string;
   tipo: TimelineEventType;
@@ -302,6 +310,7 @@ export interface TimelineEvent {
   porcentaje?: number;
   archivo_url?: string;
   enlace_url?: string;
+  actividad?: TimelineActivity | null;
   metadata: Record<string, string | number | null>;
 }
 

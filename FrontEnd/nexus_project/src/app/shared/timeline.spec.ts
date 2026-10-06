@@ -17,7 +17,9 @@ const SEMESTERS: TimelineSemester[] = [
     numero: 2,
     activo: true,
     eventos: [
-      { id: 'E-1', tipo: 'EVIDENCIA', fecha: '2026-05-01', titulo: 'Evidencia mayo', descripcion: '', metadata: {} },
+      { id: 'E-1', tipo: 'EVIDENCIA', fecha: '2026-05-01', titulo: 'Evidencia mayo', descripcion: '', metadata: {}, actividad: {
+        tipo: 'TUTORIA', id: 1, etiqueta: 'Tutoría', titulo: 'Sesión de tutoría (Presencial)', fecha: '2026-04-20',
+      } },
       { id: 'T-2', tipo: 'TUTORIA', fecha: '2026-06-01', titulo: 'Tutoria junio', descripcion: '', metadata: {} },
     ],
   },
@@ -120,6 +122,16 @@ describe('TimelineComponent (HU-23)', () => {
     expect(titles()).toEqual(['Evidencia mayo']);
     expect(ariaPressed('Evidencias')).toBe('true');
     expect(ariaPressed('Todos')).toBe('false');
+  });
+
+  it('muestra la actividad y fecha relacionadas de una evidencia', () => {
+    clickFilter('Evidencias');
+    fixture.detectChanges();
+
+    const context = fixture.nativeElement.querySelector('.evidence-context') as HTMLElement;
+    expect(context.textContent).toContain('Vinculada a: Tutoría');
+    expect(context.textContent).toContain('Sesión de tutoría (Presencial)');
+    expect(context.textContent).toContain('April 20, 2026');
   });
 
   it('conserva el semestre de cada evento como referencia sin agrupar', () => {

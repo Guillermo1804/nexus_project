@@ -71,6 +71,13 @@ function compareDates(a: string, b: string): number {
                 </div>
                 <h4>{{ entry.event.titulo }}</h4>
                 @if (entry.event.descripcion) { <p>{{ entry.event.descripcion }}</p> }
+                @if (entry.event.tipo === 'EVIDENCIA' && entry.event.actividad; as activity) {
+                  <div class="evidence-context" aria-label="Actividad relacionada">
+                    <strong>Vinculada a: {{ activity.etiqueta }}</strong>
+                    @if (activity.titulo) { <span>{{ activity.titulo }}</span> }
+                    @if (activity.fecha) { <time [attr.datetime]="activity.fecha">Fecha de actividad: {{ activity.fecha | date:'longDate' }}</time> }
+                  </div>
+                }
                 <footer>
                   @if (entry.event.actor) { <span>Responsable: {{ entry.event.actor }}</span> }
                   @if (entry.event.estado_efectivo) { <span class="status">{{ entry.event.estado_efectivo.replaceAll('_', ' ') }}</span> }

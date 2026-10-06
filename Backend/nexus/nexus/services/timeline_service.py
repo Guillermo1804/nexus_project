@@ -57,6 +57,8 @@ class TimelineService:
     def _events(self, semester, numeracion_inicial=0, base_url=None):
         events = []
         sessions = list(semester.tutoring_sessions.all())
+        agreements = [agreement for session in sessions for agreement in session.timeline_agreements]
+        progress_items = list(semester.thesis_progresses.all())
         for index, session in enumerate(sorted(sessions, key=lambda item: (item.fecha_sesion, item.id)), numeracion_inicial + 1):
             events.append({
                 'id': f'tutoria-{session.id}',
@@ -85,7 +87,7 @@ class TimelineService:
                     'metadata': {'fecha_limite': agreement.fecha_limite.isoformat()},
                 })
 
-        for progress in semester.thesis_progresses.all():
+        for progress in progress_items:
             events.append({
                 'id': f'tesis-{progress.id}',
                 'tipo': 'TESIS',
@@ -106,6 +108,7 @@ class TimelineService:
                 'descripcion': evidence.descripcion,
                 'actor': self._actor(evidence.created_by),
                 'metadata': {'tipo_evidencia': evidence.tipo},
+                'actividad': self._evidence_activity(evidence, sessions, agreements, progress_items),
             }
             if evidence.archivo_adjunto:
                 event['archivo_url'] = self._absoluta(evidence.archivo_adjunto.url, base_url)
@@ -119,3 +122,36 @@ class TimelineService:
             event['orden'] = position
 
         return sorted(events, key=lambda event: (event['fecha'], event['orden']))
+
+    @staticmethod
+    def _evidence_activity(evidence, sessions, agreements, progress_items):
+        activity_type = evidence.actividad_tipo
+        activity_id = evidence.actividad_id
+        base = {'tipo': activity_type, 'id': activity_id, 'etiqueta': 'Otra actividad', 'titulo': None, 'fecha': None}
+
+        if activity_type == Evidence.ActivityType.TUTORING:
+            session = next((item for item in sessions if item.id == activity_id), None)
+            if session:
+                base.update({
+                    'etiqueta': 'Tutoría',
+                    'titulo': f'Sesión de tutoría ({session.get_modalidad_display()})',
+                    'fecha': session.fecha_sesion.isoformat(),
+                })
+        elif activity_type == Evidence.ActivityType.AGREEMENT:
+            agreement = next((item for item in agreements if item.id == activity_id), None)
+            if agreement:
+                base.update({
+                    'etiqueta': 'Acuerdo',
+                    'titulo': agreement.descripcion,
+                    'fecha': agreement.session.fecha_sesion.isoformat() if agreement.session else None,
+                })
+        elif activity_type == Evidence.ActivityType.THESIS:
+            progress = next((item for item in progress_items if item.id == activity_id), None)
+            if progress:
+                base.update({
+                    'etiqueta': 'Tesis',
+                    'titulo': f'Avance de tesis ({progress.porcentaje_avance}%)',
+                    'fecha': progress.fecha_registro.isoformat(),
+                })
+
+        return base

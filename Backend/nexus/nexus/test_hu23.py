@@ -68,6 +68,8 @@ class TimelineHu23Tests(APITestCase):
         evidence = Evidence.objects.create(
             student=self.student,
             semester=self.first_semester,
+            actividad_tipo=Evidence.ActivityType.TUTORING,
+            actividad_id=session.id,
             titulo='Minuta firmada',
             descripcion='Documento de la sesión.',
             archivo_adjunto=SimpleUploadedFile('minuta.pdf', b'%PDF-test'),
@@ -101,7 +103,34 @@ class TimelineHu23Tests(APITestCase):
         self.assertEqual(events['ACUERDO']['estado_efectivo'], 'VENCIDO')
         self.assertEqual(events['TESIS']['porcentaje'], progress.porcentaje_avance)
         self.assertEqual(events['EVIDENCIA']['metadata']['tipo_evidencia'], Evidence.EvidenceType.LOCAL_FILE)
+        self.assertEqual(events['EVIDENCIA']['actividad'], {
+            'tipo': 'TUTORIA',
+            'id': session.id,
+            'etiqueta': 'Tutoría',
+            'titulo': 'Sesión de tutoría (Híbrida)',
+            'fecha': '2026-02-10',
+        })
         self.assertIn(f'evidence/', events['EVIDENCIA']['archivo_url'])
+
+    def test_exposes_agreement_and_thesis_activity_context(self):
+        session, agreement, progress, _ = self.create_events()
+        agreement_evidence = Evidence.objects.create(
+            student=self.student, semester=self.first_semester,
+            actividad_tipo=Evidence.ActivityType.AGREEMENT, actividad_id=agreement.id,
+            titulo='Acuerdo firmado', fecha_carga=date(2026, 2, 21), created_by=self.owner,
+        )
+        thesis_evidence = Evidence.objects.create(
+            student=self.student, semester=self.first_semester,
+            actividad_tipo=Evidence.ActivityType.THESIS, actividad_id=progress.id,
+            titulo='Avance documentado', fecha_carga=date(2026, 2, 22), created_by=self.owner,
+        )
+
+        events = {item['id']: item for item in self.client.get(self.url).data['semestres'][0]['eventos']}
+
+        self.assertEqual(events[f'evidencia-{agreement_evidence.id}']['actividad']['fecha'], '2026-02-10')
+        self.assertEqual(events[f'evidencia-{agreement_evidence.id}']['actividad']['etiqueta'], 'Acuerdo')
+        self.assertEqual(events[f'evidencia-{thesis_evidence.id}']['actividad']['fecha'], '2026-02-15')
+        self.assertEqual(events[f'evidencia-{thesis_evidence.id}']['actividad']['etiqueta'], 'Tesis')
 
     def test_unrelated_or_unknown_student_returns_404(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_for(self.other)}')

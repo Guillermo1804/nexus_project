@@ -34,6 +34,8 @@ ol[aria-label='Trayectoria cronológica del estudiante'] { margin-left: 17px; pa
 .semester-badge.current { background: var(--success-bg); border-color: transparent; color: var(--success); }
 .event h4 { color: var(--heading); font-size: 15px; margin-bottom: 7px; }
 .event p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
+.evidence-context { display: grid; gap: 4px; margin: 12px 0; padding: 10px 12px; border-left: 3px solid var(--success); background: var(--success-bg); color: var(--text-secondary); font-size: 12px; }
+.evidence-context strong { color: var(--heading); }.evidence-context time { color: var(--text-muted); }
 .event footer a { color: var(--brand); font-weight: 700; }
 .empty { color: var(--text-muted); padding: 36px; text-align: center; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
