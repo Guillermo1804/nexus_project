@@ -31,18 +31,23 @@ class ThesisProgressHu15Tests(APITestCase):
     def test_creates_progress_with_components(self):
         response = self.client.post(self.url, self.payload(), format='json')
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['porcentaje_avance'], 35)
+        # Global calculado: (100 + 80) / 6 componentes = 30.
+        self.assertEqual(response.data['porcentaje_avance'], 30)
         self.assertEqual(response.data['componentes_json']['protocolo'], 100)
         self.assertEqual(response.data['registrado_por'], self.student_user.id)
         self.assertEqual(response.data['registrado_por_nombre'], 'Ana Pérez')
 
-    def test_rejects_percentage_outside_range_and_accepts_boundaries(self):
-        for percentage in (-1, 101):
-            with self.subTest(percentage=percentage):
-                self.assertEqual(self.client.post(self.url, self.payload(porcentaje_avance=percentage), format='json').status_code, 400)
-        for percentage in (0, 100):
-            with self.subTest(percentage=percentage):
-                self.assertEqual(self.client.post(self.url, self.payload(porcentaje_avance=percentage), format='json').status_code, 201)
+    def test_global_is_computed_and_client_value_is_ignored(self):
+        for enviado in (-1, 35, 99, 101):
+            with self.subTest(enviado=enviado):
+                response = self.client.post(self.url, self.payload(porcentaje_avance=enviado), format='json')
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(response.data['porcentaje_avance'], 30)
+        full = self.client.post(self.url, self.payload(componentes_json=dict.fromkeys(
+            ('protocolo', 'marco_teorico', 'metodologia', 'recoleccion_datos', 'analisis_resultados', 'redaccion_capitulos'), 100)), format='json')
+        self.assertEqual(full.data['porcentaje_avance'], 100)
+        vacio = self.client.post(self.url, self.payload(componentes_json={}), format='json')
+        self.assertEqual(vacio.data['porcentaje_avance'], 0)
 
     def test_rejects_invalid_component_values(self):
         for value in ('abc', 150):
@@ -67,11 +72,14 @@ class ThesisProgressHu15Tests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.data)
         first = self.client.post(self.url, self.payload(porcentaje_avance=20), format='json')
-        second = self.client.post(self.url, self.payload(porcentaje_avance=45), format='json')
+        segundo = self.payload()
+        segundo['componentes_json'] = {'protocolo': 100, 'marco_teorico': 80, 'metodologia': 60}
+        second = self.client.post(self.url, segundo, format='json')
         self.assertEqual(ThesisProgress.objects.filter(student=self.student).count(), 2)
         self.assertNotEqual(first.data['id'], second.data['id'])
         self.assertEqual(self.client.get(latest_url).data['id'], second.data['id'])
-        self.assertEqual(self.client.get(latest_url).data['porcentaje_avance'], 45)
+        # Global del segundo registro recalculado: (100 + 80 + 60) / 6 = 40.
+        self.assertEqual(self.client.get(latest_url).data['porcentaje_avance'], 40)
 
     def test_uses_active_semester_when_omitted(self):
         payload = self.payload()

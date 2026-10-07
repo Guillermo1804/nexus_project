@@ -10,6 +10,7 @@
 }
 
 .login-card {
+  animation: login-rise var(--motion-slow) var(--ease-out) both;
   background: var(--surface-warm);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -17,6 +18,11 @@
   padding: 40px;
   width: min(440px, 100%);
 }
+
+/* Keyframe local: los definidos en styles.scss no son alcanzables por nombre desde
+   estilos de componente porque Angular renombra los de componente. */
+@keyframes login-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .login-card { animation: none; } }
 
 h1 {
   color: var(--heading);
@@ -52,8 +58,10 @@ input { font-size: 14px; min-height: 42px; width: 100%; }
   position: absolute;
   right: 3px;
   top: 1px;
+  transition: color var(--motion-fast) var(--ease-out);
   width: 40px;
 }
+.password-toggle:hover { color: var(--heading); }
 .password-toggle:focus-visible { border-radius: var(--radius-small); outline: 2px solid var(--brand); }
 .validation { color: var(--danger); font-size: 12px; }
 .error {
@@ -75,9 +83,11 @@ input { font-size: 14px; min-height: 42px; width: 100%; }
   font-weight: 700;
   min-height: 44px;
   padding: 10px 18px;
+  transition: background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
   width: 100%;
 }
-.submit-button:hover:not(:disabled) { background: var(--primary-hover); }
+.submit-button:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.submit-button:active:not(:disabled) { transform: scale(.99); }
 .submit-button:disabled { cursor: not-allowed; opacity: .65; }
 .footer { color: var(--text-muted); font-size: 12px; margin: 28px 0 0; text-align: center; }
 

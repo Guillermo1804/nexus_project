@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ToastHostComponent } from '../shared/toast-host.component';
 import { filter, finalize } from 'rxjs';
@@ -12,6 +12,9 @@ import { getRoleLabelByGender } from '../shared/presentation/role-labels';
 /** Mirrors the `allowedRoles` of the agreements route so the link never leads to a redirect. */
 const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
 
+/** Techo de la escala global de movimiento: la animación de apertura del menú. */
+const MENU_ANIMATION_MS = 220;
+
 @Component({
   selector: 'app-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, ToastHostComponent],
@@ -22,13 +25,35 @@ export class AppShell implements OnInit {
   protected readonly auth = inject(AuthService);
   private readonly academic = inject(AcademicService);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef);
   protected readonly alerts = signal<AgreementAlertsResponse | null>(null);
   protected readonly agreementAlertCount = computed(() => this.alerts()?.total_alertas ?? 0);
   private readonly navigation = toSignal(
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
     { initialValue: null },
   );
+
+  /** Menú de hamburguesa: colapsado por defecto en móvil, siempre abierto en escritorio. */
+  protected readonly menuOpen = signal(false);
+  /**
+   * Acceso directo al expediente propio. Sólo el estudiante tiene un expediente único
+   * (su `student_id`); tutor, comité y coordinador llegan a la misma vista desde la
+   * lista de estudiantes de Inicio, porque su expediente depende de a quién consultan.
+   */
+  protected readonly canOpenOwnRecord = computed(() => {
+    const user = this.auth.user();
+    return user?.role === 'STUDENT' && !!user.student_id;
+  });
+  protected readonly ownRecordId = computed(() => this.auth.user()?.student_id ?? null);
+
   protected isLeaving = false;
+
+  constructor() {
+    // Al navegar el menú de hamburguesa se cierra para que la vista quede a la vista.
+    effect(() => {
+      if (this.navigation()) this.menuOpen.set(false);
+    });
+  }
   protected readonly viewTitle = computed(() => {
     this.navigation();
     const url = this.router.url.split('?')[0];
@@ -94,5 +119,29 @@ export class AppShell implements OnInit {
         void this.router.navigate(['/login']);
       }),
     ).subscribe({ error: () => undefined });
+  }
+
+  protected toggleMenu(): void {
+    this.menuOpen.update(open => !open);
+    if (this.menuOpen()) this.warnIfMenuOverflows();
+  }
+
+  /**
+   * Mide scrollWidth contra clientWidth en cada contenedor del menú (no basta mirar el
+   * documento: el desborde puede quedar atrapado dentro de la barra). Lo usa la prueba
+   * de regresión y deja una pista en consola si el menú abierto llegara a desbordar.
+   */
+  protected hasHorizontalOverflow(): boolean {
+    const root = this.host.nativeElement as HTMLElement;
+    const containers = root.querySelectorAll<HTMLElement>('.topbar, .sidebar, .sidebar-inner, .nav-list, .content');
+    return Array.from(containers).some(el => el.scrollWidth > el.clientWidth + 1);
+  }
+
+  private warnIfMenuOverflows(): void {
+    setTimeout(() => {
+      if (this.hasHorizontalOverflow()) {
+        console.warn('[nexus] El menú lateral desborda horizontalmente en uno de sus contenedores.');
+      }
+    }, MENU_ANIMATION_MS + 20);
   }
 }

@@ -41,6 +41,14 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# Frente de evidencias remotas: el Quick Tunnel de Cloudflare asigna un subdominio
+# aleatorio de *.trycloudflare.com en cada arranque, así que no puede listarse uno
+# por uno. El patrón con punto inicial acepta cualquier subdominio del túnel; si
+# falta, Django responde 400 (DisallowedHost) a toda la sesión remota. Sólo aplica
+# en desarrollo: en producción los hosts permitidos se fijan por DJANGO_ALLOWED_HOSTS.
+if DEBUG:
+    ALLOWED_HOSTS.append('.trycloudflare.com')
+
 
 # Application definition
 
@@ -79,6 +87,21 @@ CORS_ALLOWED_ORIGINS = [
     ).split(',')
     if origin.strip()
 ]
+# La interfaz vista desde el túnel vive en https://<aleatorio>.trycloudflare.com;
+# si alguna petición a la API sale directa (sin pasar por el proxy de Angular),
+# el navegador la bloquearía sin esta excepción.
+CORS_ALLOWED_ORIGIN_REGEXES = [r'^https://[\w.-]+\.trycloudflare\.com$']
+
+# Django valida el cabecera Origin de los POST contra esta lista; por el túnel
+# llega https://<aleatorio>.trycloudflare.com y sin declararlo la carga remota de
+# evidencias recibiría 403 de CSRF.
+CSRF_TRUSTED_ORIGINS = ['https://*.trycloudflare.com']
+
+# Detrás del túnel la petición original es https, pero Django sólo ve el http que
+# le entrega el proxy. Sin esta cabecera request.build_absolute_uri generaría URLs
+# http:// para la evidencia y el navegador las bloquearía como contenido mixto
+# dentro de la página https del túnel.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG

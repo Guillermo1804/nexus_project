@@ -19,12 +19,20 @@ h3 { color: var(--heading); font-size: 13px; }
 .badge.neutral { background: var(--surface-soft); color: var(--text-secondary); }
 .overview-tabs, .semester-tabs { display: flex; align-items: end; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); }
 .overview-tabs { margin: 24px 0 16px; }
-/* Los dos grupos de pestañas comparten estilo: se declaran juntos para no duplicarlos. */
-.overview-tabs button, .semester-tabs button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; padding: 12px 16px; white-space: nowrap; font-weight: 600; border-bottom: 2px solid transparent; }
-.overview-tabs button.selected, .semester-tabs button.selected { color: var(--brand); border-bottom-color: var(--brand); }
+/* Los dos grupos de pestañas comparten estilo: se declaran juntos para no duplicarlos.
+   La transición suaviza el cambio de pestaña activa sin mover la línea inferior. */
+.overview-tabs button, .semester-tabs button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; padding: 12px 16px; white-space: nowrap; font-weight: 600; border-bottom: 2px solid transparent; transition: color var(--motion-fast) var(--ease-out), border-bottom-color var(--motion-fast) var(--ease-out); }
+:is(.overview-tabs, .semester-tabs) button:is(:hover, :focus-visible):not(.selected) { color: var(--heading); }
+:is(.overview-tabs, .semester-tabs) button.selected { color: var(--brand); border-bottom-color: var(--brand); }
 .semester-tabs { margin: 0 0 16px; }
 .semester-tabs .add-semester { margin-left: auto; color: var(--brand); }
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr); gap: 20px; align-items: start; }
+
+/* Cambio de pestaña: el panel que entra sube levemente en lugar de aparecer en seco.
+   Se anima el contenedor de cada vista (resumen, línea de tiempo, evidencias). */
+@keyframes panel-swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.dashboard-grid, .timeline-panel, .evidence-list-panel { animation: panel-swap var(--motion-base) var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) { .dashboard-grid, .timeline-panel, .evidence-list-panel { animation: none; } }
 /* `minmax(0, 1fr)` y no `1fr`: una columna `auto` no baja del ancho mínimo del
    contenido, y la tabla de acuerdos (594 px) estiraría toda la columna en móvil. */
 .main-column, .side-column { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
@@ -49,24 +57,53 @@ h3 { color: var(--heading); font-size: 13px; }
 .link-button, .text-action, .icon-link { border: 0; background: none; color: var(--brand); cursor: pointer; font-weight: 700; padding: 4px; }
 .session-list { display: grid; gap: 10px; margin-top: 18px; }.session-item { border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; gap: 16px; align-items: center; justify-content: space-between; }.session-item div { display: grid; gap: 5px; }.session-item strong { color: var(--heading); }.session-item span { color: var(--text-muted); font-size: 13px; }
 .progress-total { display: flex; align-items: baseline; gap: 10px; margin: 20px 0 10px; }.progress-total strong { color: var(--brand); font-size: 36px; }.progress-total span { color: var(--text-muted); font-size: 12px; }
-.progress-track { height: 7px; border-radius: 999px; background: #e4e1ed; overflow: hidden; }.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--brand); }.progress-track.large { height: 10px; }
+.progress-track { height: 7px; border-radius: 999px; background: #e4e1ed; overflow: hidden; }.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width var(--motion-slow) var(--ease-out); }.progress-track.large { height: 10px; }
 .component-progress { margin-top: 16px; }.component-progress > div:first-child { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 7px; }.component-progress strong { color: var(--heading); }.text-action { margin-top: 16px; }.thesis-action { width: 100%; margin-top: 18px; }
 .committee-list { display: grid; gap: 15px; margin-top: 18px; }.committee-member { display: flex; gap: 10px; align-items: center; }.member-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-soft); color: var(--brand); font-weight: 700; }.committee-member div { display: grid; gap: 2px; }.committee-member strong { color: var(--heading); font-size: 13px; }.committee-member div span { color: var(--text-muted); font-size: 11px; }
-.overdue-card { display: flex; gap: 12px; border: 1px solid var(--danger); border-radius: 12px; background: var(--danger-bg); color: var(--danger); padding: 18px; }.overdue-card h2 { color: var(--danger); font-size: 16px; }.overdue-card p { font-size: 13px; margin: 5px 0 10px; }.overdue-card button { border: 0; background: transparent; padding: 0; color: var(--danger); font-weight: 700; cursor: pointer; }.alert-icon { border: 2px solid var(--danger); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; flex: 0 0 auto; }
+/* Aviso flotante de compromisos vencidos: sustituye a la tarjeta incrustada del aside
+   (tercer <article>). Es overlay fijo: no ocupa sitio del flujo, así que aparece y se
+   descarta sin desplazar el contenido. Debajo de los modales (z-index 1000) para no
+   estorbarlos. */
+.overdue-toast {
+  position: fixed; right: 24px; bottom: 24px; z-index: 900;
+  display: flex; gap: 12px; align-items: flex-start; max-width: min(360px, calc(100vw - 48px));
+  border: 1px solid var(--danger); border-radius: 12px; background: var(--danger-bg);
+  color: var(--danger); padding: 18px; box-shadow: var(--shadow-modal);
+  animation: overdue-in var(--motion-base) var(--ease-out) both;
+}
+.overdue-toast.cerrando { animation: overdue-out var(--motion-fast) var(--ease-out) both; }
+.overdue-toast h2 { color: var(--danger); font-size: 16px; }
+.overdue-toast p { font-size: 13px; margin: 5px 0 10px; }
+.overdue-toast button { border: 0; background: transparent; padding: 0; color: var(--danger); font-weight: 700; cursor: pointer; }
+.overdue-toast .toast-close { margin-left: auto; font-size: 20px; line-height: 1; color: var(--danger); }
+@keyframes overdue-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes overdue-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .overdue-toast, .overdue-toast.cerrando { animation: none; } }
+.alert-icon { border: 2px solid var(--danger); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; flex: 0 0 auto; }
 .last-tutoring time { color: var(--heading); font-weight: 700; display: inline-block; margin: 18px 8px 10px 0; }.last-tutoring > p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }.evidence-button, .evidence-timeline-button { width: 100%; }.evidence-timeline-button { margin-top: 10px; }
 .empty-state { color: var(--text-muted); font-size: 13px; margin: 20px 0 0; }.empty-state.large { padding: 36px; text-align: center; }
 .success-banner { background: var(--success-bg); color: var(--success); padding: 10px 14px; border-radius: 8px; margin: 16px 0 0; font-size: 13px; }
-.state-container, .timeline-state { min-height: 280px; display: grid; place-content: center; justify-items: center; color: var(--text-muted); }.timeline-state { min-height: 360px; gap: 12px; }.timeline-state p { margin: 0; }.timeline-panel { min-height: 400px; }.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; }@keyframes spin { to { transform: rotate(360deg); } }
+/* El spinner vive en styles.scss (compartido con home), igual que .sr-only. */
+.state-container, .timeline-state { min-height: 280px; display: grid; place-content: center; justify-items: center; color: var(--text-muted); }.timeline-state { min-height: 360px; gap: 12px; }.timeline-state p { margin: 0; }.timeline-panel { min-height: 400px; }
 
-.modal-backdrop { padding: 24px; overflow-y: auto; align-items: center; }
-/* Cada modal fija su ancho con una variable y todos comparten la misma fórmula. */
-.modal-panel { max-height: calc(100vh - 48px); overflow-y: auto; width: min(92vw, var(--ancho-modal, 720px)); }
-.tutoring-modal { --ancho-modal: 1024px; }.small-modal { --ancho-modal: 560px; }.status-modal { --ancho-modal: 480px; }.evidence-modal { --ancho-modal: 512px; min-width: 0; }
-.modal-header { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }.modal-header h2 { font-size: 20px; }.modal-title { display: flex; align-items: center; gap: 12px; }.modal-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--surface-soft); color: var(--brand); display: grid; place-items: center; font-size: 20px; }.close-button { border: 0; background: none; color: var(--text-muted); font-size: 28px; cursor: pointer; line-height: 1; }
-.modal-form, .embedded-form, .progress-body { padding: 24px; background: var(--surface-warm); }.modal-form { display: grid; gap: 16px; }.modal-form label { display: grid; gap: 7px; color: var(--heading); font-size: 13px; font-weight: 700; }.modal-form .input-field { width: 100%; resize: vertical; }.modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding: 16px 20px; background: var(--surface); }.modal-form .modal-footer { margin: 8px -24px -24px; }
-.form-error, .form-warning { border-radius: 8px; font-size: 13px; margin: 0; padding: 10px; }.form-error { color: var(--danger); background: var(--danger-bg); }.form-warning { color: var(--warning); background: var(--warning-bg); }
+/* Panel del tab de evidencias: se restauran estos estilos porque la línea que los
+   declaraba se eliminó por error en el commit «Bug del sprint 2 arreglados» (1a8c1e2),
+   y la vista de evidencias (tercera pestaña) quedaba sin tratamiento visual. */
+.evidence-list-panel { padding: 22px; min-width: 0; }
+.evidence-table-wrap { overflow-x: auto; margin-top: 20px; }
+.evidence-table { width: 100%; min-width: 760px; border-collapse: collapse; color: var(--text-secondary); font-size: 13px; }
+.evidence-table th { background: var(--surface-warm); color: var(--text-muted); font-size: 11px; font-weight: 700; text-align: left; text-transform: uppercase; }
+.evidence-table th, .evidence-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.evidence-table td strong { color: var(--heading); }
+.evidence-table a { color: var(--brand); font-weight: 700; white-space: nowrap; }
+.muted-value { color: var(--text-muted); }
+
+/* El armazón de los modales (cabecera, formularios, pie, nota del comité, anchos
+   por variable) se movió a styles.scss: es el patrón común de la aplicación y así
+   este componente vuelve a caber en su presupuesto de estilos. Aquí quedan sólo
+   las piezas que agreements-list.scss define distinto (transición de estado y
+   descripción del acuerdo) y que no deben globalizarse. */
 .transition { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; }.transition .next { color: var(--brand); background: var(--surface-soft); }.agreement-description { color: var(--text-secondary); margin: 0; }
-.committee-note { padding: 18px 24px 0; background: var(--surface-warm); }.committee-note h3 { margin-bottom: 10px; }.committee-modal-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.committee-modal-list div { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: grid; gap: 3px; }.committee-modal-list strong { color: var(--heading); font-size: 12px; }.committee-modal-list span, .committee-note p { color: var(--text-muted); font-size: 12px; }.committee-note p { margin: 10px 0 0; }
 
 /* La tabla de acuerdos deja de ser tabla y se apila en fichas. Estas reglas viven
    aquí, no en styles.scss: al ser del componente empatan en especificidad con la

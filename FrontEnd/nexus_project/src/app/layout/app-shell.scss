@@ -29,6 +29,13 @@
   z-index: 20;
 }
 
+/* En escritorio el envoltorio del menú no altera el árbol visual: se comporta como si
+   no existiera y sólo toma papel en móvil, donde colapsa el menú con la hamburguesa. */
+.sidebar-inner { display: contents; }
+
+/* La hamburguesa sólo existe en móvil (ver media query al final). */
+.menu-toggle { display: none; }
+
 .logo {
   align-items: center;
   color: var(--brand);
@@ -49,6 +56,7 @@
   font-weight: 600;
   padding: 11px 12px;
   text-decoration: none;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
 }
 .nav-list a:hover { background: var(--surface-warm); color: var(--heading); }
 .nav-list a.active { background: var(--surface-soft); color: var(--brand); }
@@ -57,6 +65,7 @@
    En rojo si hay vencidos, en ámbar si sólo hay próximos vencimientos. */
 .alert-count {
   align-items: center;
+  animation: badge-pop var(--motion-base) var(--ease-out) both;
   background: var(--warning);
   border-radius: 999px;
   color: #fff;
@@ -69,6 +78,8 @@
   min-width: 22px;
   padding: 2px 7px;
 }
+@keyframes badge-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .alert-count { animation: none; } }
 .alert-count.critical { background: var(--danger); }
 .alert-count .alert-icon {
   align-items: center; background: rgb(255 255 255 / 25%); border-radius: 50%;
@@ -96,31 +107,78 @@
 
 /* En móvil el menú deja de desplazarse en horizontal —eso escondía opciones sin avisar—
    y pasa a envolver en varias filas, de modo que todas quedan a la vista. Se ancla bajo
-   la barra superior, que queda fija. */
+   la barra superior, que queda fija, y colapsa por defecto: la hamburguesa lo despliega.
+   El despliegue anima `grid-template-rows` (0fr → 1fr) con la escala global de movimiento;
+   `prefers-reduced-motion` lo neutraliza con la regla global de styles.scss. */
 @media (max-width: 899px) {
   .topbar { height: 56px; padding: 0 16px; position: sticky; }
-  .sidebar {
+  .menu-toggle {
     align-items: center;
-    border-bottom: 1px solid var(--border);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 5px;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+  }
+  /* Las tres barras se cruzan al abrirse para que el icono anuncie el estado. */
+  .menu-toggle .bar {
+    background: var(--heading);
+    border-radius: 2px;
+    height: 2px;
+    transition:
+      transform var(--motion-fast) var(--ease-out),
+      opacity var(--motion-fast) var(--ease-out);
+    width: 22px;
+  }
+  .menu-toggle.open .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle.open .bar:nth-child(2) { opacity: 0; }
+  .menu-toggle.open .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .sidebar {
+    border-bottom: 0;
     border-right: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    height: auto;
+    bottom: auto;
+    display: grid;
+    grid-template-rows: 0fr;
     left: 0;
-    padding: 8px 12px;
+    overflow: hidden;
+    padding: 0;
     position: sticky;
     right: 0;
     top: 56px;
+    transition:
+      grid-template-rows var(--motion-base) var(--ease-out),
+      visibility 0s linear var(--motion-base);
+    visibility: hidden;
     width: auto;
     z-index: 25;
   }
+  .sidebar.open {
+    border-bottom: 1px solid var(--border);
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--motion-base) var(--ease-out);
+    visibility: visible;
+  }
+  .sidebar-inner {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    min-height: 0;
+    padding: 8px 12px;
+  }
   .logo { font-size: 0; padding: 8px 12px; }
-  .nav-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 2px; }
+  .nav-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 2px; min-width: 0; }
   .nav-list a { align-items: center; display: inline-flex; font-size: 13px; min-height: 44px; padding: 8px 12px; white-space: nowrap; }
   .nav-group { display: none; }
   .workspace { margin-left: 0; min-height: auto; padding-top: 0; }
   .breadcrumb span, .breadcrumb b, .identity { display: none; }
+  .breadcrumb { min-width: 0; overflow: hidden; }
   .content { padding: 16px; }
 }
 

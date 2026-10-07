@@ -118,4 +118,26 @@ describe('ThesisProgressFormComponent (HU-15)', () => {
     expect(payload.student).toBe(10);
     expect(payload.semester).toBe(4);
   });
+
+  it('calcula el porcentaje global como el promedio de los seis componentes', () => {
+    const global = (): string => fixture.nativeElement.querySelector('.global-value')?.textContent?.trim() ?? '';
+    // Estado inicial: sólo metodologia 30 → promedio 5.
+    expect(global()).toBe('5%');
+
+    type(numbers()[0], '100');
+    expect(global()).toBe('22%');
+  });
+
+  it('el global enviado al guardar es el calculado, no un valor escrito a mano', () => {
+    component.form.controls.componentes_json.controls.metodologia.setValue(60);
+    component.submit();
+
+    const payload = createThesisProgress.calls.mostRecent().args[0];
+    expect(payload.porcentaje_avance).toBe(10);
+  });
+
+  it('no ofrece ningún campo editable para el porcentaje global', () => {
+    expect(fixture.nativeElement.querySelector('#thesis-percentage')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('input[type="number"]').length).toBe(6);
+  });
 });

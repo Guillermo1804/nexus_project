@@ -1,6 +1,6 @@
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -66,6 +66,18 @@ class NexusPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+
+class AgreementOffsetPagination(LimitOffsetPagination):
+    """Paginación por offset (`limit`/`offset`) para el scroll infinito de acuerdos.
+
+    La respuesta mantiene la misma forma `{count, next, previous, results}` que
+    PageNumberPagination, así que los consumidores actuales no notan el cambio;
+    los enlaces `next`/`previous` llevan los propios `limit`/`offset`.
+    """
+
+    default_limit = 10
+    max_limit = 100
 
 
 def paginated_response(request, queryset, serializer_class):
@@ -474,6 +486,22 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
     permission_classes = [IsAuthenticated]
     serializer_class = AgreementSerializer
     pagination_class = NexusPagination
+
+    @property
+    def paginator(self):
+        """Elige el esquema de paginación por petición.
+
+        Con `limit` u `offset` en la query se usa el esquema por offset (scroll
+        infinito); sin ellos se conserva la paginación por página (`page`,
+        `page_size`) para no romper a los consumidores existentes.
+        """
+        if not hasattr(self, '_paginator'):
+            query = self.request.query_params
+            if 'limit' in query or 'offset' in query:
+                self._paginator = AgreementOffsetPagination()
+            else:
+                self._paginator = NexusPagination()
+        return self._paginator
 
     def get_queryset(self):
         user = self.request.user

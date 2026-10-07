@@ -20,11 +20,12 @@ const COMPONENTS: { key: ThesisComponentKey; label: string }[] = [
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="thesis-form" aria-label="Registrar avance de tesis">
       <div class="form-body">
-        <label for="thesis-percentage">Porcentaje global
-          <div class="percentage-input"><input id="thesis-percentage" class="input-field" type="number" min="0" max="100" step="1" formControlName="porcentaje_avance" [attr.aria-invalid]="form.controls.porcentaje_avance.invalid" /><span>%</span></div>
-        </label>
+        <div class="global-row">
+          <span class="global-label">Porcentaje global (calculado)</span>
+          <span class="global-value">{{ globalPercentage }}%</span>
+        </div>
         <div class="progress-track" role="progressbar" aria-label="Avance global" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="globalPercentage"><span [style.width.%]="globalPercentage"></span></div>
-        @if (form.controls.porcentaje_avance.invalid && form.controls.porcentaje_avance.touched) { <p class="field-error">Indica un número entero entre 0 y 100.</p> }
+        <p class="field-hint">El avance global es el promedio de los seis componentes; no se escribe a mano.</p>
 
         <fieldset formGroupName="componentes_json"><legend>Avance por componentes</legend>
           <p class="field-hint" id="components-hint">Indica el porcentaje de cada componente con el deslizador o escríbelo directamente en el campo numérico.</p>
@@ -85,7 +86,6 @@ export class ThesisProgressFormComponent implements OnInit {
   protected saving = false;
   protected error = '';
   protected readonly form = this.fb.nonNullable.group({
-    porcentaje_avance: [0, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+$/)]],
     componentes_json: this.fb.nonNullable.group({
       protocolo: [0, [Validators.min(0), Validators.max(100)]],
       marco_teorico: [0, [Validators.min(0), Validators.max(100)]],
@@ -98,12 +98,26 @@ export class ThesisProgressFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const values = Object.fromEntries(COMPONENTS.map(({ key }) => [key, this.validPercentage(this.currentComponents[key])])) as ThesisComponents;
-    this.form.patchValue({ porcentaje_avance: this.validPercentage(this.currentPercentage), componentes_json: values, observaciones: this.currentObservations });
+    const values = Object.fromEntries(COMPONENTS.map(({ key }) => [key, this.validPercentage(this.componentInput(this.currentComponents[key]))])) as ThesisComponents;
+    this.form.patchValue({ componentes_json: values, observaciones: this.currentObservations });
     for (const key of this.componentKeys) this.drafts[key] = String(this.componentValue(key));
   }
 
-  protected get globalPercentage(): number { return this.validPercentage(this.form.controls.porcentaje_avance.value); }
+  /** Acepta tanto el número simple ({protocolo: 40}) como la forma {porcentaje, estado} del seed. */
+  private componentInput(raw: unknown): number {
+    if (typeof raw === 'number') return raw;
+    if (raw && typeof raw === 'object') {
+      const porcentaje = (raw as Record<string, unknown>)['porcentaje'];
+      if (typeof porcentaje === 'number') return porcentaje;
+    }
+    return 0;
+  }
+
+  /** El global nunca se escribe a mano: promedio simple de los seis componentes. */
+  protected get globalPercentage(): number {
+    const total = this.componentKeys.reduce((suma, key) => suma + this.componentValue(key), 0);
+    return Math.round(total / this.componentKeys.length);
+  }
   protected componentValue(key: ThesisComponentKey): number { return this.form.controls.componentes_json.controls[key].value; }
   protected componentLabelId(key: ThesisComponentKey): string { return `thesis-${key}-label`; }
   protected draftValue(key: ThesisComponentKey): string {
@@ -131,7 +145,7 @@ export class ThesisProgressFormComponent implements OnInit {
     if (this.form.invalid || this.saving) { this.form.markAllAsTouched(); return; }
     const value = this.form.getRawValue();
     this.saving = true; this.error = '';
-    this.service.createThesisProgress({ student: this.studentId, semester: this.semesterId, porcentaje_avance: value.porcentaje_avance, componentes_json: value.componentes_json, observaciones: value.observaciones.trim() })
+    this.service.createThesisProgress({ student: this.studentId, semester: this.semesterId, porcentaje_avance: this.globalPercentage, componentes_json: value.componentes_json, observaciones: value.observaciones.trim() })
       .pipe(finalize(() => this.saving = false)).subscribe({
         next: () => this.saved.emit(),
         error: err => this.error = err.status === 403 ? 'No tienes permiso para registrar avances de este estudiante.' : err.error?.porcentaje_avance?.[0] || err.error?.componentes_json?.[0] || err.error?.semester?.[0] || err.error?.detail || 'No fue posible registrar el avance de tesis.',

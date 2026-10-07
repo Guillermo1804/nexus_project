@@ -199,6 +199,9 @@ export interface Agreement {
 export interface AgreementFilters {
   page?: number;
   page_size?: number;
+  /** Paginación por offset para el scroll infinito; excluyente con `page`. */
+  limit?: number;
+  offset?: number;
   student?: number;
   semester?: number;
   estado?: string;

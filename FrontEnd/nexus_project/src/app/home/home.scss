@@ -70,7 +70,7 @@ h2 { color: var(--heading); font-size: 18px; margin-bottom: 0; }
 .cohort-row > span { color: var(--text-secondary); font-weight: 600; }
 .cohort-row strong { color: var(--heading); text-align: right; }
 .bar-track { background: #e4e1ed; border-radius: 9999px; height: 9px; overflow: hidden; }
-.bar-track span { background: var(--brand); border-radius: inherit; display: block; height: 100%; min-width: 4px; }
+.bar-track span { background: var(--brand); border-radius: inherit; display: block; height: 100%; min-width: 4px; transition: width var(--motion-slow) var(--ease-out); }
 
 .registry-section, .assigned-section { margin-top: 28px; }
 .registry-heading { align-items: center; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 14px; }
@@ -98,8 +98,9 @@ td:first-child .mono { color: var(--text-muted); font-size: 12px; font-weight: 7
 .state-card, .empty-state { align-items: center; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px; justify-content: center; margin-top: 20px; min-height: 150px; padding: 24px; text-align: center; }
 .state-card p, .empty-state p { margin-bottom: 0; }
 .error-state { color: var(--danger); }
-.spinner { animation: spin .8s linear infinite; border: 3px solid var(--border); border-radius: 50%; border-top-color: var(--brand); height: 28px; width: 28px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* El spinner base (borde, animación, keyframes) vive en styles.scss; aquí sólo
+   se reduce a 28px. */ 
+.spinner { height: 28px; width: 28px; }
 
 .welcome-card { align-items: center; display: flex; gap: 20px; justify-content: space-between; margin-top: 20px; padding: 22px 24px; }
 .welcome-card p { color: var(--heading); font-size: 18px; font-weight: 700; margin-bottom: 5px; }
@@ -115,7 +116,7 @@ td:first-child .mono { color: var(--text-muted); font-size: 12px; font-weight: 7
 .student-actions { border-top: 1px solid var(--border); margin-top: auto; padding-top: 15px; }
 .student-actions .btn-primary { font-size: 12px; padding: 7px 12px; }
 
-.sr-only { height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+/* .sr-only también vive ahora en styles.scss, como utilidad compartida. */
 
 @media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

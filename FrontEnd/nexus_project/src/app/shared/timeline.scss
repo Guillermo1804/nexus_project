@@ -20,7 +20,7 @@ h2 { color: var(--heading); margin-bottom: 6px; }
 .filter-note .link { background: none; border: 0; color: var(--brand); cursor: pointer; font-weight: 700; padding: 0; text-decoration: underline; }
 ol { list-style: none; margin: 0; padding: 0; }
 ol[aria-label='Trayectoria cronológica del estudiante'] { margin-left: 17px; padding-left: 28px; border-left: 2px solid var(--border); }
-.event { position: relative; padding: 0 0 18px; animation: fade-in .24s ease-out both; }
+.event { position: relative; padding: 0 0 18px; animation: fade-in var(--motion-slow) var(--ease-out) both; }
 /* `line-height: 1` hace que la caja de línea mida justo el tamaño de fuente; con la
    altura heredada el glifo se sentaba bajo el centro del círculo en vez de en él. */
 .node { position: absolute; left: -44px; top: 15px; width: 30px; height: 30px; display: grid; place-items: center; border: 3px solid var(--surface); border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; line-height: 1; }

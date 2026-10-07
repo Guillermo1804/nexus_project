@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { AgreementsListComponent } from './agreements-list';
 import { AcademicService } from '../core/academic/academic.service';
 import { AuthService } from '../core/auth/auth.service';
@@ -158,7 +159,8 @@ describe('AgreementsListComponent (HU-14)', () => {
 
     expect(academicStub.getAgreements).toHaveBeenCalledWith(
       jasmine.objectContaining({
-        page: 1,
+        limit: 10,
+        offset: 0,
         student: 4,
         semester: 3,
         responsable: 15,
@@ -208,5 +210,196 @@ describe('AgreementsListComponent (HU-14)', () => {
     expect(academicStub.getAgreements).toHaveBeenCalledWith(
       jasmine.objectContaining({ orden: 'urgencia' }),
     );
+  });
+});
+
+const userSignal = signal<AuthenticatedUser | null>({
+  id: 1,
+  email: 'coord@nexus.edu',
+  first_name: 'Coord',
+  last_name: 'Demo',
+  role: 'PROGRAM_COORDINATOR',
+  roles: ['PROGRAM_COORDINATOR'],
+  permissions: ['academic.read.global'],
+});
+
+const acuerdo = (id: number, descripcion: string) => ({
+  id,
+  student: 4,
+  student_nombre: 'Diego Fuentes',
+  student_matricula: 'DOC250002',
+  session: 12,
+  semester: 3,
+  semester_numero: 2,
+  descripcion,
+  responsable: 15,
+  responsable_nombre: 'Diego Fuentes',
+  fecha_limite: '2099-10-30',
+  estado: 'PENDIENTE' as const,
+  is_vencido: false,
+});
+
+const lote1 = {
+  count: 15,
+  next: 'http://testserver/api/v1/agreements/?limit=10&offset=10',
+  previous: null,
+  results: Array.from({ length: 10 }, (_, i) => acuerdo(i + 1, `Acuerdo ${i + 1}`)),
+};
+const lote2 = {
+  count: 15,
+  next: null,
+  previous: 'http://testserver/api/v1/agreements/?limit=10&offset=0',
+  results: Array.from({ length: 5 }, (_, i) => acuerdo(i + 11, `Acuerdo ${i + 11}`)),
+};
+
+describe('AgreementsListComponent — scroll infinito', () => {
+  let fixture: ComponentFixture<AgreementsListComponent>;
+  let component: AgreementsListComponent;
+
+  const academicStub = {
+    getAgreements: jasmine.createSpy('getAgreements').and.callFake((filters: { offset?: number }) =>
+      of((filters.offset ?? 0) > 0 ? lote2 : lote1),
+    ),
+    getGlobalOverview: jasmine.createSpy('getGlobalOverview').and.returnValue(of({ count: 1, next: null, previous: null, results: [] })),
+    getStudentSemesters: jasmine.createSpy('getStudentSemesters').and.returnValue(of([])),
+    getAgreementAuditLog: jasmine.createSpy('getAgreementAuditLog').and.returnValue(of([])),
+    updateAgreementStatus: jasmine.createSpy('updateAgreementStatus').and.returnValue(of({})),
+  };
+
+  const authStub = {
+    user: userSignal,
+    hasPermission: (p: string) => p === 'academic.read.global',
+  };
+
+  const studentStub = {
+    getStudents: jasmine.createSpy('getStudents').and.returnValue(of({ count: 0, next: null, previous: null, results: [] })),
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AgreementsListComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AcademicService, useValue: academicStub },
+        { provide: AuthService, useValue: authStub },
+        { provide: StudentService, useValue: studentStub },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AgreementsListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('la primera carga pide el primer lote por offset', () => {
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ limit: 10, offset: 0 }),
+    );
+    expect(component['agreements'].length).toBe(10);
+    expect(component['haySiguiente']).toBeTrue();
+  });
+
+  it('el sentinel acumula el siguiente lote sin repetir filas', () => {
+    academicStub.getAgreements.calls.reset();
+    component['cargarMas']();
+
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ limit: 10, offset: 10 }),
+    );
+    expect(component['agreements'].length).toBe(15);
+    expect(component['offset']).toBe(15);
+    expect(component['haySiguiente']).toBeFalse();
+
+    const ids = component['agreements'].map((a) => a.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('no vuelve a pedir un lote si ya no hay siguiente o hay una carga en vuelo', () => {
+    academicStub.getAgreements.calls.reset();
+    component['haySiguiente'] = false;
+    component['cargarMas']();
+    expect(academicStub.getAgreements).not.toHaveBeenCalled();
+
+    component['haySiguiente'] = true;
+    component['cargandoMas'] = true;
+    component['cargarMas']();
+    expect(academicStub.getAgreements).not.toHaveBeenCalled();
+  });
+
+  it('aplicar filtros descarta lo acumulado y vuelve al primer lote', () => {
+    component['cargarMas']();
+    expect(component['agreements'].length).toBe(15);
+
+    academicStub.getAgreements.calls.reset();
+    component['aplicarFiltros']();
+
+    expect(academicStub.getAgreements).toHaveBeenCalledWith(
+      jasmine.objectContaining({ limit: 10, offset: 0 }),
+    );
+    expect(component['agreements'].length).toBe(10);
+    expect(component['offset']).toBe(0);
+  });
+
+  it('anuncia el avance con el conteo de filas mostradas', () => {
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent || '';
+    expect(text).toContain('Mostrando 10 de 15');
+
+    component['cargarMas']();
+    fixture.detectChanges();
+    const textoFinal = (fixture.nativeElement as HTMLElement).textContent || '';
+    expect(textoFinal).toContain('Mostrando 15 de 15');
+    expect(textoFinal).toContain('Ya viste todos los acuerdos.');
+  });
+
+  it('renderiza el contenedor de filas y el sentinel mientras quede página', () => {
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    // Según el ancho del entorno: viewport virtualizado (escritorio) o tabla apilada (compacto).
+    const filas = el.querySelector('cdk-virtual-scroll-viewport') ?? el.querySelector('.table-container table');
+    expect(filas).not.toBeNull();
+    expect(el.querySelector('.sentinel')).not.toBeNull();
+    expect(el.querySelector('.paginator')).toBeNull();
+  });
+});
+
+describe('AgreementsListComponent — escritorio (>1200px)', () => {
+  let fixture: ComponentFixture<AgreementsListComponent>;
+
+  const academicStub = {
+    getAgreements: jasmine.createSpy('getAgreements').and.returnValue(of(lote1)),
+    getGlobalOverview: jasmine.createSpy('getGlobalOverview').and.returnValue(of({ count: 1, next: null, previous: null, results: [] })),
+    getStudentSemesters: jasmine.createSpy('getStudentSemesters').and.returnValue(of([])),
+    getAgreementAuditLog: jasmine.createSpy('getAgreementAuditLog').and.returnValue(of([])),
+    updateAgreementStatus: jasmine.createSpy('updateAgreementStatus').and.returnValue(of({})),
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AgreementsListComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AcademicService, useValue: academicStub },
+        { provide: AuthService, useValue: { user: userSignal, hasPermission: (p: string) => p === 'academic.read.global' } },
+        { provide: StudentService, useValue: { getStudents: () => of({ count: 0, next: null, previous: null, results: [] }) } },
+        // Ancho forzado: así el escritorio se prueba incluso si el entorno corre angosto.
+        { provide: BreakpointObserver, useValue: { observe: () => of({ matches: false, breakpoints: {} }) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AgreementsListComponent);
+    fixture.detectChanges();
+  });
+
+  it('virtualiza las filas con cdk-virtual-scroll-viewport', async () => {
+    // El viewport mide su tamaño tras el primer ciclo: un segundo CD estabiliza el rango.
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('cdk-virtual-scroll-viewport')).not.toBeNull();
+    expect(el.querySelectorAll('tbody tr').length).toBe(10);
+    expect(el.querySelector('.sentinel')).not.toBeNull();
   });
 });

@@ -82,6 +82,10 @@ button {
   cursor: pointer;
 }
 
+button:not(:disabled) {
+  transition: background-color var(--motion-fast, 120ms) var(--ease-out, cubic-bezier(.2, .8, .3, 1)), border-color var(--motion-fast, 120ms) var(--ease-out, cubic-bezier(.2, .8, .3, 1));
+}
+
 button:hover:not(:disabled) {
   background: #5548d9;
   border-color: #5548d9;

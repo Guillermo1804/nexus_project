@@ -53,6 +53,14 @@ export class StudentOverviewComponent implements OnInit {
   protected timelineError = '';
   protected agreementAlerts: AgreementAlertsResponse | null = null;
   protected alertsDismissed = false;
+  /** Estado del aviso flotante de compromisos vencidos: entra, se descarta en dos fases
+   * (para animar la salida) y vuelve a aparecer sólo si aparecen vencidos nuevos. */
+  protected avisoVencidos: 'visible' | 'cerrando' | 'cerrado' = 'cerrado';
+  private avisoVencidosVistos = 0;
+  private cierreAvisoPendiente: ReturnType<typeof setTimeout> | null = null;
+  /** Tokens de petición: la respuesta de una carga vieja nunca pisa el estado fresco. */
+  private acuerdosCarga = 0;
+  private alertasCarga = 0;
   private timelineLoaded = false;
   private tutoringActionHandled = false;
 
@@ -93,20 +101,54 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   private cargarAcuerdos(): void {
+    const carga = ++this.acuerdosCarga;
     this.academicService.getAgreements({ student: this.studentId, page_size: 100 }).subscribe({
-      next: data => this.agreements = data.results,
-      error: () => this.agreements = this.overview?.open_agreements.map(a => ({ ...a, student: this.studentId, session: null })) as Agreement[] ?? [],
+      next: data => {
+        if (carga !== this.acuerdosCarga) return; // respuesta vieja: la ignora
+        this.agreements = data.results;
+        this.actualizarAvisoVencidos(this.agreements);
+      },
+      error: () => {
+        if (carga !== this.acuerdosCarga) return;
+        this.agreements = this.overview?.open_agreements.map(a => ({ ...a, student: this.studentId, session: null })) as Agreement[] ?? [];
+        this.actualizarAvisoVencidos(this.agreements);
+      },
     });
   }
 
   private cargarAlertas(): void {
+    const carga = ++this.alertasCarga;
     this.academicService.getAgreementAlerts(this.studentId).subscribe({
-      next: response => this.agreementAlerts = response,
-      error: () => this.agreementAlerts = null,
+      next: response => { if (carga !== this.alertasCarga) return; this.agreementAlerts = response; },
+      error: () => { if (carga !== this.alertasCarga) return; this.agreementAlerts = null; },
     });
   }
 
   protected dismissAlerts(): void { this.alertsDismissed = true; }
+
+  /** Reevalúa el aviso flotante: reaparece sólo cuando hay vencidos nuevos, no en cada refresco. */
+  private actualizarAvisoVencidos(agreements: Agreement[]): void {
+    const vencidos = agreements.filter(a => this.esVencido(a) && a.estado !== 'CONCLUIDO').length;
+    if (vencidos === this.avisoVencidosVistos) return;
+    if (vencidos > this.avisoVencidosVistos) {
+      this.avisoVencidos = 'visible';
+      this.avisoVencidosVistos = vencidos;
+      return;
+    }
+    this.avisoVencidosVistos = vencidos;
+    if (vencidos === 0) {
+      if (this.cierreAvisoPendiente) { clearTimeout(this.cierreAvisoPendiente); this.cierreAvisoPendiente = null; }
+      this.avisoVencidos = 'cerrado';
+    }
+  }
+
+  /** Descarte en dos fases: la clase «cerrando» anima la salida (120 ms) antes de quitar el nodo. */
+  protected descartarAvisoVencidos(): void {
+    if (this.avisoVencidos !== 'visible') return;
+    this.avisoVencidos = 'cerrando';
+    if (this.cierreAvisoPendiente) clearTimeout(this.cierreAvisoPendiente);
+    this.cierreAvisoPendiente = setTimeout(() => { this.avisoVencidos = 'cerrado'; this.cierreAvisoPendiente = null; }, 120);
+  }
   protected alertFor(agreement: Agreement): AgreementAlert | undefined {
     return this.agreementAlerts?.alertas.find(alert => alert.agreement_id === agreement.id);
   }
@@ -127,9 +169,20 @@ export class StudentOverviewComponent implements OnInit {
     return this.agreements.filter(a => a.semester === semester.id || (a.session != null && sessionIds.has(a.session)));
   }
 
-  protected get overdueCount(): number { return this.agreements.filter(a => a.is_vencido && a.estado !== 'CONCLUIDO').length; }
+  /**
+   * «Vencido» es un estado DERIVADO: no concluido y con fecha límite pasada. Se recalcula
+   * en el cliente además de confiar en la bandera del servidor, para que un objeto
+   * desactualizado (cargado antes de una actualización de estado) no muestre un estado
+   * que ya no corresponde.
+   */
+  protected esVencido(agreement: { estado: string; fecha_limite: string; is_vencido: boolean }): boolean {
+    if (agreement.estado === 'CONCLUIDO') return false;
+    return agreement.is_vencido || agreement.fecha_limite < this.localDateString();
+  }
+
+  protected get overdueCount(): number { return this.agreements.filter(a => this.esVencido(a) && a.estado !== 'CONCLUIDO').length; }
   protected get completedCount(): number { return this.semesterAgreements.filter(a => a.estado === 'CONCLUIDO').length; }
-  protected get semesterOverdueCount(): number { return this.semesterAgreements.filter(a => a.is_vencido && a.estado !== 'CONCLUIDO').length; }
+  protected get semesterOverdueCount(): number { return this.semesterAgreements.filter(a => this.esVencido(a) && a.estado !== 'CONCLUIDO').length; }
   protected get canCreateTutoring(): boolean { return this.auth.hasPermission('tutoring.create'); }
   /** Explica por qué el avance de tesis queda apagado sin semestre activo. */
   protected readonly motivoSinSemestreActivo =
@@ -236,7 +289,16 @@ export class StudentOverviewComponent implements OnInit {
     if (!agreement || !next || !this.puedeActualizarAcuerdo(agreement) || this.guardandoEstado) return;
     this.guardandoEstado = true; this.errorEstado = '';
     this.academicService.updateAgreementStatus(agreement.id, next, this.comentarioEstado.trim()).pipe(finalize(() => this.guardandoEstado = false)).subscribe({
-      next: () => { this.cerrarModal(); this.refrescar(); this.toasts.exito('Estado del acuerdo actualizado.'); },
+      next: actualizado => {
+        // El PATCH devuelve el acuerdo con el estado (y el derivado «vencido») ya
+        // recalculados por el servidor: se aplica de inmediato para que el resumen
+        // no siga mostrando el estado viejo mientras llega el refresco.
+        this.agreements = this.agreements.map(a => a.id === actualizado.id ? { ...a, ...actualizado } : a);
+        this.actualizarAvisoVencidos(this.agreements);
+        this.cerrarModal();
+        this.refrescar();
+        this.toasts.exito('Estado del acuerdo actualizado.');
+      },
       error: err => {
         this.errorEstado = err.status === 403 ? 'Sólo el responsable puede actualizar el estado.' : err.error?.estado?.[0] || err.error?.detail || 'No fue posible actualizar el estado del acuerdo.';
         this.toasts.error(this.errorEstado);
@@ -244,8 +306,8 @@ export class StudentOverviewComponent implements OnInit {
     });
   }
 
-  protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string; is_vencido: boolean }): boolean {
-    return !agreement.is_vencido && this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
+  protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string; fecha_limite: string; is_vencido: boolean }): boolean {
+    return !this.esVencido(agreement) && this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
   }
   protected siguienteEstado(estado: string): 'EN_PROCESO' | 'CONCLUIDO' | null {
     return estado === 'PENDIENTE' ? 'EN_PROCESO' : estado === 'EN_PROCESO' ? 'CONCLUIDO' : null;
@@ -281,7 +343,7 @@ export class StudentOverviewComponent implements OnInit {
   private defaultDeadline(): string { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10); }
 
   protected scrollToOverdue(): void {
-    const semester = this.overview?.semesters.find(s => this.agreements.some(a => a.semester === s.id && a.is_vencido));
+    const semester = this.overview?.semesters.find(s => this.agreements.some(a => a.semester === s.id && this.esVencido(a) && a.estado !== 'CONCLUIDO'));
     if (semester) this.selectedSemesterId = semester.id;
     setTimeout(() => document.getElementById('agreements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }

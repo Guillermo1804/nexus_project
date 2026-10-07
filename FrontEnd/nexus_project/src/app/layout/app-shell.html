@@ -1,5 +1,18 @@
 <div class="shell">
   <header class="topbar">
+    <button
+      class="menu-toggle"
+      type="button"
+      (click)="toggleMenu()"
+      [class.open]="menuOpen()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="main-sidebar"
+      [attr.aria-label]="menuOpen() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
+    >
+      <span class="bar" aria-hidden="true"></span>
+      <span class="bar" aria-hidden="true"></span>
+      <span class="bar" aria-hidden="true"></span>
+    </button>
     <div class="breadcrumb"><span>N.E.X.U.S.</span><b>/</b><strong>{{ viewTitle() }}</strong></div>
     <div class="account">
       <div class="identity">
@@ -12,47 +25,52 @@
     </div>
   </header>
 
-  <aside class="sidebar" aria-label="Navegación principal">
-    <a class="logo" routerLink="/home" aria-label="N.E.X.U.S. Inicio">
-      <svg viewBox="0 0 12 10" width="20" height="17" fill="none" aria-hidden="true">
-        <path d="M3.98125 3.0625l1.54583-3.0625h.175l1.54584 3.0625h-3.26667m1.19583 6.9125L.14583 3.9375h5.03125v6.0375m.875 0V3.9375h5.03125L6.05208 9.975M8.21042 3.0625 6.69375 0h3.00417l1.53125 3.0625h-3.01875m-8.21042 0L1.53125 0h3.00417L3.01875 3.0625H0" fill="currentColor"/>
-      </svg>
-      <span>N.E.X.U.S.</span>
-    </a>
+  <aside class="sidebar" id="main-sidebar" aria-label="Navegación principal" [class.open]="menuOpen()">
+    <div class="sidebar-inner">
+      <a class="logo" routerLink="/home" aria-label="N.E.X.U.S. Inicio">
+        <svg viewBox="0 0 12 10" width="20" height="17" fill="none" aria-hidden="true">
+          <path d="M3.98125 3.0625l1.54583-3.0625h.175l1.54584 3.0625h-3.26667m1.19583 6.9125L.14583 3.9375h5.03125v6.0375m.875 0V3.9375h5.03125L6.05208 9.975M8.21042 3.0625 6.69375 0h3.00417l1.53125 3.0625h-3.01875m-8.21042 0L1.53125 0h3.00417L3.01875 3.0625H0" fill="currentColor"/>
+        </svg>
+        <span>N.E.X.U.S.</span>
+      </a>
 
-    <nav class="nav-list">
-      <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-      @if (canViewAgreements()) {
-        <a routerLink="/acuerdos" routerLinkActive="active" class="agreements-link">
-          <span>Acuerdos</span>
-          @if (agreementAlertCount() > 0) {
-            <span
-              class="alert-count"
-              [class.critical]="hasVencidos()"
-              [title]="alertSummary()"
-              [attr.aria-label]="alertSummary()"
-            >
-              <span class="alert-icon" aria-hidden="true">!</span>
-              {{ agreementAlertCount() }}
-            </span>
-          }
-        </a>
-      }
+      <nav class="nav-list">
+        <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+        @if (canOpenOwnRecord()) {
+          <a [routerLink]="['/expediente', ownRecordId()]" routerLinkActive="active" aria-label="Mi expediente académico">Mi expediente</a>
+        }
+        @if (canViewAgreements()) {
+          <a routerLink="/acuerdos" routerLinkActive="active" class="agreements-link">
+            <span>Acuerdos</span>
+            @if (agreementAlertCount() > 0) {
+              <span
+                class="alert-count"
+                [class.critical]="hasVencidos()"
+                [title]="alertSummary()"
+                [attr.aria-label]="alertSummary()"
+              >
+                <span class="alert-icon" aria-hidden="true">!</span>
+                {{ agreementAlertCount() }}
+              </span>
+            }
+          </a>
+        }
 
-      @if (auth.hasPermission('students.create')) {
-        <a routerLink="/coordinator/students/new" routerLinkActive="active">Registrar estudiante</a>
-      }
-      @if (auth.hasPermission('committee.manage')) {
-        <a routerLink="/coordinator/committee" routerLinkActive="active">Comité</a>
-      }
+        @if (auth.hasPermission('students.create')) {
+          <a routerLink="/coordinator/students/new" routerLinkActive="active">Registrar estudiante</a>
+        }
+        @if (auth.hasPermission('committee.manage')) {
+          <a routerLink="/coordinator/committee" routerLinkActive="active">Comité</a>
+        }
 
-      @if (isSystemAdmin()) {
-        <p class="nav-group">Administración</p>
-        <a routerLink="/admin/roles" routerLinkActive="active">Roles</a>
-        <a routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
-        <a routerLink="/admin/audit" routerLinkActive="active">Auditoría</a>
-      }
-    </nav>
+        @if (isSystemAdmin()) {
+          <p class="nav-group">Administración</p>
+          <a routerLink="/admin/roles" routerLinkActive="active">Roles</a>
+          <a routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
+          <a routerLink="/admin/audit" routerLinkActive="active">Auditoría</a>
+        }
+      </nav>
+    </div>
   </aside>
 
   <div class="workspace">

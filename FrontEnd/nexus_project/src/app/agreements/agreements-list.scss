@@ -5,44 +5,45 @@
 
 .agreements-page {
   display: grid;
-  gap: 24px;
+  gap: 14px;
   margin: 0 auto;
   max-width: 1440px;
-  padding: 32px clamp(20px, 3vw, 40px) 48px;
+  padding: 18px clamp(20px, 3vw, 40px) 32px;
 }
 
 .page-header h1 {
   color: var(--heading);
-  font-size: 26px;
+  font-size: 20px;
   line-height: 1.25;
-  margin: 0 0 6px;
+  margin: 0 0 2px;
 }
 
 .page-header p,
 .section-header p {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
-.filters-panel { padding: 22px 24px; }
+/* Cabecera compacta: la lista es el protagonista, no el encabezado. */
+.filters-panel { padding: 14px 16px; }
 
 .filters-grid {
   display: grid;
-  gap: 18px;
+  gap: 10px 14px;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
 }
 
 .filters-grid label,
 .notes-field {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .filters-grid label > span,
 .field-label {
   color: var(--heading);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -60,8 +61,8 @@
   align-items: center;
   display: flex;
   flex-direction: row-reverse;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .filters-summary {
@@ -71,14 +72,14 @@
 }
 
 /* Filtros y orden como grupos de píldoras, igual que en la línea de tiempo. */
-.status-filters { display: grid; gap: 8px; margin-bottom: 20px; }
-.order-pills { display: grid; gap: 8px; }
-.group-label { color: var(--heading); font-size: 13px; font-weight: 600; }
-.pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.status-filters { display: grid; gap: 6px; margin-bottom: 12px; }
+.order-pills { display: grid; gap: 6px; }
+.group-label { color: var(--heading); font-size: 12px; font-weight: 600; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill {
   align-items: center; background: var(--surface); border: 1px solid var(--border);
   border-radius: 999px; color: var(--text-secondary); cursor: pointer; display: inline-flex;
-  font-weight: 600; gap: 6px; min-height: 36px; padding: 7px 12px;
+  font-size: 12px; font-weight: 600; gap: 6px; min-height: 30px; padding: 4px 11px;
   transition:
     background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out),
     color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
@@ -102,18 +103,28 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 12px 16px;
 }
 
 .section-header h2 {
   color: var(--heading);
-  font-size: 18px;
-  margin: 0 0 4px;
+  font-size: 16px;
+  margin: 0 0 2px;
 }
 
 .table-container { overflow-x: auto; }
+
+/* Viewport de la virtualización: alto acotado para que el scroll interno viva
+   dentro de la tarjeta; la cabecera de la tabla queda pegajosa dentro. */
+.table-viewport { height: min(58vh, 620px); }
+.table-viewport .agreements-table thead th {
+  background: var(--surface-soft);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 
 .agreements-table {
   border-collapse: collapse;
@@ -136,7 +147,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
-  padding: 13px 16px;
+  padding: 9px 12px;
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
@@ -146,13 +157,13 @@
   border-top: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: 13px;
-  padding: 16px;
+  padding: 9px 12px;
   vertical-align: middle;
 }
 
 .student-cell {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .student-cell strong {
@@ -163,6 +174,17 @@
 .student-cell span {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+/* Una línea con elipsis: mantiene la fila dentro de la altura fija que exige la
+   virtualización. Sólo dentro del viewport virtualizado; en las fichas móviles
+   el texto debe poder romperse. */
+.table-viewport .description-cell {
+  color: var(--text) !important;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .description-cell {
@@ -215,25 +237,29 @@
   color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
-  padding: 48px 24px;
+  padding: 32px 16px;
   text-align: center;
 }
 
 .error-message { color: var(--danger); }
-.error-message p { margin: 0 0 16px; }
+.error-message p { margin: 0 0 12px; }
 
-.paginator {
-  align-items: center;
+/* Sentinel del scroll infinito y avisos de estado de la carga. */
+.sentinel {
+  display: flex;
+  justify-content: center;
+  min-height: 12px;
+  padding: 8px 0;
+}
+.loading-more { padding: 4px 0; }
+.end-message {
   border-top: 1px solid var(--border);
   color: var(--text-muted);
-  display: flex;
-  font-size: 13px;
-  gap: 16px;
-  justify-content: flex-end;
-  padding: 16px 24px;
+  font-size: 12px;
+  margin: 0;
+  padding: 10px 16px;
+  text-align: center;
 }
-
-.paginator .btn-secondary { padding: 7px 14px; }
 
 .drawer-backdrop {
   backdrop-filter: blur(3.5px);
@@ -256,33 +282,34 @@
   z-index: 1101;
 }
 
+/* Drawer compacto: misma información, menos aire entre bloques. */
 .drawer-header {
   align-items: flex-start;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
-  padding: 24px;
+  padding: 14px 16px;
 }
 
 .folio {
   color: rgba(73, 74, 213, .49);
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .drawer-header h2 {
   color: var(--heading);
-  font-size: 20px;
+  font-size: 17px;
   line-height: 1.3;
-  margin: 0 0 5px;
+  margin: 0 0 3px;
 }
 
 .drawer-header p {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   margin: 0;
 }
 
@@ -304,16 +331,16 @@
 
 .drawer-body {
   display: grid;
-  gap: 24px;
+  gap: 14px;
   overflow-y: auto;
-  padding: 24px;
+  padding: 14px 16px;
 }
 
 .agreement-summary,
 .transition-section,
 .audit-section {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .field-block p,
@@ -328,12 +355,12 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   line-height: 1.5;
-  padding: 12px;
+  padding: 10px;
 }
 
 .metadata-grid {
   display: grid;
-  gap: 16px;
+  gap: 10px;
   grid-template-columns: 1fr 1fr;
 }
 
@@ -350,6 +377,8 @@
   gap: 8px;
 }
 
+/* Ajuste puramente de animación: los chips cambian de fondo al pasar de estado y la
+   transición evita el salto seco. La escala y el ease vienen de los tokens globales. */
 .status-chip {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -359,6 +388,10 @@
   font-weight: 700;
   letter-spacing: .03em;
   padding: 7px 9px;
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
 }
 
 .status-chip:disabled { cursor: not-allowed; opacity: .55; }
@@ -378,8 +411,8 @@
   width: 100%;
 }
 
-.audit-section { border-top: 1px solid var(--border); padding-top: 22px; }
-.audit-list { display: grid; gap: 18px; list-style: none; margin: 0; padding: 0 0 0 14px; }
+.audit-section { border-top: 1px solid var(--border); padding-top: 12px; }
+.audit-list { display: grid; gap: 12px; list-style: none; margin: 0; padding: 0 0 0 12px; }
 
 .audit-list li {
   border-left: 2px solid var(--border);
@@ -411,9 +444,9 @@
   background: var(--surface-soft);
   border-top: 1px solid var(--border);
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
-  padding: 24px;
+  padding: 12px 16px;
 }
 
 @media (max-width: 900px) {
@@ -442,7 +475,7 @@
 }
 
 /* El aviso de sólo lectura usa el patrón `.notice` compartido en styles.scss. */
-.read-only-notice { margin-bottom: 20px; }
+.read-only-notice { margin-bottom: 0; }
 
 /* El botón de un acuerdo vencido no se apaga: se marca para que se sepa que lleva
    candado, pero sigue respondiendo al clic. */

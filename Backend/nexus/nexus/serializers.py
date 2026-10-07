@@ -44,10 +44,17 @@ EVIDENCE_SIGNATURES = {
 }
 
 
+#: Componentes oficiales de la tesis. El avance global es el promedio simple de
+#: estos seis valores redondeado al entero más cercano; un componente ausente cuenta como 0.
+COMPONENTES_TESIS = ('protocolo', 'marco_teorico', 'metodologia', 'recoleccion_datos', 'analisis_resultados', 'redaccion_capitulos')
+
+
 class ThesisProgressSerializer(serializers.ModelSerializer):
     registrado_por_nombre = serializers.SerializerMethodField()
     fecha_registro = serializers.SerializerMethodField()
-    porcentaje_avance = serializers.IntegerField(min_value=0, max_value=100)
+    #: Sólo lectura: el cliente no lo envía; se calcula desde componentes_json
+    #: para que el global nunca discrepe de los componentes registrados.
+    porcentaje_avance = serializers.SerializerMethodField()
 
     class Meta:
         model = ThesisProgress
@@ -77,6 +84,15 @@ class ThesisProgressSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Cada componente debe tener un porcentaje entero entre 0 y 100.')
         return value
 
+    def get_porcentaje_avance(self, progress):
+        return progress.porcentaje_avance
+
+    @staticmethod
+    def calcular_avance_global(componentes):
+        componentes = componentes or {}
+        total = sum(min(100, max(0, int(componentes.get(clave, 0)))) for clave in COMPONENTES_TESIS)
+        return int(total / len(COMPONENTES_TESIS) + 0.5)
+
     def validate(self, attrs):
         student = attrs.get('student')
         semester = attrs.get('semester')
@@ -87,6 +103,8 @@ class ThesisProgressSerializer(serializers.ModelSerializer):
             attrs['semester'] = semester
         if student and semester and semester.student_id != student.id:
             raise serializers.ValidationError({'semester': 'El semestre no pertenece al estudiante.'})
+        # El global se recalcula siempre: lo que mande el cliente se ignora.
+        attrs['porcentaje_avance'] = self.calcular_avance_global(attrs.get('componentes_json'))
         return attrs
 
 

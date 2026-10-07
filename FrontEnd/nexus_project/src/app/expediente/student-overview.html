@@ -27,6 +27,20 @@
       </section>
     }
 
+    <!-- Aviso flotante de compromisos vencidos: overlay fijo, descartable, no desplaza
+         el contenido (sustituye a la tarjeta incrustada del aside). -->
+    @if (overdueCount > 0 && avisoVencidos !== 'cerrado') {
+      <aside class="overdue-toast" [class.cerrando]="avisoVencidos === 'cerrando'" role="alert" aria-label="Compromisos vencidos">
+        <span class="alert-icon" aria-hidden="true">!</span>
+        <div>
+          <h2>¡Compromisos Vencidos!</h2>
+          <p>{{ overdueCount }} {{ overdueCount === 1 ? 'acuerdo requiere' : 'acuerdos requieren' }} atención.</p>
+          <button type="button" (click)="scrollToOverdue()">Ver acuerdos vencidos</button>
+        </div>
+        <button type="button" class="toast-close" (click)="descartarAvisoVencidos()" aria-label="Descartar aviso de compromisos vencidos">×</button>
+      </aside>
+    }
+
     <div class="overview-tabs" role="tablist" aria-label="Vistas del expediente">
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'resumen'" [class.selected]="activeView === 'resumen'" (click)="selectView('resumen')">Resumen académico</button>
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'timeline'" [class.selected]="activeView === 'timeline'" (click)="selectView('timeline')">Línea de Tiempo</button>
@@ -65,7 +79,7 @@
                       @if (alertFor(agreement); as alert) {
                         <span class="status-pill" [class.overdue]="alert.nivel === 'CRITICO'" [class.warning-alert]="alert.nivel === 'ADVERTENCIA'">{{ alert.nivel === 'CRITICO' ? 'CRÍTICO · VENCIDO' : 'ADVERTENCIA · PRÓXIMO' }}</span>
                       } @else {
-                        <span class="status-pill" [class.overdue]="agreement.is_vencido" [class.done]="agreement.estado === 'CONCLUIDO'">{{ etiquetaEstado(agreement.estado, agreement.is_vencido) }}</span>
+                        <span class="status-pill" [class.overdue]="esVencido(agreement)" [class.done]="agreement.estado === 'CONCLUIDO'">{{ etiquetaEstado(agreement.estado, esVencido(agreement)) }}</span>
                       }
                     </span>
                     <span class="row-actions">@if (agreement.estado !== 'CONCLUIDO') { <button class="link-button" (click)="abrirEstado(agreement)">Actualizar Estado</button> }</span>
@@ -97,8 +111,6 @@
         </article>
 
         <article class="nexus-card side-card"><h2>Comité Tutorial</h2><div class="committee-list">@for (member of committeeMembers(); track member.id) { <div class="committee-member"><span class="member-avatar">{{ member.nombre_completo.charAt(0) }}</span><div><strong>{{ member.nombre_completo }}</strong><span>{{ member.etiqueta }}</span></div></div> } @empty { <p class="empty-state">Sin comité asignado.</p> }</div></article>
-
-        @if (overdueCount > 0) { <article class="overdue-card"><span class="alert-icon">!</span><div><h2>¡Compromisos Vencidos!</h2><p>{{ overdueCount }} {{ overdueCount === 1 ? 'acuerdo requiere' : 'acuerdos requieren' }} atención.</p><button (click)="scrollToOverdue()">Ver Acuerdos Vencidos</button></div></article> }
 
         <article class="nexus-card side-card last-tutoring">
           <div class="section-heading"><h2>Última Tutoría</h2>@if (canCreateTutoring) { <button class="link-button" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
@@ -157,7 +169,7 @@
     }
 
     @if (modal === 'estado' && selectedAgreement; as agreement) {
-      <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel status-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="status-modal-title"><header class="modal-header"><h2 id="status-modal-title">Actualizar Estado de Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="modal-form"><p class="agreement-description">{{ agreement.descripcion }}</p><div class="transition"><span class="status-pill">{{ etiquetaEstado(agreement.estado) }}</span><span>→</span><span class="status-pill next">{{ etiquetaEstado(siguienteEstado(agreement.estado) ?? '') }}</span></div><label>Comentario para la bitácora<textarea class="input-field" rows="3" [(ngModel)]="comentarioEstado" placeholder="Comentario opcional"></textarea></label>@if (!puedeActualizarAcuerdo(agreement)) { <p class="notice notice-warning" role="note">{{ agreement.is_vencido ? 'Los acuerdos vencidos están cerrados y no permiten cambios.' : 'Sólo el responsable puede actualizar el estado.' }}</p> }@if (errorEstado) { <p class="notice notice-danger" role="alert">{{ errorEstado }}</p> }<footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button class="btn-primary" [disabled]="!puedeActualizarAcuerdo(agreement) || guardandoEstado" (click)="actualizarEstadoAcuerdo()">{{ guardandoEstado ? 'Guardando...' : 'Guardar' }}</button></footer></div></section></div>
+      <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel status-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="status-modal-title"><header class="modal-header"><h2 id="status-modal-title">Actualizar Estado de Acuerdo</h2><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><div class="modal-form"><p class="agreement-description">{{ agreement.descripcion }}</p><div class="transition"><span class="status-pill" [class.overdue]="esVencido(agreement)">{{ etiquetaEstado(agreement.estado, esVencido(agreement)) }}</span>@if (!esVencido(agreement) && siguienteEstado(agreement.estado); as next) { <span aria-hidden="true">→</span><span class="status-pill next">{{ etiquetaEstado(next) }}</span> }</div><label>Comentario para la bitácora<textarea class="input-field" rows="3" [(ngModel)]="comentarioEstado" placeholder="Comentario opcional"></textarea></label>@if (!puedeActualizarAcuerdo(agreement)) { <p class="notice notice-warning" role="note">{{ agreement.is_vencido ? 'Los acuerdos vencidos están cerrados y no permiten cambios.' : 'Sólo el responsable puede actualizar el estado.' }}</p> }@if (errorEstado) { <p class="notice notice-danger" role="alert">{{ errorEstado }}</p> }<footer class="modal-footer"><button class="btn-secondary" (click)="cerrarModal()">Cancelar</button><button class="btn-primary" [disabled]="!puedeActualizarAcuerdo(agreement) || guardandoEstado" (click)="actualizarEstadoAcuerdo()">{{ guardandoEstado ? 'Guardando...' : 'Guardar' }}</button></footer></div></section></div>
     }
 
     @if (modal === 'avance' && overview.current_semester; as semester) {

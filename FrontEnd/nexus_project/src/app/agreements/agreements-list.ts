@@ -1,7 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import {
@@ -26,19 +38,33 @@ type DrawerMode = 'edit' | 'audit';
 
 @Component({
   selector: 'app-agreements-list',
-  imports: [CommonModule, FormsModule, ModalFocusDirective],
+  imports: [CommonModule, FormsModule, ScrollingModule, ModalFocusDirective],
   templateUrl: './agreements-list.html',
   styleUrl: './agreements-list.scss',
 })
-export class AgreementsListComponent implements OnInit {
+export class AgreementsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly academic = inject(AcademicService);
   private readonly studentsApi = inject(StudentService);
   private readonly route = inject(ActivatedRoute);
   protected readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
   private triggerElement: HTMLElement | null = null;
 
   @ViewChild('drawerClose') private drawerClose?: ElementRef<HTMLButtonElement>;
+  @ViewChild('sentinel') private sentinel?: ElementRef<HTMLElement>;
+  @ViewChild(CdkVirtualScrollViewport) protected viewport?: CdkVirtualScrollViewport;
+
+  /** Lote que pide cada carga (coincide con el `default_limit` del backend). */
+  protected readonly limite = 10;
+  /** Altura estimada de una fila para la virtualización. */
+  protected readonly rowHeight = 56;
+  /** Filas prerenderizadas por debajo del borde del viewport (minBufferPx). */
+  protected readonly minBufferPx = 240;
+  /** Debajo de 1200px las filas se apilan en fichas y la tabla deja de virtualizarse. */
+  protected readonly compacto = signal(false);
+
+  private observador?: IntersectionObserver;
 
   protected agreements: Agreement[] = [];
   protected students: StudentRecord[] = [];
@@ -82,13 +108,11 @@ export class AgreementsListComponent implements OnInit {
     this.estadosSeleccionados = this.isEstadoActivo(estado)
       ? this.estadosSeleccionados.filter((item) => item !== estado)
       : [...this.estadosSeleccionados, estado];
-    this.pagina = 1;
     this.cargarAcuerdos();
   }
 
   protected limpiarEstados(): void {
     this.estadosSeleccionados = [];
-    this.pagina = 1;
     this.cargarAcuerdos();
   }
 
@@ -102,10 +126,11 @@ export class AgreementsListComponent implements OnInit {
     return conteo;
   }
 
-  protected pagina = 1;
+  protected offset = 0;
   protected total = 0;
   protected haySiguiente = false;
   protected cargando = false;
+  protected cargandoMas = false;
   protected error = '';
 
   protected drawerOpen = false;
@@ -132,13 +157,43 @@ export class AgreementsListComponent implements OnInit {
     this.cargarAcuerdos();
   }
 
+  ngAfterViewInit(): void {
+    // El corte a 1200px es el mismo que usa styles.scss para apilar las tablas.
+    this.breakpointObserver.observe('(max-width: 1200px)').subscribe(({ matches }) => {
+      this.compacto.set(matches);
+      this.observarSentinel();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.observador?.disconnect();
+  }
+
+  /**
+   * Observa el sentinel que pide la página siguiente en la rama compacta (móvil),
+   * donde el listado crece con la página y el sentinel entra y sale del viewport
+   * del navegador. En escritorio el scroll vive dentro del viewport virtualizado,
+   * que no mueve la página: ese caso lo cubre `alDesplazarViewport`.
+   */
+  private observarSentinel(): void {
+    this.observador?.disconnect();
+    const objetivo = this.sentinel?.nativeElement;
+    if (!objetivo || typeof IntersectionObserver === 'undefined') return;
+    this.observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((entrada) => entrada.isIntersecting)) this.cargarMas();
+      },
+      { rootMargin: '160px' },
+    );
+    this.observador.observe(objetivo);
+  }
+
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
     if (this.drawerOpen) this.cerrarDrawer();
   }
 
   protected aplicarFiltros(): void {
-    this.pagina = 1;
     this.cargarAcuerdos();
   }
 
@@ -152,14 +207,12 @@ export class AgreementsListComponent implements OnInit {
     this.filtroBusqueda = '';
     this.filtroOrden = 'urgencia';
     this.semesters = [];
-    this.pagina = 1;
     this.cargarAcuerdos();
   }
 
-  /** Cambiar el orden vuelve a la primera página: en la 5 el sentido ya no se percibe. */
+  /** Cambiar el orden recarga desde el primer lote: acumulado con otro sentido ya no se percibe. */
   protected cambiarOrden(orden: string): void {
     this.filtroOrden = orden;
-    this.pagina = 1;
     this.cargarAcuerdos();
   }
 
@@ -182,14 +235,12 @@ export class AgreementsListComponent implements OnInit {
     }
   }
 
-  protected irPagina(page: number): void {
-    if (page < 1) return;
-    this.pagina = page;
-    this.cargarAcuerdos();
+  protected trackById(_: number, a: Agreement): number {
+    return a.id;
   }
 
-  protected get totalPaginas(): number {
-    return Math.max(1, Math.ceil(this.total / 10));
+  protected get mostrados(): number {
+    return this.agreements.length;
   }
 
   protected estadoVisible(a: Agreement): string {
@@ -383,11 +434,88 @@ export class AgreementsListComponent implements OnInit {
     });
   }
 
+  /** Recarga desde el primer lote: filtra, ordena o restablece la lista. */
   private cargarAcuerdos(): void {
     this.cargando = true;
+    this.cargandoMas = false;
+    this.offset = 0;
     this.error = '';
 
-    const filters: AgreementFilters = { page: this.pagina, page_size: 10 };
+    this.academic
+      .getAgreements(this.filtrosActuales(0))
+      .pipe(finalize(() => (this.cargando = false)))
+      .subscribe({
+        next: (data) => {
+          this.agreements = data.results;
+          this.total = data.count;
+          this.haySiguiente = data.next !== null;
+          this.mergeResponsables(data.results);
+          // El sentinel se renderiza después de este ciclo: diferir el observe.
+          setTimeout(() => this.observarSentinel());
+        },
+        error: (err) => {
+          this.agreements = [];
+          this.total = 0;
+          this.haySiguiente = false;
+          this.error =
+            err.status === 401 || err.status === 403
+              ? 'No cuenta con autorización para consultar acuerdos.'
+              : 'No fue posible cargar los acuerdos.';
+        },
+      });
+  }
+
+  /**
+   * Escritorio: el scroll ocurre DENTRO del viewport virtualizado, así que el
+   * sentinel externo no se mueve y el IntersectionObserver sólo dispara una vez.
+   * Este handler escucha `scrolledIndexChange` y pide otro lote cuando la primera
+   * fila visible se acerca al final de lo cargado (visibles + búfer declarado).
+   */
+  protected alDesplazarViewport(indice: number): void {
+    if (this.compacto() || !this.haySiguiente || this.cargando || this.cargandoMas) return;
+    const viewport = this.viewport;
+    if (!viewport) return;
+    const visibles = Math.ceil(viewport.getViewportSize() / this.rowHeight) + 1;
+    const buffer = Math.ceil(this.minBufferPx / this.rowHeight) + 1;
+    if (indice + visibles + buffer >= this.agreements.length) this.cargarMas();
+  }
+
+  /** Pide el siguiente lote con el sentinel y lo agrega al final de la lista. */
+  protected cargarMas(): void {
+    if (!this.haySiguiente || this.cargando || this.cargandoMas) return;
+    this.cargandoMas = true;
+    this.error = '';
+
+    // El offset de la petición es lo ya cargado: se calcula ANTES de emitir,
+    // no al recibir la respuesta.
+    this.academic
+      .getAgreements(this.filtrosActuales(this.agreements.length))
+      .pipe(finalize(() => (this.cargandoMas = false)))
+      .subscribe({
+        next: (data) => {
+          const vistos = new Set(this.agreements.map((a) => a.id));
+          this.agreements = [...this.agreements, ...data.results.filter((a) => !vistos.has(a.id))];
+          this.offset = this.agreements.length;
+          this.total = data.count;
+          this.haySiguiente = data.next !== null;
+          this.mergeResponsables(data.results);
+          // Rama compacta: al crecer la página el sentinel puede seguir visible
+          // (lotes chicos); re-observarlo dispara el lote siguiente en cadena
+          // hasta que sale del viewport o se agotan las páginas.
+          if (this.compacto()) setTimeout(() => this.observarSentinel());
+        },
+        error: (err) => {
+          this.error =
+            err.status === 401 || err.status === 403
+              ? 'No cuenta con autorización para consultar acuerdos.'
+              : 'No fue posible cargar más acuerdos.';
+        },
+      });
+  }
+
+  /** Parámetros de la petición: filtros + lote por offset. */
+  private filtrosActuales(offset: number): AgreementFilters {
+    const filters: AgreementFilters = { limit: this.limite, offset };
     const student = Number(this.filtroStudent);
     if (Number.isInteger(student) && student > 0) filters.student = student;
     const semester = Number(this.filtroSemester);
@@ -400,27 +528,7 @@ export class AgreementsListComponent implements OnInit {
     if (this.filtroFechaHasta) filters.fecha_hasta = this.filtroFechaHasta;
     if (this.filtroBusqueda.trim()) filters.busqueda = this.filtroBusqueda.trim();
     if (this.filtroOrden) filters.orden = this.filtroOrden;
-
-    this.academic
-      .getAgreements(filters)
-      .pipe(finalize(() => (this.cargando = false)))
-      .subscribe({
-        next: (data) => {
-          this.agreements = data.results;
-          this.total = data.count;
-          this.haySiguiente = data.next !== null;
-          this.mergeResponsables(data.results);
-        },
-        error: (err) => {
-          this.agreements = [];
-          this.total = 0;
-          this.haySiguiente = false;
-          this.error =
-            err.status === 401 || err.status === 403
-              ? 'No cuenta con autorización para consultar acuerdos.'
-              : 'No fue posible cargar los acuerdos.';
-        },
-      });
+    return filters;
   }
 
   private mergeResponsables(items: Agreement[]): void {

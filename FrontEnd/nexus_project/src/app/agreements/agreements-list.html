@@ -87,7 +87,7 @@
     <div class="section-header">
       <div>
         <h2>Acuerdos registrados</h2>
-        <p>{{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}</p>
+        <p>Mostrando {{ mostrados }} de {{ total }} {{ total === 1 ? 'resultado' : 'resultados' }}</p>
       </div>
       <div class="order-pills" role="group" aria-label="Ordenar acuerdos">
         <span class="group-label">Ordenar</span>
@@ -108,7 +108,7 @@
 
     @if (cargando) {
       <p class="state-message" role="status">Cargando acuerdos...</p>
-    } @else if (error) {
+    } @else if (error && agreements.length === 0) {
       <div class="state-message error-message" role="alert">
         <p>{{ error }}</p>
         <button type="button" class="btn-secondary" (click)="aplicarFiltros()">Reintentar</button>
@@ -116,23 +116,81 @@
     } @else if (agreements.length === 0) {
       <p class="state-message">No hay acuerdos con los filtros seleccionados.</p>
     } @else {
-      <div class="table-container">
-        <table class="agreements-table">
-          <caption>Acuerdos académicos filtrados</caption>
-          <thead>
-            <tr>
-              <th scope="col">Estudiante</th>
-              <th scope="col">Descripción</th>
-              <th scope="col">Semestre</th>
-              <th scope="col">Responsable</th>
-              <th scope="col">Fecha límite</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of agreements; track a.id) {
+      @if (compacto()) {
+        <!-- En móvil las filas se apilan en fichas de altura variable: sin virtualización. -->
+        <div class="table-container">
+          <table class="agreements-table">
+            <caption>Acuerdos académicos filtrados</caption>
+            <thead>
               <tr>
+                <th scope="col">Estudiante</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Semestre</th>
+                <th scope="col">Responsable</th>
+                <th scope="col">Fecha límite</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of agreements; track trackById($index, a)) {
+                <tr>
+                  <td data-label="Estudiante">
+                    <div class="student-cell">
+                      <strong>{{ a.student_nombre || ('Estudiante #' + a.student) }}</strong>
+                      <span class="mono">{{ a.student_matricula || '—' }}</span>
+                    </div>
+                  </td>
+                  <td class="description-cell" data-label="Compromiso">{{ a.descripcion }}</td>
+                  <td data-label="Semestre">{{ a.semester_numero != null ? ('S' + a.semester_numero) : '—' }}</td>
+                  <td data-label="Responsable">{{ a.responsable_nombre }}</td>
+                  <td class="mono date-cell" data-label="Fecha límite">{{ a.fecha_limite }}</td>
+                  <td data-label="Estado"><span class="badge" [ngClass]="badgeClass(a)">{{ estadoLabel(estadoVisible(a)) }}</span></td>
+                  <td data-label="Acción">
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="edit-button"
+                        [class.locked]="a.is_vencido"
+                        [title]="a.is_vencido ? 'Vencido: se abrirá en sólo lectura para revisar su bitácora' : 'Cambiar el estado del acuerdo'"
+                        (click)="abrirEdicion(a, $event)"
+                      >
+                        @if (a.is_vencido) { <span class="lock" aria-hidden="true">🔒</span> }
+                        {{ a.is_vencido ? 'Revisar' : 'Editar' }}
+                      </button>
+                      <button type="button" (click)="verAuditoria(a, $event)">Bitácora</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <!-- Virtualización: el `<tr>` ancla del cdkVirtualFor vive dentro del tbody y Angular
+             lo crea por createElement, no por parseo, así que la tabla se arma bien. -->
+        <cdk-virtual-scroll-viewport
+          class="table-viewport"
+          [itemSize]="rowHeight"
+          [minBufferPx]="minBufferPx"
+          maxBufferPx="480"
+          (scrolledIndexChange)="alDesplazarViewport($event)"
+        >
+          <table class="agreements-table">
+            <caption>Acuerdos académicos filtrados</caption>
+            <thead>
+              <tr>
+                <th scope="col">Estudiante</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Semestre</th>
+                <th scope="col">Responsable</th>
+                <th scope="col">Fecha límite</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *cdkVirtualFor="let a of agreements; trackBy: trackById">
                 <td data-label="Estudiante">
                   <div class="student-cell">
                     <strong>{{ a.student_nombre || ('Estudiante #' + a.student) }}</strong>
@@ -160,16 +218,24 @@
                   </div>
                 </td>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </cdk-virtual-scroll-viewport>
+      }
 
-      <nav class="paginator" aria-label="Paginación de acuerdos">
-        <button type="button" class="btn-secondary" (click)="irPagina(pagina - 1)" [disabled]="pagina === 1 || cargando">Anterior</button>
-        <span>Página {{ pagina }} de {{ totalPaginas }}</span>
-        <button type="button" class="btn-secondary" (click)="irPagina(pagina + 1)" [disabled]="!haySiguiente || cargando">Siguiente</button>
-      </nav>
+      <p class="state-message" *ngIf="error && agreements.length > 0" role="alert">{{ error }}</p>
+
+      <!-- Sentinel del scroll infinito: al asomarse, pide el siguiente lote. Sólo
+           gobierna la rama compacta: en escritorio la tabla virtualiza el scroll
+           dentro del viewport, que no mueve la página, así que ahí el lote extra lo
+           pide `alDesplazarViewport` al escuchar `scrolledIndexChange`. -->
+      @if (haySiguiente) {
+        <div #sentinel class="sentinel" aria-hidden="true">
+          @if (cargandoMas) { <span class="state-message loading-more">Cargando más acuerdos…</span> }
+        </div>
+      } @else if (total > limite && !cargandoMas) {
+        <p class="end-message" role="status">Ya viste todos los acuerdos.</p>
+      }
     }
   </section>
 </main>

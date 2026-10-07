@@ -82,7 +82,7 @@ const mockOverview: StudentOverview = {
     {
       id: 101,
       descripcion: 'Entregar primer borrador de la propuesta',
-      fecha_limite: '2026-09-20',
+      fecha_limite: '2026-11-20',
       estado: 'EN_PROCESO',
       responsable: 30,
       responsable_nombre: 'Laura Méndez',
@@ -144,7 +144,11 @@ const MOCK_SIDE_AGREEMENTS = mockOverview.open_agreements.map((a) => ({
   session: null,
 }));
 
-function flushTutoringSideRequests(http: HttpTestingController, preferredSessionId: number | null = 5): void {
+function flushTutoringSideRequests(
+  http: HttpTestingController,
+  preferredSessionId: number | null = 5,
+  agreements: unknown[] = MOCK_SIDE_AGREEMENTS,
+): void {
   const sessionPayload =
     preferredSessionId == null
       ? { count: 0, next: null, previous: null, results: [] as unknown[] }
@@ -182,7 +186,7 @@ function flushTutoringSideRequests(http: HttpTestingController, preferredSession
     .match((req) => req.urlWithParams.includes('/api/v1/agreements/?student='))
     .forEach((req) => {
       expect(req.request.method).toBe('GET');
-      req.flush({ count: MOCK_SIDE_AGREEMENTS.length, next: null, previous: null, results: MOCK_SIDE_AGREEMENTS });
+      req.flush({ count: agreements.length, next: null, previous: null, results: agreements });
     });
 
   if (preferredSessionId == null) return;
@@ -633,5 +637,238 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
     fixture.detectChanges();
     // No se habrá pedido la trayectoria porque sigue en la vista de resumen.
     http.verify();
+  });
+});
+
+describe('StudentOverviewComponent, estado vencido derivado y aviso flotante', () => {
+  let component: StudentOverviewComponent;
+  let fixture: ComponentFixture<StudentOverviewComponent>;
+  let http: HttpTestingController;
+  let authService: AuthService;
+
+  const OVERVIEW_URL = 'http://localhost:8000/api/v1/students/10/overview/';
+  const ACUERDO_VENCIDO = {
+    id: 201,
+    descripcion: 'Entregar el capítulo de metodología',
+    fecha_limite: '2026-01-15',
+    estado: 'PENDIENTE',
+    responsable: 30,
+    responsable_nombre: 'Laura Méndez',
+    is_vencido: true,
+    student: 10,
+    semester: 2,
+    session: null,
+  };
+  const ACUERDO_ACTIVO = {
+    id: 202,
+    descripcion: 'Preparar la defensa anual del proyecto',
+    fecha_limite: '2026-11-20',
+    estado: 'EN_PROCESO',
+    responsable: 30,
+    responsable_nombre: 'Laura Méndez',
+    is_vencido: false,
+    student: 10,
+    semester: 2,
+    session: null,
+  };
+  const MOCK_TIMELINE = {
+    student: { id: 10, matricula: 'DOC-2026-010', nombre_completo: 'Laura Méndez' },
+    semestres: [{
+      id: 2,
+      numero: 2,
+      activo: true,
+      eventos: [{
+        id: 'E-9',
+        tipo: 'EVIDENCIA',
+        fecha: '2026-10-01',
+        titulo: 'Minuta de la sesión',
+        descripcion: '',
+        archivo_url: 'https://example.org/minuta.pdf',
+        metadata: {},
+        actividad: { tipo: 'TUTORIA', id: 5, etiqueta: 'Tutoría', titulo: 'Sesión de tutoría', fecha: '2026-09-05' },
+      }],
+    }],
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [StudentOverviewComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ id: '10' }) } },
+        },
+      ],
+    }).compileComponents();
+
+    http = TestBed.inject(HttpTestingController);
+    authService = TestBed.inject(AuthService);
+    fixture = TestBed.createComponent(StudentOverviewComponent);
+    component = fixture.componentInstance;
+  });
+
+  afterEach(() => http.verify());
+
+  /** Carga inicial con una lista de acuerdos dada en lugar del mock por defecto. */
+  function cargarCon(acuerdos: unknown[]): void {
+    fixture.detectChanges();
+    http.expectOne(OVERVIEW_URL).flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5, acuerdos);
+    fixture.detectChanges();
+  }
+
+  it('el tab de evidencias comparte el tratamiento visual de las otras pestañas', async () => {
+    cargarCon([ACUERDO_ACTIVO]);
+
+    const tabs: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.overview-tabs button'));
+    expect(tabs.length).withContext('tres pestañas').toBe(3);
+    const base = getComputedStyle(tabs[0]);
+    const evidencias = getComputedStyle(tabs[2]);
+    expect(evidencias.padding).withContext('mismo padding').toBe(base.padding);
+    expect(evidencias.fontWeight).withContext('mismo peso tipográfico').toBe(base.fontWeight);
+    expect(evidencias.borderBottomWidth).withContext('misma línea inferior').toBe(base.borderBottomWidth);
+
+    // Color de la línea inferior de una pestaña seleccionada (el estilo activo de referencia).
+    const colorActivo = getComputedStyle(tabs[0]).borderBottomColor;
+
+    tabs[2].click();
+    fixture.detectChanges();
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    // La transición de color dura 120 ms: se deja terminar antes de leer el estilo computado.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(getComputedStyle(tabs[2]).borderBottomColor).withContext('mismo estilo activo').toBe(colorActivo);
+
+    http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
+    fixture.detectChanges();
+  });
+
+  it('la vista de evidencias recupera sus estilos de tabla (eliminados por error en 1a8c1e2)', () => {
+    cargarCon([ACUERDO_ACTIVO]);
+
+    component['selectView']('evidencias');
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/monitoring/timeline/')).flush(MOCK_TIMELINE);
+    fixture.detectChanges();
+
+    const th = fixture.nativeElement.querySelector('.evidence-table th');
+    expect(th).toBeTruthy();
+    expect(getComputedStyle(th).textTransform).toBe('uppercase');
+    expect(getComputedStyle(th).borderBottomWidth).toBe('1px');
+    const caption = fixture.nativeElement.querySelector('.evidence-table caption');
+    expect(getComputedStyle(caption).position).withContext('leyenda sr-only').toBe('absolute');
+  });
+
+  it('el estado derivado «vencido» se recalcula en el cliente aunque la bandera llegue desactualizada', () => {
+    cargarCon([{ ...ACUERDO_VENCIDO, is_vencido: false }]);
+
+    expect(fixture.nativeElement.textContent).toContain('VENCIDO');
+    expect(fixture.nativeElement.textContent).not.toContain('PENDIENTE');
+    expect(component['overdueCount']).toBe(1);
+    expect(fixture.nativeElement.querySelector('.overdue-toast')).toBeTruthy();
+  });
+
+  it('el aviso de compromisos vencidos es flotante y descartable sin desplazar el contenido', () => {
+    cargarCon([ACUERDO_VENCIDO]);
+
+    const aviso = fixture.nativeElement.querySelector('.overdue-toast');
+    expect(aviso).withContext('aviso flotante visible').toBeTruthy();
+    expect(getComputedStyle(aviso).position).toBe('fixed');
+    expect(aviso.getAttribute('role')).toBe('alert');
+    // Ya no existe la tarjeta incrustada del aside (tercer <article> eliminado).
+    expect(fixture.nativeElement.querySelector('.overdue-card')).toBeNull();
+
+    jasmine.clock().install();
+    (aviso.querySelector('.toast-close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.overdue-toast').classList.contains('cerrando'))
+      .withContext('fase de salida animada').toBeTrue();
+    jasmine.clock().tick(121);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.overdue-toast')).withContext('descartado').toBeNull();
+    jasmine.clock().uninstall();
+
+    // No reaparece en un refresco silencioso mientras no haya vencidos nuevos.
+    component['evidenciaGuardada']();
+    http.expectOne(OVERVIEW_URL).flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5, [ACUERDO_VENCIDO]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.overdue-toast')).toBeNull();
+  });
+
+  it('el modal de estado muestra el derivado «vencido» y no ofrece una transición cerrada', () => {
+    cargarCon([ACUERDO_VENCIDO]);
+
+    component['abrirEstado'](component['agreements'][0]);
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('.status-modal');
+    expect(modal).toBeTruthy();
+    expect(modal.querySelector('.transition').textContent).toContain('VENCIDO');
+    expect(modal.querySelector('.transition').textContent).not.toContain('EN PROCESO');
+    expect(modal.querySelector('.transition').textContent).not.toContain('→');
+    expect(modal.textContent).toContain('Los acuerdos vencidos están cerrados y no permiten cambios.');
+    expect((modal.querySelector('.btn-primary') as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('al actualizar el estado, el resumen refleja de inmediato el estado recalculado por el servidor', () => {
+    authService.user.set({
+      id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
+      role: 'STUDENT', roles: ['STUDENT'], permissions: [],
+    });
+    cargarCon([ACUERDO_ACTIVO]);
+
+    component['abrirEstado'](component['agreements'][0]);
+    fixture.detectChanges();
+    const guardar = fixture.nativeElement.querySelector('.status-modal .btn-primary') as HTMLButtonElement;
+    expect(guardar.disabled).toBeFalse();
+    guardar.click();
+
+    const patch = http.expectOne('http://localhost:8000/api/v1/agreements/202/status/');
+    expect(patch.request.method).toBe('PATCH');
+    expect(patch.request.body).toEqual({ estado: 'CONCLUIDO', comentario: '' });
+    patch.flush({ ...ACUERDO_ACTIVO, estado: 'CONCLUIDO', is_vencido: false });
+
+    // Antes incluso de que llegue el refresco, la fila ya muestra el estado nuevo.
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('CONCLUIDO');
+
+    const refresh = http.expectOne(OVERVIEW_URL);
+    refresh.flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5, [{ ...ACUERDO_ACTIVO, estado: 'CONCLUIDO' }]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('CONCLUIDO');
+  });
+
+  it('una respuesta vieja de acuerdos no pisa el estado recién refrescado', () => {
+    authService.user.set({
+      id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
+      role: 'STUDENT', roles: ['STUDENT'], permissions: [],
+    });
+    cargarCon([ACUERDO_ACTIVO]);
+
+    component['evidenciaGuardada']();
+    component['evidenciaGuardada']();
+
+    http.match((r) => r.url === OVERVIEW_URL).forEach((r) => r.flush(mockOverview));
+    fixture.detectChanges();
+
+    const acuerdosReqs = http.match((r) => r.urlWithParams.includes('/api/v1/agreements/?student='));
+    expect(acuerdosReqs.length).withContext('dos recargas solapadas').toBe(2);
+    const fresco = { ...ACUERDO_ACTIVO, estado: 'CONCLUIDO' };
+    acuerdosReqs[1].flush({ count: 1, next: null, previous: null, results: [fresco] });
+    acuerdosReqs[0].flush({ count: 1, next: null, previous: null, results: [ACUERDO_ACTIVO] });
+    fixture.detectChanges();
+
+    expect(component['agreements'][0].estado).withContext('la respuesta vieja se descarta').toBe('CONCLUIDO');
+
+    http
+      .match((r) => r.urlWithParams.includes('/monitoring/alerts/agreements/'))
+      .forEach((r) => r.flush({ total_alertas: 0, vencidos_count: 0, proximos_vencer_count: 0, alertas: [] }));
   });
 });

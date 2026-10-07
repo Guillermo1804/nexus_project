@@ -25,7 +25,7 @@ import { ToastService } from './toast.service';
       left: 20px; max-width: min(420px, calc(100vw - 40px)); position: fixed; z-index: 1400;
     }
     .toast {
-      align-items: flex-start; animation: toast-in .22s cubic-bezier(.2, .8, .3, 1) both;
+      align-items: flex-start; animation: toast-in var(--motion-slow, 220ms) var(--ease-out, cubic-bezier(.2, .8, .3, 1)) both;
       background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--brand);
       border-radius: 10px; box-shadow: var(--shadow-modal); display: flex; gap: 10px; padding: 12px 14px;
     }
