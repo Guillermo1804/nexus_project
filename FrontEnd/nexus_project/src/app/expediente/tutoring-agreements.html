@@ -1,0 +1,99 @@
+<section class="agreements-panel" aria-label="Acuerdos de la tutoría">
+  <div class="agreements-header">
+    <h3>Acuerdos y compromisos</h3>
+    @if (sessions.length > 0) {
+      <label class="session-picker">
+        <span>Tutoría</span>
+        <select
+          [value]="selectedSessionId ?? ''"
+          (change)="onSessionChange($any($event.target).value)"
+          [disabled]="cargando"
+        >
+          @for (session of sessions; track session.id) {
+            <option [value]="session.id">
+              {{ session.fecha_sesion }} — {{ session.modalidad }}
+            </option>
+          }
+        </select>
+      </label>
+    }
+  </div>
+
+  @if (cargando) {
+    <p role="status">Cargando tutorías...</p>
+  } @else if (sessions.length === 0) {
+    <p class="empty-hint">Registre una tutoría para poder crear acuerdos.</p>
+  } @else {
+    @if (puedeRegistrar()) {
+      <form class="agreement-form" [formGroup]="form" (ngSubmit)="submit()" aria-label="Crear acuerdo">
+        <label>
+          Descripción del acuerdo
+          <textarea formControlName="descripcion" rows="3" maxlength="1000"></textarea>
+        </label>
+
+        <div class="form-row">
+          <label>
+            Responsable
+            <select formControlName="responsable">
+              @if (responsibleOptions.length === 0) {
+                <option [ngValue]="0" disabled>Sin personas asociadas al seguimiento</option>
+              }
+              @for (opt of responsibleOptions; track opt.id) {
+                <option [ngValue]="opt.id">{{ opt.nombre_completo }} ({{ opt.etiqueta }})</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Fecha límite
+            <input
+              type="date"
+              formControlName="fecha_limite"
+              [attr.min]="minFechaLimite() || null"
+            />
+          </label>
+        </div>
+
+        <button type="submit" [disabled]="guardando || form.invalid || responsibleOptions.length === 0">
+          {{ guardando ? 'Guardando...' : 'Crear acuerdo' }}
+        </button>
+      </form>
+    }
+
+    @if (exito) {
+      <p class="success-msg" role="status" aria-live="polite">{{ exito }}</p>
+    }
+    @if (error) {
+      <p class="error-msg" role="alert">{{ error }}</p>
+    }
+
+    @if (agreements.length === 0) {
+      <p class="empty-hint">Sin acuerdos en esta tutoría.</p>
+    } @else {
+      <ul class="agreement-list">
+        @for (a of agreements; track a.id) {
+          <li>
+            <div class="agr-top">
+              <p class="agr-desc">{{ a.descripcion }}</p>
+              <span class="badge">{{ etiquetaEstado(a.estado, a.is_vencido) }}</span>
+            </div>
+            <div class="agr-meta">
+              <span>Responsable: {{ a.responsable_nombre }}</span>
+              <span>Fecha límite: {{ a.fecha_limite }}</span>
+            </div>
+            @if (puedeActualizarEstado(a)) {
+              <button
+                type="button"
+                class="btn-status"
+                [disabled]="actualizandoId === a.id"
+                (click)="actualizarEstado(a)"
+              >
+                {{ actualizandoId === a.id ? 'Actualizando...' : etiquetaSiguiente(a.estado) }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

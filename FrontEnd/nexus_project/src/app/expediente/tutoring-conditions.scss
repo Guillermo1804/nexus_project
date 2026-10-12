@@ -1,0 +1,186 @@
+:host {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  background: #f8f8ff;
+  border: 1px solid #e4e4f5;
+  border-radius: 8px;
+}
+
+section > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h4 {
+  margin: 0;
+  color: #34206f;
+  font-size: 0.85rem;
+}
+
+p {
+  margin: 0;
+  color: #667085;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.45rem;
+  padding: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+label span {
+  min-width: 0;
+  color: #1f2937;
+  font-size: 0.78rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+label small {
+  grid-column: 2;
+  color: #667085;
+  font-size: 0.7rem;
+}
+
+input[type="checkbox"] {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: #6558e8;
+}
+
+input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+button {
+  align-self: flex-end;
+  padding: 0.4rem 0.7rem;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #6558e8;
+  border: 1px solid #6558e8;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:not(:disabled) {
+  transition: background-color var(--motion-fast, 120ms) var(--ease-out, cubic-bezier(.2, .8, .3, 1)), border-color var(--motion-fast, 120ms) var(--ease-out, cubic-bezier(.2, .8, .3, 1));
+}
+
+button:hover:not(:disabled) {
+  background: #5548d9;
+  border-color: #5548d9;
+}
+
+button:disabled {
+  color: #77748f;
+  background: #e5e4f0;
+  border-color: #e5e4f0;
+  cursor: not-allowed;
+}
+
+p[role="alert"] {
+  padding: 0.45rem;
+  color: #b42318;
+  background: #fff1f0;
+  border-radius: 6px;
+}
+
+p[role="status"] {
+  padding: 0.45rem;
+  color: #287a4b;
+  background: #ecfdf3;
+  border-radius: 6px;
+}
+
+.next-meeting-section {
+  margin-top: 0.5rem;
+  padding-top: 0.8rem;
+  background: #ffffff;
+  border-color: #d9d6f5;
+}
+
+.next-meeting-section h5 {
+  margin: 0;
+  color: #34206f;
+  font-size: 0.82rem;
+}
+
+.next-meeting-form,
+.next-meeting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.next-meeting-field > label {
+  display: block;
+  padding: 0;
+  color: #1f2937;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: default;
+}
+
+.next-meeting-field input,
+.next-meeting-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.78rem;
+  background: #ffffff;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+}
+
+.next-meeting-field textarea {
+  resize: vertical;
+}
+
+.next-meeting-field input[aria-invalid="true"],
+.next-meeting-field textarea[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.next-meeting-field small,
+.character-counter {
+  color: #667085;
+  font-size: 0.7rem;
+}
+
+.character-counter {
+  align-self: flex-end;
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 0.72rem;
+}
+
+.next-meeting-actions {
+  display: flex;
+  justify-content: flex-end;
+}

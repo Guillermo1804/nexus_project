@@ -1,0 +1,187 @@
+:host { display: block; min-height: 100vh; }
+
+/* La barra superior va antes del menú en el DOM para que ambos puedan ser pegajosos
+   en móvil sin taparse; en escritorio ambos son fijos y el contenido los esquiva. */
+.topbar {
+  align-items: center;
+  background: var(--surface-warm);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  height: 64px;
+  justify-content: space-between;
+  left: 0;
+  padding: 0 24px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 30;
+}
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  bottom: 0;
+  left: 0;
+  padding: 24px 16px;
+  position: fixed;
+  top: 64px;
+  width: 260px;
+  z-index: 20;
+}
+
+/* En escritorio el envoltorio del menú no altera el árbol visual: se comporta como si
+   no existiera y sólo toma papel en móvil, donde colapsa el menú con la hamburguesa. */
+.sidebar-inner { display: contents; }
+
+/* La hamburguesa sólo existe en móvil (ver media query al final). */
+.menu-toggle { display: none; }
+
+.logo {
+  align-items: center;
+  color: var(--brand);
+  display: flex;
+  font-size: 16px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: .1em;
+  padding: 4px 12px 28px;
+  text-decoration: none;
+}
+
+.nav-list { display: grid; gap: 4px; }
+.nav-list a {
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 12px;
+  text-decoration: none;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+}
+.nav-list a:hover { background: var(--surface-warm); color: var(--heading); }
+.nav-list a.active { background: var(--surface-soft); color: var(--brand); }
+.agreements-link { align-items: center; display: flex; justify-content: space-between; }
+/* La insignia lleva un signo para que se lea como aviso y no como un número suelto.
+   En rojo si hay vencidos, en ámbar si sólo hay próximos vencimientos. */
+.alert-count {
+  align-items: center;
+  animation: badge-pop var(--motion-base) var(--ease-out) both;
+  background: var(--warning);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 4px;
+  justify-content: center;
+  min-height: 22px;
+  min-width: 22px;
+  padding: 2px 7px;
+}
+@keyframes badge-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .alert-count { animation: none; } }
+.alert-count.critical { background: var(--danger); }
+.alert-count .alert-icon {
+  align-items: center; background: rgb(255 255 255 / 25%); border-radius: 50%;
+  display: inline-flex; font-size: 9px; height: 14px; justify-content: center; width: 14px;
+}
+.nav-group {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin: 24px 12px 6px;
+  text-transform: uppercase;
+}
+
+.workspace { margin-left: 260px; min-height: 100vh; padding-top: 64px; }
+.breadcrumb { align-items: center; color: var(--text-muted); display: flex; font-size: 13px; gap: 8px; }
+.breadcrumb b { color: var(--placeholder); font-weight: 400; }
+.breadcrumb strong { color: var(--heading); font-size: 15px; }
+.account { align-items: center; display: flex; gap: 16px; }
+.identity { display: grid; text-align: right; }
+.identity strong { color: var(--text); font-size: 13px; }
+.identity span { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+.account button { padding: 7px 14px; }
+.content { padding: 24px; }
+
+/* En móvil el menú deja de desplazarse en horizontal —eso escondía opciones sin avisar—
+   y pasa a envolver en varias filas, de modo que todas quedan a la vista. Se ancla bajo
+   la barra superior, que queda fija, y colapsa por defecto: la hamburguesa lo despliega.
+   El despliegue anima `grid-template-rows` (0fr → 1fr) con la escala global de movimiento;
+   `prefers-reduced-motion` lo neutraliza con la regla global de styles.scss. */
+@media (max-width: 899px) {
+  .topbar { height: 56px; padding: 0 16px; position: sticky; }
+  .menu-toggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 5px;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+  }
+  /* Las tres barras se cruzan al abrirse para que el icono anuncie el estado. */
+  .menu-toggle .bar {
+    background: var(--heading);
+    border-radius: 2px;
+    height: 2px;
+    transition:
+      transform var(--motion-fast) var(--ease-out),
+      opacity var(--motion-fast) var(--ease-out);
+    width: 22px;
+  }
+  .menu-toggle.open .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle.open .bar:nth-child(2) { opacity: 0; }
+  .menu-toggle.open .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .sidebar {
+    border-bottom: 0;
+    border-right: 0;
+    bottom: auto;
+    display: grid;
+    grid-template-rows: 0fr;
+    left: 0;
+    overflow: hidden;
+    padding: 0;
+    position: sticky;
+    right: 0;
+    top: 56px;
+    transition:
+      grid-template-rows var(--motion-base) var(--ease-out),
+      visibility 0s linear var(--motion-base);
+    visibility: hidden;
+    width: auto;
+    z-index: 25;
+  }
+  .sidebar.open {
+    border-bottom: 1px solid var(--border);
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--motion-base) var(--ease-out);
+    visibility: visible;
+  }
+  .sidebar-inner {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    min-height: 0;
+    padding: 8px 12px;
+  }
+  .logo { font-size: 0; padding: 8px 12px; }
+  .nav-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 2px; min-width: 0; }
+  .nav-list a { align-items: center; display: inline-flex; font-size: 13px; min-height: 44px; padding: 8px 12px; white-space: nowrap; }
+  .nav-group { display: none; }
+  .workspace { margin-left: 0; min-height: auto; padding-top: 0; }
+  .breadcrumb span, .breadcrumb b, .identity { display: none; }
+  .breadcrumb { min-width: 0; overflow: hidden; }
+  .content { padding: 16px; }
+}
+
+@media (max-width: 520px) {
+  .account button { padding: 7px 10px; }
+}

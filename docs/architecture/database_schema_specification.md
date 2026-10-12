@@ -9,7 +9,7 @@
 
 El presente documento constituye la **especificación canónica y prescriptiva** del modelo de datos relacional para el sistema N.E.X.U.S. La arquitectura de persistencia está diseñada bajo principios de **integridad referencial estricta, trazabilidad histórica, soporte de control de acceso basado en roles (RBAC) e indexación optimizada** para agregaciones analíticas de alta concurrencia (Línea de Tiempo, Semáforos de Supervisión Activa y Dossier Académico).
 
-El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de aplicación de dominio y el subsistema de seguridad de Django.
+El esquema comprende **23 tablas relacionales** de la aplicación Django única `nexus`, organizadas en 9 dominios conceptuales y complementadas por el subsistema de seguridad de Django.
 
 ---
 
@@ -17,34 +17,34 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ```
                                   +-----------------------+
-                                  | identity_customuser   |
+                                  | nexus_customuser   |
                                   +-----------+-----------+
                                               |
                      +------------------------+------------------------+
                      |                        |                        |
          +-----------v-----------++-----------v-----------++-----------v-----------+
-         |   students_student    || students_academiccomm || agreements_agreement  |
+         |   nexus_student    || nexus_academiccomm || nexus_agreement  |
          +-----------+-----------++-----------------------++-----------+-----------+
                      |                                                 |
          +-----------v-----------+                         +-----------v-----------+
-         |   students_semester   |                         | agreements_auditlog   |
+         |   nexus_semester   |                         | nexus_agreementauditlog   |
          +-----------+-----------+                         +-----------------------+
                      |
          +-----------+-----------------------------------+
          |                   |                           |
 +--------v-----------++------v-------------++------------v-------------+
-| tutoring_session   || thesis_progress    || academic_output_*        |
+| nexus_tutoringsession   || nexus_thesisprogress    || nexus_academicoutput_*        |
 +--------+-----------++--------------------++--------------------------+
          |                                               |
 +--------v-----------+                                   |
-| tutoring_partic    |                                   |
-| tutoring_observ    |                                   |
+| nexus_tutoringpartic    |                                   |
+| nexus_tutoringobserv    |                                   |
 +--------------------+                                   |
          |                                               |
          +-------------------+---------------------------+
                              |
                    +---------v---------+
-                   | evidence_evidence |
+                   | nexus_evidence |
                    +-------------------+
 ```
 
@@ -52,10 +52,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ## 3. Especificación Detallada por Módulo
 
-### 3.1. Módulo: `apps.identity` (Autenticación y Seguridad)
+### 3.1. Dominio conceptual: `identity` (app Django `nexus`) (Autenticación y Seguridad)
 
-#### Tabla: `identity_customuser`
-* **Modelo Django:** `apps.identity.models.CustomUser`
+#### Tabla: `nexus_customuser`
+* **Modelo Django:** `nexus.models.CustomUser`
 * **Descripción:** Entidad central de autenticación y autorización del sistema. Reemplaza el modelo estándar de Django (`AbstractBaseUser`, `PermissionsMixin`).
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Default / Choices | Descripción |
@@ -67,25 +67,25 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
   | `email` | `EmailField(255)` | No / No | **Único (`unique=True`)** | Identificador principal de inicio de sesión (`USERNAME_FIELD`). |
   | `first_name` | `CharField(150)` | No / No | — | Nombres del usuario. |
   | `last_name` | `CharField(150)` | No / No | — | Apellidos del usuario. |
-  | `role` | `CharField(30)` | No / No | `STUDENT` | Rol RBAC: `'STUDENT'`, `'TUTOR'`, `'COMMITTEE_MEMBER'`, `'PROGRAM_COORDINATOR'`, `'ACADEMIC_ADMIN'`, `'SYSTEM_ADMIN'`. |
+  | `role` | `CharField(30)` | No / No | `STUDENT` | Rol RBAC: `'STUDENT'`, `'TUTOR'`, `'COMMITTEE_MEMBER'`, `'PROGRAM_COORDINATOR'`, `'SYSTEM_ADMIN'`. |
   | `is_active` | `BooleanField` | No / No | `True` | Estatus operativo de la cuenta. |
   | `is_staff` | `BooleanField` | No / No | `False` | Acceso habilitado a la interfaz administrativa. |
   | `created_at` | `DateTimeField` | No / No | `auto_now_add=True` | Marca temporal de creación. |
   | `updated_at` | `DateTimeField` | No / No | `auto_now=True` | Marca temporal de última modificación. |
 
 * **Relaciones M2M Automáticas de Seguridad:**
-  - `identity_customuser_groups` -> `auth_group(id)` (`CASCADE`)
-  - `identity_customuser_user_permissions` -> `auth_permission(id)` (`CASCADE`)
+  - `nexus_customuser_groups` -> `auth_group(id)` (`CASCADE`)
+  - `nexus_customuser_user_permissions` -> `auth_permission(id)` (`CASCADE`)
 * **Índices y Restricciones:**
   - `unique=True` en `email`.
   - Índice B-Tree implícito en `email` para autenticación $O(1)$ en endpoints de SimpleJWT.
 
 ---
 
-### 3.2. Módulo: `apps.students` (Expedientes y Comités)
+### 3.2. Dominio conceptual: `students` (app Django `nexus`) (Expedientes y Comités)
 
-#### Tabla: `students_student`
-* **Modelo Django:** `apps.students.models.Student`
+#### Tabla: `nexus_student`
+* **Modelo Django:** `nexus.models.Student`
 * **Descripción:** Expediente maestro de información académica del estudiante doctoral.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Regla de Integridad |
@@ -106,8 +106,8 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-#### Tabla: `students_semester`
-* **Modelo Django:** `apps.students.models.Semester`
+#### Tabla: `nexus_semester`
+* **Modelo Django:** `nexus.models.Semester`
 * **Descripción:** Ciclo lectivo semestral cursado por el estudiante (Semestres 1 al 6).
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Restricciones |
@@ -126,51 +126,57 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-#### Tabla: `students_academiccommittee`
-* **Modelo Django:** `apps.students.models.AcademicCommittee`
-* **Descripción:** Conformación oficial del comité tutorial del estudiante.
+#### Tabla: `nexus_academiccommittee`
+* **Modelo Django:** `nexus.models.AcademicCommittee`
+* **Descripción:** Agregado único de comité tutorial por estudiante.
+* **Campos:**
+  | Campo | Tipo Django | Nulo/Blanco | Atributos |
+  | :--- | :--- | :---: | :--- |
+  | `id` | `BigAutoField` | No / No | Clave primaria. |
+  | `student_id` | `OneToOneField(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='academic_committee'`. |
+
+#### Tabla: `nexus_committeemembership`
+* **Modelo Django:** `nexus.models.CommitteeMembership`
+* **Descripción:** Membresías del comité agrupado; separa la identidad institucional del cargo ejercido para un estudiante.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
   | :--- | :--- | :---: | :--- |
   | `id` | `BigAutoField` | No / No | Clave primaria. |
-  | `student_id` | `ForeignKey(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='committee_members'`. |
-  | `user_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='committee_assignments'`. |
-  | `rol_comite` | `CharField(30)` | No / No | Choices: `'ASESOR_PRINCIPAL'`, `'COASESOR'`, `'VOCAL'`, `'SECRETARIO'`. |
-  | `fecha_asignacion` | `DateField` | No / No | Default: `timezone.now`. |
-  | `is_active` | `BooleanField` | No / No | Default: `True`. |
-  | `created_at` | `DateTimeField` | No / No | `auto_now_add=True`. |
-  | `updated_at` | `DateTimeField` | No / No | `auto_now=True`. |
+  | `committee_id` | `ForeignKey(AcademicCommittee)` | No / No | `on_delete=models.CASCADE`, `related_name='memberships'`. |
+  | `user_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='committee_memberships'`. |
+  | `role` | `CharField(30)` | No / No | Choices: `ASESOR`, `COASESOR`, `COMMITTEE_MEMBER`. |
 
 * **Restricciones de Integridad y Unicidad:**
-  - Validación de dominio: Solo usuarios con `role in ['ASESOR', 'COORDINADOR']` pueden ser asignados.
-  - `UniqueConstraint(fields=['student', 'user', 'rol_comite'], name='unique_student_user_committee_role')`.
+  - `UniqueConstraint(fields=['committee', 'user', 'role'], name='unique_committee_user_role')`.
+  - `UniqueConstraint(fields=['committee'], condition=Q(role='COASESOR'), name='unique_committee_coadvisor')`: máximo un coasesor por comité.
+  - `ASESOR` y `COASESOR` requieren una cuenta institucional con rol RBAC `TUTOR`; `COMMITTEE_MEMBER` requiere el rol RBAC homónimo.
 
 ---
 
-### 3.3. Módulo: `apps.tutoring` (Sesiones y Minutas de Tutoría)
+### 3.3. Dominio conceptual: `tutoring` (app Django `nexus`) (Sesiones y Minutas de Tutoría)
 
 #### Tabla: `tutoring_tutoringsession`
-* **Modelo Django:** `apps.tutoring.models.TutoringSession`
+* **Modelo Django:** `nexus.models.TutoringSession`
 * **Descripción:** Registro de cada reunión de tutoría formal celebrada entre el estudiante y su comité.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
   | :--- | :--- | :---: | :--- |
   | `id` | `BigAutoField` | No / No | Clave primaria. |
-  | `student_id` | `ForeignKey(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='tutoring_sessions'`. |
-  | `semester_id` | `ForeignKey(Semester)` | No / No | `on_delete=models.CASCADE`, `related_name='tutoring_sessions'`. |
+  | `student_id` | `ForeignKey(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='nexus_tutoringsessions'`. |
+  | `semester_id` | `ForeignKey(Semester)` | No / No | `on_delete=models.CASCADE`, `related_name='nexus_tutoringsessions'`. |
   | `fecha_sesion` | `DateField` | No / No | `db_index=True`. Fecha en que ocurrió la sesión. |
   | `modalidad` | `CharField(20)` | No / No | Choices: `'PRESENCIAL'`, `'VIRTUAL'`, `'HIBRIDA'`. Default: `'PRESENCIAL'`. |
   | `resumen` | `TextField` | No / No | Síntesis ejecutiva de la reunión. |
   | `proxima_reunion_fecha` | `DateField` | Sí / Sí | Fecha proyectada para el siguiente encuentro. |
   | `proxima_reunion_notas` | `TextField` | No / Sí | Default: `''`. Temas a preparar. |
-  | `created_by_id` | `ForeignKey(CustomUser)` | Sí / Sí | `on_delete=models.SET_NULL`, `related_name='registered_tutoring_sessions'`. |
+  | `created_by_id` | `ForeignKey(CustomUser)` | Sí / Sí | `on_delete=models.SET_NULL`, `related_name='registered_nexus_tutoringsessions'`. |
   | `created_at` | `DateTimeField` | No / No | `auto_now_add=True`. |
   | `updated_at` | `DateTimeField` | No / No | `auto_now=True`. |
 
 ---
 
 #### Tabla: `tutoring_tutoringparticipant`
-* **Modelo Django:** `apps.tutoring.models.TutoringParticipant`
+* **Modelo Django:** `nexus.models.TutoringParticipant`
 * **Descripción:** Lista de asistencia y roles de los académicos y estudiante en la sesión.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -178,7 +184,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
   | `id` | `BigAutoField` | No / No | Clave primaria. |
   | `session_id` | `ForeignKey(TutoringSession)`| No / No | `on_delete=models.CASCADE`, `related_name='participants'`. |
   | `user_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='tutoring_attendances'`. |
-  | `rol_en_sesion` | `CharField(30)` | No / No | Choices: `'ESTUDIANTE'`, `'ASESOR_PRINCIPAL'`, `'COASESOR'`, `'VOCAL'`, `'SECRETARIO'`, `'INVITADO'`. |
+  | `rol_en_sesion` | `CharField(30)` | No / No | Choices vigentes: `'ESTUDIANTE'`, `'ASESOR_PRINCIPAL'`, `'COASESOR'`, `'MIEMBRO_COMITE'`. |
   | `asistencia` | `BooleanField` | No / No | Default: `True`. |
   | `notas` | `CharField(255)` | No / Sí | Default: `''`. Justificación o comentarios. |
 
@@ -188,14 +194,14 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `tutoring_tutoringobservation`
-* **Modelo Django:** `apps.tutoring.models.TutoringObservation`
+* **Modelo Django:** `nexus.models.TutoringObservation`
 * **Descripción:** Observaciones técnicas puntuales emitidas por un docente en la sesión.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Descripción |
   | :--- | :--- | :---: | :--- |
   | `id` | `BigAutoField` | No / No | Clave primaria. |
   | `session_id` | `ForeignKey(TutoringSession)`| No / No | `on_delete=models.CASCADE`, `related_name='observations'`. |
-  | `autor_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='tutoring_observations'`. |
+  | `autor_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='nexus_tutoringobservations'`. |
   | `tema_revisado` / `titulo_tema` | `CharField(255)` | No / Sí | Título del tópico evaluado. |
   | `observaciones_detalladas` / `contenido`| `TextField` | No / Sí | Cuerpo de la recomendación o dictamen. |
   | `created_at` | `DateTimeField` | No / No | `auto_now_add=True`. |
@@ -203,10 +209,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.4. Módulo: `apps.agreements` (Acuerdos, Compromisos y Auditoría)
+### 3.4. Dominio conceptual: `agreements` (app Django `nexus`) (Acuerdos, Compromisos y Auditoría)
 
-#### Tabla: `agreements_agreement`
-* **Modelo Django:** `apps.agreements.models.Agreement`
+#### Tabla: `nexus_agreement`
+* **Modelo Django:** `nexus.models.Agreement`
 * **Descripción:** Compromiso académico formal con fecha de entrega y responsable.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -217,19 +223,19 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
   | `descripcion` | `TextField` | No / No | Detalle claro del entregable comprometido. |
   | `responsable_id` | `ForeignKey(CustomUser)` | No / No | `on_delete=models.CASCADE`, `related_name='assigned_agreements'`. |
   | `fecha_limite` | `DateField` | No / No | `db_index=True`. Fecha perentoria de cumplimiento. |
-  | `estado` | `CharField(20)` | No / No | Choices: `'PENDIENTE'`, `'EN_PROCESO'`, `'CONCLUIDO'`, `'VENCIDO'`. Default: `'PENDIENTE'`, `db_index=True`. |
+  | `estado` | `CharField(20)` | No / No | Choices de presentación: `'PENDIENTE'`, `'EN_PROCESO'`, `'CONCLUIDO'`, `'VENCIDO'`. Se persisten transiciones manuales hasta `CONCLUIDO`; `VENCIDO` se deriva de la fecha límite. Default: `'PENDIENTE'`, `db_index=True`. |
   | `fecha_conclusion`| `DateField` | Sí / Sí | Fecha en que pasó a `'CONCLUIDO'`. |
   | `created_by_id` | `ForeignKey(CustomUser)` | Sí / Sí | `on_delete=models.SET_NULL`, `related_name='created_agreements'`. |
   | `created_at` | `DateTimeField` | No / No | `auto_now_add=True`. |
   | `updated_at` | `DateTimeField` | No / No | `auto_now=True`. |
 
 * **Reglas de Negocio Automatizadas:**
-  - Transición automática a `'VENCIDO'` si `fecha_limite < hoy` y `estado != 'CONCLUIDO'`.
+  - `is_vencido` se deriva en lectura cuando `fecha_limite < hoy` y `estado != 'CONCLUIDO'`; no se ejecuta transición manual ni escritura automática a `'VENCIDO'`.
 
 ---
 
-#### Tabla: `agreements_agreementauditlog`
-* **Modelo Django:** `apps.agreements.models.AgreementAuditLog`
+#### Tabla: `nexus_agreementauditlog`
+* **Modelo Django:** `nexus.models.AgreementAuditLog`
 * **Descripción:** Bitácora inmutable de trazabilidad sobre cada cambio de estado de un acuerdo.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos |
@@ -244,31 +250,31 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.5. Módulo: `apps.thesis` (Avance de Tesis Doctoral)
+### 3.5. Dominio conceptual: `thesis` (app Django `nexus`) (Avance de Tesis Doctoral)
 
 #### Tabla: `thesis_thesisprogress`
-* **Modelo Django:** `apps.thesis.models.ThesisProgress`
+* **Modelo Django:** `nexus.models.ThesisProgress`
 * **Descripción:** Registro cuantitativo y cualitativo del avance del proyecto de tesis doctoral por semestre.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Validaciones |
   | :--- | :--- | :---: | :--- |
   | `id` | `BigAutoField` | No / No | Clave primaria. |
-  | `student_id` | `ForeignKey(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='thesis_progresses'`, `db_index=True`. |
-  | `semester_id` | `ForeignKey(Semester)` | No / No | `on_delete=models.CASCADE`, `related_name='thesis_progresses'`, `db_index=True`. |
+  | `student_id` | `ForeignKey(Student)` | No / No | `on_delete=models.CASCADE`, `related_name='nexus_thesisprogresses'`, `db_index=True`. |
+  | `semester_id` | `ForeignKey(Semester)` | No / No | `on_delete=models.CASCADE`, `related_name='nexus_thesisprogresses'`, `db_index=True`. |
   | `porcentaje_avance`| `PositiveSmallIntegerField`| No / No | Validación: `0 <= porcentaje_avance <= 100`. |
   | `componentes_json` | `JSONField` | No / Sí | Estructura canónica: `{"protocolo": N, "estadoArte": N, "marcoTeorico": N, "metodologia": N, "analisis": N, "redaccion": N}`. |
   | `observaciones` | `TextField` | No / Sí | Default: `''`. Notas del comité. |
-  | `registrado_por_id`| `ForeignKey(CustomUser)` | Sí / Sí | `on_delete=models.SET_NULL`, `related_name='registered_thesis_progresses'`. |
+  | `registrado_por_id`| `ForeignKey(CustomUser)` | Sí / Sí | `on_delete=models.SET_NULL`, `related_name='registered_nexus_thesisprogresses'`. |
   | `fecha_registro` | `DateField` | No / No | Default: `timezone.now`, `db_index=True`. |
   | `created_at` | `DateTimeField` | No / No | `auto_now_add=True`. |
   | `updated_at` | `DateTimeField` | No / No | `auto_now=True`. |
 
 ---
 
-### 3.6. Módulo: `apps.academic_output` (Producción Científica y Estancias)
+### 3.6. Dominio conceptual: `academic_output` (app Django `nexus`) (Producción Científica y Estancias)
 
 #### Tabla: `academic_output_publication`
-* **Modelo Django:** `apps.academic_output.models.Publication`
+* **Modelo Django:** `nexus.models.Publication`
 * **Descripción:** Registro de artículos en revistas indexadas (JCR/Scopus, Conacyt) y capítulos de libro.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -290,7 +296,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_academicevent`
-* **Modelo Django:** `apps.academic_output.models.AcademicEvent`
+* **Modelo Django:** `nexus.models.AcademicEvent`
 * **Descripción:** Ponencias y presentaciones en congresos, coloquios y simposios.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -311,7 +317,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_researchstay`
-* **Modelo Django:** `apps.academic_output.models.ResearchStay`
+* **Modelo Django:** `nexus.models.ResearchStay`
 * **Descripción:** Estancias de investigación científica nacional e internacional.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos |
@@ -333,7 +339,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 ---
 
 #### Tabla: `academic_output_otherproduct`
-* **Modelo Django:** `apps.academic_output.models.OtherProduct`
+* **Modelo Django:** `nexus.models.OtherProduct`
 * **Descripción:** Software registrado, patentes, prototipos industriales y bases de datos.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Choices |
@@ -351,10 +357,10 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.7. Módulo: `apps.evidence` (Repositorio de Archivos y DOIs)
+### 3.7. Dominio conceptual: `evidence` (app Django `nexus`) (Repositorio de Archivos y DOIs)
 
-#### Tabla: `evidence_evidence`
-* **Modelo Django:** `apps.evidence.models.Evidence`
+#### Tabla: `nexus_evidence`
+* **Modelo Django:** `nexus.models.Evidence`
 * **Descripción:** Depósito polimórfico de soporte documental (archivos físicos y DOIs persistentes) vinculado a cualquier actividad académica del estudiante.
 * **Campos:**
   | Campo | Tipo Django | Nulo/Blanco | Atributos / Restricciones |
@@ -367,7 +373,7 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
   | `actividad_id` | `PositiveIntegerField` | Sí / Sí | ID de la entidad vinculada (`db_index=True`). |
   | `titulo` | `CharField(255)` | No / No | Nombre descriptivo del comprobante. |
   | `descripcion` | `TextField` | No / Sí | Default: `''`. |
-  | `archivo_adjunto` | `FileField` | Sí / Sí | Ruta: `evidence/%Y/%m/`. Validación: Máx 15MB, formatos PDF, PNG, JPG, DOCX, ZIP. |
+  | `archivo_adjunto` | `FileField` | Sí / Sí | Ruta: `evidence/%Y/%m/`. Validación: Máx 15 MiB, formatos PDF, PNG, JPG, DOCX, ZIP. |
   | `enlace_url` / `url_doi`| `CharField(500)` | No / Sí | Default: `''`. Validador Regex de URL/DOI estándar. |
   | `mime_type` | `CharField(100)` | No / Sí | Detección automática en backend (`application/pdf`, etc.). |
   | `file_size_bytes` | `BigIntegerField` | No / No | Default: `0`. Tamaño en bytes. |
@@ -377,15 +383,15 @@ El esquema comprende **23 tablas relacionales**, distribuidas en 9 módulos de a
 
 ---
 
-### 3.8. Módulos Analíticos y de Agregación: `apps.monitoring` y `apps.reporting`
+### 3.8. Dominios Analíticos y de Agregación futuros: `monitoring` y `reporting`
 
 Los módulos `monitoring` y `reporting` **no persisten tablas independientes**, sino que operan como **capas de servicios de agregación y cómputo de alto rendimiento** sobre el grafo de tablas relacionales:
 
-1. **`SupervisionRulesEngine` (`apps.monitoring.supervision_rules`):**
-   - Ejecuta consultas compuestas indexadas sobre `students_student`, `tutoring_tutoringsession`, `agreements_agreement` y `evidence_evidence` para calcular semáforos de riesgo en tiempo real (alumnos sin tutoría >45 días, acuerdos concluidos sin evidencia adjunta, tutorías próximas <=7 días).
-2. **`TimelineService` (`apps.monitoring.views.TimelineView`):**
-   - Agrega cronológicamente eventos ordenados por `db_index` de fecha desde `tutoring_tutoringsession`, `agreements_agreement`, `thesis_thesisprogress`, `academic_output_*` y `evidence_evidence`.
-3. **`DossierReportEngine` (`apps.reporting.pdf_export` y `excel_export`):**
+1. **`SupervisionRulesEngine` (`nexus.monitoring.supervision_rules`):**
+   - Ejecuta consultas compuestas indexadas sobre `nexus_student`, `tutoring_tutoringsession`, `nexus_agreement` y `nexus_evidence` para calcular semáforos de riesgo en tiempo real (alumnos sin tutoría >45 días, acuerdos concluidos sin evidencia adjunta, tutorías próximas <=7 días).
+2. **`TimelineService` (`nexus.monitoring.views.TimelineView`):**
+   - Agrega cronológicamente eventos ordenados por `db_index` de fecha desde `tutoring_tutoringsession`, `nexus_agreement`, `thesis_thesisprogress`, `nexus_academicoutput_*` y `nexus_evidence`.
+3. **`DossierReportEngine` (`nexus.reporting.pdf_export` y `excel_export`):**
    - Genera reportes institucionales multi-hoja en Excel (`openpyxl`) y PDF vectorizado (`reportlab`) consolidando el historial íntegro del expediente.
 
 ---
@@ -407,8 +413,13 @@ Los módulos `monitoring` y `reporting` **no persisten tablas independientes**, 
 ## 4. Política de Integridad Referencial y Rendimiento
 
 1. **Borrado en Cascada (`CASCADE`):**  
-   Aplicado exclusivamente a datos subordinados directos del estudiante (`semesters`, `committee_members`, `tutoring_sessions`, `agreements`, `thesis_progresses`, `publications`, `academic_events`, `research_stays`, `other_products`, `evidences`). Si un expediente de estudiante se elimina, se purga todo su árbol subordinado sin dejar registros huérfanos.
+   Aplicado exclusivamente a datos subordinados directos del estudiante (`semesters`, `committee_members`, `nexus_tutoringsessions`, `agreements`, `nexus_thesisprogresses`, `publications`, `academic_events`, `research_stays`, `other_products`, `evidences`). Si un expediente de estudiante se elimina, se purga todo su árbol subordinado sin dejar registros huérfanos.
 2. **Preservación de Auditoría (`SET_NULL`):**  
    Aplicado a relaciones con usuarios creadores (`created_by`, `registrado_por`, `cargado_por`). Si una cuenta de usuario es dada de baja, las minutas, acuerdos y evidencias registradas permanecen intactas en el expediente histórico.
 3. **Indexación Estratégica (`db_index=True`):**  
    Todos los campos temporales (`fecha_sesion`, `fecha_limite`, `fecha_registro`, `fecha_publicacion`, `fecha_presentacion`, `fecha_inicio`, `fecha_carga`) y de discriminación de estado (`estado`, `tipo`, `estatus_activo`, `cohorte`, `matricula`) cuentan con índices B-Tree para garantizar respuestas menores a **50 ms** en consultas analíticas y construcción del timeline.
+
+
+## 5. Nota de implementación vigente
+
+Esta especificación conserva entidades y módulos futuros del ciclo completo. En el estado actual, todos los modelos propios residen en la aplicación Django única `nexus`, por lo que Django materializa sus tablas con prefijo `nexus_*`; los nombres de dominio anteriores son agrupaciones conceptuales, no `INSTALLED_APPS` independientes. La creación y modificación de semestres está reservada a `PROGRAM_COORDINATOR`.

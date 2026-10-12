@@ -1,0 +1,77 @@
+<section class="observations-panel" aria-label="Minutas y observaciones de la tutoría">
+  <div class="observations-header">
+    <h3>Avances y observaciones</h3>
+    @if (sessions.length > 0) {
+      <label class="session-picker">
+        <span>Tutoría</span>
+        <select
+          [value]="selectedSessionId ?? ''"
+          (change)="onSessionChange($any($event.target).value)"
+          [disabled]="cargandoSesiones"
+        >
+          @for (session of sessions; track session.id) {
+            <option [value]="session.id">
+              {{ session.fecha_sesion }} — {{ session.modalidad }}
+            </option>
+          }
+        </select>
+      </label>
+    }
+  </div>
+
+  @if (cargandoSesiones) {
+    <p role="status">Cargando tutorías...</p>
+  } @else if (sessions.length === 0) {
+    <p class="empty-hint">
+      @if (futureSessions > 0) {
+        Sólo hay {{ futureSessions }} tutoría{{ futureSessions === 1 ? '' : 's' }} programada{{ futureSessions === 1 ? '' : 's' }} y todavía ninguna realizada. Las observaciones se registran cuando la sesión ocurre.
+      } @else {
+        Registre una tutoría para poder documentar observaciones.
+      }
+    </p>
+  } @else {
+    @if (puedeRegistrar()) {
+      <form class="observation-form" [formGroup]="form" (ngSubmit)="submit()" aria-label="Registrar observación">
+        <label>
+          Tema / avance revisado
+          <input type="text" formControlName="tema_revisado" maxlength="255" />
+        </label>
+        <label>
+          Observaciones detalladas
+          <textarea formControlName="observaciones_detalladas" rows="4" maxlength="5000"></textarea>
+        </label>
+        <button type="submit" [disabled]="guardando || form.invalid">
+          {{ guardando ? 'Guardando...' : 'Agregar observación' }}
+        </button>
+      </form>
+    }
+
+    @if (exito) {
+      <p class="success-msg" role="status" aria-live="polite">{{ exito }}</p>
+    }
+    @if (error) {
+      <p class="error-msg" role="alert">{{ error }}</p>
+    }
+
+    @if (cargandoObservaciones) {
+      <p role="status">Cargando observaciones...</p>
+    } @else if (observations.length === 0) {
+      <p class="empty-hint">Sin observaciones registradas en esta tutoría.</p>
+    } @else {
+      <ul class="observation-feed">
+        @for (item of observations; track item.id) {
+          <li>
+            <div class="obs-meta">
+              <strong>{{ item.autor_nombre }}</strong>
+              <time [attr.datetime]="item.created_at">{{ item.created_at | date: 'medium' }}</time>
+            </div>
+            @if (item.tema_revisado) {
+              <p class="obs-tema">{{ item.tema_revisado }}</p>
+            }
+            <p class="obs-body">{{ item.observaciones_detalladas }}</p>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

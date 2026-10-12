@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.page-shell {
+  color: var(--text);
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 32px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  color: var(--heading);
+  font-size: 26px;
+  line-height: 1.25;
+  margin: 0 0 6px;
+}
+
+.page-header p,
+.section-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.table-card {
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 22px 24px;
+}
+
+.section-header h2 {
+  color: var(--heading);
+  font-size: 20px;
+  margin: 0 0 5px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 620px;
+  width: 100%;
+}
+
+th {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 12px 24px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+td {
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 14px 24px;
+}
+
+.user-email {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.role-select {
+  min-width: 220px;
+}
+
+.role-badge {
+  background: var(--surface-soft);
+  color: var(--brand);
+}
+
+.state-message,
+.empty-state {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.feedback {
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  margin: 16px 0 0;
+  padding: 9px 14px;
+  width: fit-content;
+}
+
+.feedback-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.visually-hidden {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 720px) {
+  .page-shell { padding: 24px 16px; }
+  .section-header, th, td { padding-left: 16px; padding-right: 16px; }
+}

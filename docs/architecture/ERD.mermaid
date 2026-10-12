@@ -1,7 +1,7 @@
 erDiagram
     %% =========================================================================
     %% N.E.X.U.S. - DIAGRAMA ENTIDAD-RELACIÓN CANÓNICO (ESPECIFICACIÓN v1.0)
-    %% Arquitectura Modular de 9 Aplicaciones Django + SQLite / PostgreSQL
+    %% Aplicación Django única nexus, 9 dominios conceptuales + SQLite / PostgreSQL
     %% =========================================================================
 
     %% -------------------------------------------------------------------------
@@ -12,7 +12,8 @@ erDiagram
         varchar_255 email UK "db_index, Unique Identifier"
         varchar_150 first_name
         varchar_150 last_name
-        varchar_20 role "COORDINADOR | ASESOR | ESTUDIANTE"
+        varchar_30 role "STUDENT | TUTOR | COMMITTEE_MEMBER | PROGRAM_COORDINATOR | SYSTEM_ADMIN"
+        varchar_20 grammatical_gender "MASCULINE | FEMININE | NEUTRAL | UNSPECIFIED"
         boolean is_active "Default: True"
         boolean is_staff "Default: False"
         boolean is_superuser "Default: False"
@@ -50,13 +51,14 @@ erDiagram
 
     ACADEMIC_COMMITTEE {
         bigint id PK
-        bigint student_id FK "FK -> STUDENT (CASCADE)"
-        bigint user_id FK "FK -> CUSTOM_USER (CASCADE, Role: ASESOR/COORDINADOR)"
-        varchar_30 rol_comite "ASESOR_PRINCIPAL | COASESOR | VOCAL | SECRETARIO"
-        date fecha_asignacion "Default: now"
-        boolean is_active "Default: True"
-        datetime created_at "auto_now_add"
-        datetime updated_at "auto_now"
+        bigint student_id FK,UK "OneToOne -> STUDENT (CASCADE)"
+    }
+
+    COMMITTEE_MEMBERSHIP {
+        bigint id PK
+        bigint committee_id FK "FK -> ACADEMIC_COMMITTEE (CASCADE)"
+        bigint user_id FK "FK -> CUSTOM_USER (CASCADE)"
+        varchar_30 role "ASESOR | COASESOR | COMMITTEE_MEMBER"
     }
 
     %% -------------------------------------------------------------------------
@@ -80,7 +82,7 @@ erDiagram
         bigint id PK
         bigint session_id FK "FK -> TUTORING_SESSION (CASCADE)"
         bigint user_id FK "FK -> CUSTOM_USER (CASCADE)"
-        varchar_30 rol_en_sesion "ESTUDIANTE | ASESOR_PRINCIPAL | COASESOR | VOCAL | SECRETARIO | INVITADO"
+        varchar_30 rol_en_sesion "ESTUDIANTE | ASESOR_PRINCIPAL | COASESOR | MIEMBRO_COMITE"
         boolean asistencia "Default: True"
         varchar_255 notas "Default: empty"
     }
@@ -95,7 +97,7 @@ erDiagram
         text descripcion
         bigint responsable_id FK "FK -> CUSTOM_USER (CASCADE)"
         date fecha_limite "db_index"
-        varchar_20 estado "PENDIENTE | EN_PROCESO | CONCLUIDO | VENCIDO (db_index)"
+        varchar_20 estado "PENDIENTE | EN_PROCESO | CONCLUIDO; VENCIDO derivado (db_index)"
         date fecha_conclusion "Nullable"
         bigint created_by_id FK "Nullable, FK -> CUSTOM_USER (SET_NULL)"
         datetime created_at "auto_now_add"
@@ -139,7 +141,7 @@ erDiagram
         bigint actividad_id "Nullable, ID polimórfico de actividad vinculada (db_index)"
         varchar_255 titulo
         text descripcion "Default: empty"
-        varchar_100 archivo_adjunto "Nullable, Ruta al archivo (Max: 15MB)"
+        varchar_100 archivo_adjunto "Nullable, Ruta al archivo (Max: 15 MiB)"
         varchar_500 enlace_url "Nullable, URL o formato DOI"
         varchar_100 mime_type "ej. application/pdf, image/png"
         bigint file_size_bytes "Default: 0"
@@ -216,8 +218,9 @@ erDiagram
     %% Identity & Students
     CUSTOM_USER ||--o| STUDENT : "asigna perfil a (1:1)"
     STUDENT ||--o{ SEMESTER : "cursa (1:N, Unique[student, numero])"
-    STUDENT ||--o{ ACADEMIC_COMMITTEE : "tiene asignado (1:N)"
-    CUSTOM_USER ||--o{ ACADEMIC_COMMITTEE : "participa como miembro (1:N)"
+    STUDENT ||--o| ACADEMIC_COMMITTEE : "tiene comité agrupado (1:0..1)"
+    ACADEMIC_COMMITTEE ||--o{ COMMITTEE_MEMBERSHIP : "agrupa membresías (1:N; máximo un COASESOR)"
+    CUSTOM_USER ||--o{ COMMITTEE_MEMBERSHIP : "participa con cargo (1:N)"
 
     %% Tutoring
     STUDENT ||--o{ TUTORING_SESSION : "recibe sesiones (1:N)"

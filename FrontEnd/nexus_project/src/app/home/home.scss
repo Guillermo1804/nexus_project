@@ -1,0 +1,150 @@
+:host { display: block; }
+
+.home-page {
+  background: var(--bg-canvas);
+  color: var(--text);
+  min-height: calc(100vh - 64px);
+  padding: 28px;
+}
+
+.home-page > * { max-width: 1440px; margin-inline: auto; }
+
+.page-header { padding: 24px 28px; }
+.agreement-alert-banner {
+  align-items: center;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+}
+.agreement-alert-banner .alert-symbol { align-items: center; border: 2px solid var(--danger); border-radius: 50%; color: var(--danger); display: flex; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.agreement-alert-banner strong { color: var(--heading); }
+.agreement-alert-banner p { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 5px 0 0; }
+.agreement-alert-banner .level { font-size: 13px; font-weight: 700; }
+.agreement-alert-banner .critical { color: var(--danger); }
+.agreement-alert-banner .warning { color: var(--warning); }
+.agreement-alert-banner a { color: var(--brand); font-size: 13px; font-weight: 700; }
+.agreement-alert-banner button { background: transparent; border: 0; color: var(--text-muted); cursor: pointer; font-size: 24px; }
+.eyebrow { color: var(--brand); font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 8px; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { color: var(--heading); font-size: 26px; line-height: 1.2; margin-bottom: 8px; }
+.page-header > p:last-child { color: var(--text-secondary); font-size: 14px; margin-bottom: 0; }
+h2 { color: var(--heading); font-size: 18px; margin-bottom: 0; }
+
+.kpi-grid { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 20px; }
+.kpi-card { min-width: 0; padding: 20px; }
+.kpi-card strong { color: var(--heading); display: block; font-size: 28px; line-height: 1.2; margin: 10px 0 4px; }
+.kpi-card > span:last-child { color: var(--text-secondary); font-size: 12px; }
+.kpi-label { color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+
+.dashboard-grid { display: grid; gap: 20px; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.5fr); margin: 20px auto 0; max-width: 1440px; }
+.risk-card, .alerts-card, .cohort-card { padding: 24px; }
+.risk-card { background: var(--surface-warm); }
+.section-heading { align-items: center; display: flex; justify-content: space-between; margin-bottom: 18px; }
+.risk-row { align-items: center; border-top: 1px solid var(--border); display: grid; gap: 12px; grid-template-columns: auto 1fr auto; padding: 14px 0; }
+.risk-row div { display: flex; flex-direction: column; gap: 3px; }
+.risk-row strong { color: var(--heading); font-size: 12px; }
+.risk-row span { color: var(--text-secondary); font-size: 12px; }
+.risk-row b { color: var(--heading); font-size: 20px; }
+.risk-dot { border-radius: 50%; height: 10px; width: 10px; }
+.risk-dot.critical { background: var(--danger); }
+.risk-dot.preventive { background: var(--warning); }
+.risk-dot.regular { background: var(--success); }
+
+.alert-list { display: grid; }
+.alert-row { align-items: center; border-top: 1px solid var(--border); display: grid; gap: 14px; grid-template-columns: auto minmax(0, 1fr) auto; padding: 14px 0; }
+.alert-row div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.alert-row strong { color: var(--heading); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alert-row div span { color: var(--text-secondary); font-size: 12px; }
+.alert-row a, table a, .student-actions > a:first-child { color: var(--brand); font-size: 13px; font-weight: 700; text-decoration: none; }
+.info-badge { background: #eef7f8; color: var(--info); }
+.empty-message { color: var(--text-muted); font-size: 13px; margin-bottom: 0; }
+
+.cohort-card { margin-top: 20px; }
+.cohort-list { display: grid; gap: 14px; }
+.cohort-row { align-items: center; display: grid; font-size: 13px; gap: 14px; grid-template-columns: minmax(80px, 160px) minmax(100px, 1fr) 32px; }
+.cohort-row > span { color: var(--text-secondary); font-weight: 600; }
+.cohort-row strong { color: var(--heading); text-align: right; }
+.bar-track { background: #e4e1ed; border-radius: 9999px; height: 9px; overflow: hidden; }
+.bar-track span { background: var(--brand); border-radius: inherit; display: block; height: 100%; min-width: 4px; transition: width var(--motion-slow) var(--ease-out); }
+
+.registry-section, .assigned-section { margin-top: 28px; }
+.registry-heading { align-items: center; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 14px; }
+.registry-heading > div > span { color: var(--text-muted); display: inline-block; font-size: 12px; margin-top: 5px; }
+a.btn-primary { display: inline-flex; text-decoration: none; }
+
+.filters { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(140px, .75fr)) minmax(220px, 1.4fr); margin-bottom: 16px; padding: 16px; }
+.filters label { color: var(--text-muted); display: flex; flex-direction: column; font-size: 11px; font-weight: 700; gap: 6px; letter-spacing: .04em; }
+.filters .input-field { min-width: 0; width: 100%; }
+
+.table-card { overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; min-width: 760px; width: 100%; }
+th { background: var(--surface-soft); color: var(--text-muted); font-size: 11px; letter-spacing: .07em; padding: 13px 20px; text-align: left; }
+td { border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; padding: 15px 20px; }
+tbody tr:hover { background: #faf9fe; }
+td:first-child strong, td:first-child span { display: block; }
+td:first-child strong { color: var(--text); font-size: 13px; margin-bottom: 5px; }
+td:first-child .mono { color: var(--text-muted); font-size: 12px; font-weight: 700; }
+.active-badge { background: var(--success-bg); color: var(--success); }
+.inactive-badge { background: var(--warning-bg); color: var(--warning); }
+.table-footer { align-items: center; background: var(--surface-warm); border-top: 1px solid var(--border); color: var(--text-secondary); display: flex; font-size: 12px; gap: 18px; justify-content: space-between; padding: 16px 24px; }
+.table-footer .btn-secondary { padding: 7px 15px; }
+
+.state-card, .empty-state { align-items: center; color: var(--text-secondary); display: flex; flex-direction: column; gap: 12px; justify-content: center; margin-top: 20px; min-height: 150px; padding: 24px; text-align: center; }
+.state-card p, .empty-state p { margin-bottom: 0; }
+.error-state { color: var(--danger); }
+/* El spinner base (borde, animación, keyframes) vive en styles.scss; aquí sólo
+   se reduce a 28px. */ 
+.spinner { height: 28px; width: 28px; }
+
+.welcome-card { align-items: center; display: flex; gap: 20px; justify-content: space-between; margin-top: 20px; padding: 22px 24px; }
+.welcome-card p { color: var(--heading); font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+.welcome-card span { color: var(--text-secondary); font-size: 13px; }
+.welcome-card .record-unavailable { color: var(--text-secondary); font-size: 13px; font-weight: 400; margin: 0; }
+.assigned-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.student-card { display: flex; flex-direction: column; gap: 18px; min-width: 0; padding: 20px; }
+.student-card-top, .student-actions { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.student-card-top .mono { color: var(--brand); font-size: 12px; font-weight: 700; }
+.student-card h3 { color: var(--heading); font-size: 17px; margin-bottom: 7px; }
+.student-card p { color: var(--text-secondary); font-size: 13px; margin-bottom: 8px; }
+.student-card div > span { color: var(--text-muted); font-size: 12px; }
+.student-actions { border-top: 1px solid var(--border); margin-top: auto; padding-top: 15px; }
+.student-actions .btn-primary { font-size: 12px; padding: 7px 12px; }
+
+/* .sr-only también vive ahora en styles.scss, como utilidad compartida. */
+
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .assigned-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* El apilado en fichas lo define styles.scss; aquí sólo se anula el ancho mínimo
+   propio del componente, que al ser local ganaría a la regla global. */
+@media (max-width: 1200px) {
+  .table-scroll { overflow-x: visible; }
+  table { min-width: 0; }
+}
+
+@media (max-width: 700px) {
+  .home-page { padding: 18px 14px; }
+  .page-header, .risk-card, .alerts-card, .cohort-card { padding: 20px; }
+  .kpi-grid, .filters, .assigned-grid { grid-template-columns: minmax(0, 1fr); }
+  .alert-row { align-items: start; grid-template-columns: 1fr; }
+  .registry-heading, .welcome-card { align-items: stretch; flex-direction: column; }
+  .agreement-alert-banner { align-items: start; grid-template-columns: auto 1fr auto; }
+  .agreement-alert-banner a { grid-column: 2; }
+  .agreement-alert-banner button { grid-column: 3; grid-row: 1; }
+  .registry-heading .btn-primary, .welcome-card .btn-primary { justify-content: center; }
+  .cohort-row { grid-template-columns: 76px minmax(80px, 1fr) 28px; gap: 8px; }
+  .table-footer { flex-wrap: wrap; justify-content: center; }
+  .table-footer span { order: -1; text-align: center; width: 100%; }
+  .student-actions { align-items: stretch; flex-direction: column; }
+  .student-actions a { justify-content: center; width: 100%; }
+}

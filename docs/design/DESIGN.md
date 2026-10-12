@@ -200,7 +200,7 @@ The color architecture is divided into three tiers: **Institutional Brand Palett
 | `badge-pending-bg` / `text` | `#F6FCFE` / `#57949D` | **Pendiente / Blue-Teal**: Initial commitment state, waiting for action start. |
 | `badge-in-progress-bg` / `text` | `#FEF8F3` / `#B57136` | **En Proceso / Warm Amber**: Active commitment in execution; preventive alert. |
 | `badge-concluded-bg` / `text` | `#E9FEF1` / `#437E5C` | **Concluido / Emerald Green**: Satisfactorily concluded, compliant, on-track milestone. |
-| `badge-overdue-bg` / `text` | `#F8F1FF` / `#A14D98` | **Vencido / Deep Magenta**: Overdue agreement or critical risk requiring immediate escalation. |
+| `badge-overdue-bg` / `text` | `#F8F1FF` / `#A14D98` | **Vencido / Deep Magenta**: Derived presentation state when the deadline has passed and the agreement is not concluded; critical risk requiring immediate escalation. |
 | `danger-bg` / `text` / `border` | `#FEF3F2` / `#B42318` / `#FECDCA` | **Error & Critical Alert**: Form validation errors, student risk banners, delete actions. |
 | `badge-info-bg` / `text` | `#F0F5FF` / `#3B82F6` | **Informativo / Sky Blue**: System notifications, informational tags. |
 | `badge-inactive-bg` / `text` | `#F3F4F6` / `#6B7280` | **Inactivo / Neutral Gray**: Inactive records, archived states. |
@@ -323,7 +323,7 @@ The N.E.X.U.S. component library is designed with strict modularity, TypeScript 
 - **Flyout Drawer (380px)**: Clicking any milestone opens a right slide-in inspector displaying participant attendance, structured observations, thesis components, and evidence download buttons.
 
 ### 4. AgreementDrawer (`features/agreements/agreement-drawer`)
-- **Structure**: 400px right drawer with dual mode: (1) Creation mode with deadline picker and responsible party selector, (2) Status transition mode with semaphore buttons (`Pendiente`, `En Proceso`, `Concluido`, `Vencido`) and audit transition history log.
+- **Structure**: 400px right drawer with dual mode: (1) Creation mode with deadline picker and responsible party selector, (2) Status transition mode with manual transition buttons (`En Proceso`, `Concluido`) and read-only derived semaphore presentation (`Pendiente`, `En Proceso`, `Concluido`, `Vencido`) and audit transition history log.
 
 ### 5. TutoringModal (`features/tutoring/tutoring-modal`)
 - **Structure**: 960px centered modal with 2-column layout:
@@ -341,7 +341,7 @@ The N.E.X.U.S. component library is designed with strict modularity, TypeScript 
 
 ### 7. EvidenceDropzone (`features/evidence/evidence-upload`)
 - **Structure**: 680px modal with dual-mode navigation tabs:
-  - *Archivo Local*: Drag-and-drop zone supporting up to 15 MB (PDF, DOCX, ZIP, PNG).
+  - *Archivo Local*: Drag-and-drop zone supporting up to 15 MiB (PDF, DOCX, ZIP, PNG).
   - *Enlace Digital*: Form with regex validator for DOIs (`10.xxxx/...`) and secure institutional URLs.
 
 ### 8. FullDossierReport (`features/reporting/full-dossier-report`)
@@ -367,3 +367,15 @@ The N.E.X.U.S. component library is designed with strict modularity, TypeScript 
 - **DON'T** hide overdue or high-risk alert banners behind accordion panels or secondary tabs.
 - **DON'T** use modal dialogs for simple status updates when an inline trigger or drawer is more context-preserving.
 - **DON'T** allow text to wrap inside status badges or matricula chips (`white-space: nowrap` is mandatory).
+
+
+---
+
+## Implementation Alignment
+
+- The frontend workspace uses **pnpm** as its only package manager.
+- All HTTP integrations target the canonical `/api/v1/` namespace.
+- `Vencido` is rendered from the derived overdue condition; the UI must not offer it as a manually writable state.
+- Committee UI consumes one committee aggregate with `memberships` whose academic roles are `ASESOR`, `COASESOR`, and `COMMITTEE_MEMBER`; selection must prevent more than one co-advisor.
+- Semester creation and editing controls are visible only to `PROGRAM_COORDINATOR`.
+- Evidence upload copy and validation use the binary limit **15 MiB**.

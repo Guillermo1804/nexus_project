@@ -1,0 +1,243 @@
+<main class="home-page">
+  @if (auth.user(); as user) {
+    @if (agreementAlerts && agreementAlerts.total_alertas > 0 && !alertsDismissed) {
+      <section class="agreement-alert-banner" role="region" aria-label="Alertas de compromisos académicos">
+        <span class="alert-symbol" aria-hidden="true">!</span>
+        <div>
+          <strong>Alertas de acuerdos</strong>
+          <p>
+            <span class="level critical">Crítico: {{ agreementAlerts.vencidos_count }} vencido{{ agreementAlerts.vencidos_count === 1 ? '' : 's' }}</span>
+            <span class="level warning">Advertencia: {{ agreementAlerts.proximos_vencer_count }} por vencer esta semana</span>
+          </p>
+        </div>
+        <a routerLink="/acuerdos" [queryParams]="{ vencido: true }">Ver acuerdos vencidos</a>
+        <button type="button" (click)="dismissAlerts()" aria-label="Cerrar alertas">×</button>
+      </section>
+    }
+    @if (auth.hasPermission('academic.read.global')) {
+      <section class="page-header nexus-card" aria-labelledby="dashboard-title">
+        <p class="eyebrow">COORDINACIÓN ACADÉMICA</p>
+        <h1 id="dashboard-title">Dashboard del Coordinador</h1>
+        <p>Supervisión institucional del avance académico, tutorías y seguimiento de acuerdos del posgrado.</p>
+      </section>
+
+      @if (loadingDashboard) {
+        <section class="state-card nexus-card" role="status" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <p>Cargando información institucional...</p>
+        </section>
+      } @else if (dashboardError) {
+        <section class="state-card nexus-card error-state" role="alert">
+          <p>{{ dashboardError }}</p>
+          <button type="button" class="btn-secondary" (click)="loadDashboard()">Reintentar</button>
+        </section>
+      } @else {
+        <section class="kpi-grid" aria-label="Indicadores institucionales">
+          <article class="kpi-card nexus-card">
+            <span class="kpi-label">ESTUDIANTES ACTIVOS</span>
+            <strong>{{ activeStudents }}</strong>
+            <span>del padrón cargado</span>
+          </article>
+          <article class="kpi-card nexus-card">
+            <span class="kpi-label">TUTORÍAS DEL PERIODO</span>
+            <strong>{{ totalTutoringSessions }}</strong>
+            <span>sesiones registradas</span>
+          </article>
+          <article class="kpi-card nexus-card">
+            <span class="kpi-label">ACUERDOS EN SEGUIMIENTO</span>
+            <strong>{{ agreementsInFollowUp }}</strong>
+            <span>pendientes o en proceso</span>
+          </article>
+          <article class="kpi-card nexus-card">
+            <span class="kpi-label">ACUERDOS VENCIDOS</span>
+            <strong>{{ overdueAgreements }}</strong>
+            <span>requieren atención</span>
+          </article>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="risk-card nexus-card" aria-labelledby="risk-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">PANORAMA ACTUAL</p>
+                <h2 id="risk-title">Semáforo de Riesgo Institucional</h2>
+              </div>
+            </div>
+            <div class="risk-row">
+              <span class="risk-dot critical" aria-hidden="true"></span>
+              <div><strong>CRÍTICA</strong><span>Atención Inmediata</span></div>
+              <b>{{ overdueAgreements }}</b>
+            </div>
+            <div class="risk-row">
+              <span class="risk-dot preventive" aria-hidden="true"></span>
+              <div><strong>PREVENTIVA</strong><span>Alerta Preventiva</span></div>
+              <b>{{ pendingAgreements }}</b>
+            </div>
+            <div class="risk-row">
+              <span class="risk-dot regular" aria-hidden="true"></span>
+              <div><strong>AL DÍA</strong><span>Acuerdos en proceso</span></div>
+              <b>{{ inProgressAgreements }}</b>
+            </div>
+          </section>
+
+          <section class="alerts-card nexus-card" aria-labelledby="alerts-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">PRÓXIMOS EVENTOS</p>
+                <h2 id="alerts-title">Alertas de Supervisión Activa</h2>
+              </div>
+            </div>
+            @if (upcomingSessions.length) {
+              <div class="alert-list">
+                @for (session of upcomingSessions; track session.id) {
+                  <article class="alert-row">
+                    <span class="badge info-badge">INFORMATIVA</span>
+                    <div>
+                      <strong>{{ studentName(session.student) }}</strong>
+                      <span>{{ session.proxima_reunion_fecha | date:'d/MM/y, HH:mm' }} · {{ session.modalidad }}</span>
+                    </div>
+                    <a [routerLink]="['/expediente', session.student]">Ir al Expediente</a>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="empty-message">No hay próximas tutorías programadas.</p>
+            }
+          </section>
+        </div>
+
+        <section class="cohort-card nexus-card" aria-labelledby="cohort-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">COMPOSICIÓN DEL PADRÓN</p>
+              <h2 id="cohort-title">Distribución por Cohorte</h2>
+            </div>
+          </div>
+          @if (cohortSummary.length) {
+            <div class="cohort-list">
+              @for (cohort of cohortSummary; track cohort.name) {
+                <div class="cohort-row">
+                  <span>{{ cohort.name }}</span>
+                  <div class="bar-track" role="img" [attr.aria-label]="cohort.name + ': ' + cohort.count + ' estudiantes'">
+                    <span [style.width.%]="cohort.percentage"></span>
+                  </div>
+                  <strong>{{ cohort.count }}</strong>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-message">No hay datos de cohortes disponibles.</p>
+          }
+        </section>
+
+        <section class="registry-section" aria-labelledby="registry-title">
+          <div class="registry-heading">
+            <div>
+              <h2 id="registry-title">Padrón de Estudiantes de Posgrado</h2>
+              <span>{{ filteredStudents.length }} de {{ students.length }} estudiantes</span>
+            </div>
+            @if (auth.hasPermission('students.create')) {
+              <a routerLink="/coordinator/students/new" class="btn-primary">+ Registrar Nuevo Estudiante</a>
+            }
+          </div>
+
+          <div class="filters nexus-card" aria-label="Filtros del padrón">
+            <label>
+              <span>Programa</span>
+              <select class="input-field" [(ngModel)]="programFilter" (ngModelChange)="filtersChanged()">
+                <option value="">Todos los Programas</option>
+                @for (program of programs; track program) { <option [value]="program">{{ program }}</option> }
+              </select>
+            </label>
+            <label>
+              <span>Cohorte</span>
+              <select class="input-field" [(ngModel)]="cohortFilter" (ngModelChange)="filtersChanged()">
+                <option value="">Todas las Cohortes</option>
+                @for (cohort of cohorts; track cohort) { <option [value]="cohort">{{ cohort }}</option> }
+              </select>
+            </label>
+            <label>
+              <span>Estatus</span>
+              <select class="input-field" [(ngModel)]="statusFilter" (ngModelChange)="filtersChanged()">
+                <option value="all">Estatus: Todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+              </select>
+            </label>
+            <label class="search-field">
+              <span>Buscar</span>
+              <input class="input-field" type="search" [(ngModel)]="searchFilter" (ngModelChange)="filtersChanged()" placeholder="Buscar estudiante, matrícula…" />
+            </label>
+          </div>
+
+          <div class="table-card nexus-card">
+            @if (visibleStudents.length) {
+              <div class="table-scroll">
+                <table>
+                  <caption class="sr-only">Padrón de estudiantes de posgrado</caption>
+                  <thead><tr><th scope="col">ESTUDIANTE / MATRÍCULA</th><th scope="col">PROGRAMA</th><th scope="col">COHORTE</th><th scope="col">ESTATUS</th><th scope="col">ACCIONES</th></tr></thead>
+                  <tbody>
+                    @for (student of visibleStudents; track student.id) {
+                      <tr>
+                        <td data-label="Estudiante"><strong>{{ student.nombre_completo }}</strong><span class="mono">{{ student.matricula }}</span></td>
+                        <td data-label="Programa">{{ student.programa_doctoral }}</td>
+                        <td data-label="Cohorte">{{ student.cohorte }}</td>
+                        <td data-label="Estatus"><span class="badge" [class.active-badge]="student.estatus_activo" [class.inactive-badge]="!student.estatus_activo">{{ student.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}</span></td>
+                        <td data-label="Acciones"><a [routerLink]="['/expediente', student.id]">Ver Expediente</a></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <nav class="table-footer" aria-label="Paginación del padrón">
+                <button type="button" class="btn-secondary" (click)="changeStudentPage(studentPage - 1)" [disabled]="studentPage === 1">Anterior</button>
+                <span>Mostrando {{ shownFrom }}–{{ shownTo }} de {{ filteredStudents.length }} estudiantes</span>
+                <button type="button" class="btn-secondary" (click)="changeStudentPage(studentPage + 1)" [disabled]="studentPage === totalStudentPages">Siguiente</button>
+              </nav>
+            } @else {
+              <div class="empty-state"><p>No hay estudiantes que coincidan con los filtros seleccionados.</p></div>
+            }
+          </div>
+        </section>
+      }
+    } @else {
+      <section class="page-header nexus-card" aria-labelledby="home-title">
+        <p class="eyebrow">PORTAL ACADÉMICO</p>
+        <h1 id="home-title">Inicio</h1>
+        <p>Consulta tus estudiantes asignados y da seguimiento a su trayectoria académica.</p>
+      </section>
+
+      <section class="welcome-card nexus-card" aria-label="Información de sesión">
+        <div><p>{{ getWelcomeText() }}</p><span>{{ getRoleLabel(user.role) }}</span></div>
+        @if (user.role === 'STUDENT' && user.student_id) {
+          <a [routerLink]="['/expediente', user.student_id]" class="btn-primary">Mi expediente académico</a>
+        } @else if (user.role === 'STUDENT') {
+          <p class="record-unavailable" role="status">Tu cuenta aún no tiene un expediente académico vinculado.</p>
+        }
+      </section>
+
+      @if (user.role === 'TUTOR' || user.role === 'COMMITTEE_MEMBER' || auth.hasPermission('records.read.assigned')) {
+        <section class="assigned-section" aria-labelledby="assigned-title">
+          <div class="registry-heading"><div><h2 id="assigned-title">Estudiantes Asignados (Comité Tutorial)</h2><span>{{ studentService.students().length }} asignados</span></div></div>
+          @if (studentService.loading()) {
+            <div class="state-card nexus-card" role="status"><span class="spinner" aria-hidden="true"></span><p>Cargando estudiantes asignados...</p></div>
+          } @else if (studentService.error()) {
+            <div class="state-card nexus-card error-state" role="alert"><p>{{ studentService.error() }}</p><button type="button" class="btn-secondary" (click)="studentService.loadStudents()">Reintentar</button></div>
+          } @else if (!studentService.students().length) {
+            <div class="empty-state nexus-card"><p>No tienes estudiantes asignados a tu comité tutorial actualmente.</p></div>
+          } @else {
+            <div class="assigned-grid">
+              @for (student of studentService.students(); track student.id) {
+                <article class="student-card nexus-card">
+                  <div class="student-card-top"><span class="mono">{{ student.matricula }}</span><span class="badge" [class.active-badge]="student.estatus_activo" [class.inactive-badge]="!student.estatus_activo">{{ student.estatus_activo ? 'ACTIVO' : 'INACTIVO' }}</span></div>
+                  <div><h3>{{ student.nombre_completo }}</h3><p>{{ student.programa_doctoral }}</p><span>Cohorte {{ student.cohorte }}</span></div>
+                  <div class="student-actions"><a [routerLink]="['/expediente', student.id]">Ver expediente</a><a [routerLink]="['/expediente', student.id]" [queryParams]="{ accion: 'tutoria' }" class="btn-primary">+ Registrar tutoría</a></div>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      }
+    }
+  }
+</main>
