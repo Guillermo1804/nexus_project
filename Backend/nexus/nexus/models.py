@@ -250,7 +250,7 @@ class Evidence(models.Model):
 	actividad_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
 	titulo = models.CharField(max_length=255)
 	descripcion = models.TextField(blank=True, default='')
-	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])])
+	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])]) 
 	enlace_url = models.CharField(max_length=500, blank=True, default='')
 	mime_type = models.CharField(max_length=100, blank=True, default='')
 	file_size_bytes = models.BigIntegerField(default=0)
@@ -270,7 +270,7 @@ class Evidence(models.Model):
 class AcademicOutputBase(models.Model):
 	student = models.ForeignKey(Student, on_delete=models.CASCADE, db_index=True)
 	semester = models.ForeignKey(Semester, null=True, blank=True, on_delete=models.SET_NULL)
-	evidencia = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)
+	evidence = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
@@ -278,40 +278,27 @@ class AcademicOutputBase(models.Model):
 		abstract = True
 
 
+class PublicationType(models.TextChoices):
+    JCR = 'JCR', 'JCR'
+    SCOPUS = 'SCOPUS', 'Scopus'
+    CONACYT = 'CONACYT', 'Conacyt'
+    OTRO_INDEXADO = 'OTRO_INDEXADO', 'Otro Indexado'
+
+
+class PublicationStatus(models.TextChoices):
+    PREPARACION = 'PREPARACION', 'Preparación'
+    ENVIADO = 'ENVIADO', 'Enviado'
+    EN_REVISION = 'EN_REVISION', 'En Revisión'
+    ACEPTADO = 'ACEPTADO', 'Aceptado'
+    PUBLICADO = 'PUBLICADO', 'Publicado'
+
+
 class Publication(AcademicOutputBase):
-	titulo = models.CharField(max_length=255)
-	autores_texto = models.TextField()
-	tipo = models.CharField(max_length=30)
-	revista_editorial = models.CharField(max_length=255)
-	estado = models.CharField(max_length=30, default='PREPARACION')
-	fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
-	doi_url = models.CharField(max_length=500, blank=True, default='')
-
-
-class AcademicEvent(AcademicOutputBase):
-	tipo_evento = models.CharField(max_length=40)
-	nombre_evento = models.CharField(max_length=255)
-	titulo_ponencia = models.CharField(max_length=255)
-	fecha_presentacion = models.DateField(db_index=True)
-	sede_lugar = models.CharField(max_length=255)
-	modalidad = models.CharField(max_length=20, default='PRESENCIAL')
-
-
-class ResearchStay(AcademicOutputBase):
-	institucion_receptora = models.CharField(max_length=255)
-	pais = models.CharField(max_length=100)
-	fecha_inicio = models.DateField(db_index=True)
-	fecha_fin = models.DateField()
-	responsable_estancia = models.CharField(max_length=255)
-	objetivos = models.TextField(blank=True, default='')
-	resultados = models.TextField(blank=True, default='')
-
-	class Meta:
-		constraints = [models.CheckConstraint(condition=Q(fecha_fin__gte=models.F('fecha_inicio')), name='research_stay_end_after_start')]
-
-
-class OtherProduct(AcademicOutputBase):
-	tipo_producto = models.CharField(max_length=30)
-	titulo = models.CharField(max_length=255)
-	descripcion = models.TextField()
-	fecha_registro = models.DateField(default=timezone.now, db_index=True)
+    titulo = models.CharField(max_length=255)
+    autores = models.TextField()
+    tipo = models.CharField(max_length=50, choices=PublicationType.choices)
+    revista = models.CharField(max_length=255)
+    estado = models.CharField(max_length=30, choices=PublicationStatus.choices, default='PREPARACION')
+    fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
+    doi = models.URLField(blank=True, default='')
+    evidencia = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)

@@ -1,0 +1,16 @@
+<div class="publications-container">
+  <h2>Publicaciones Científicas</h2>
+
+  <div class="publication-cards">
+    <div *ngFor="let publication of publications" class="publication-card">
+      <h3>{{ publication.titulo }}</h3>
+      <p><strong>Autores:</strong> {{ publication.autores }}</p>
+      <p><strong>Tipo:</strong> {{ publication.tipo }}</p>
+      <p><strong>Revista/Editorial:</strong> {{ publication.revista }}</p>
+      <p><strong>Estado:</strong> {{ publication.estado }}</p>
+      <p *ngIf="publication.fecha_publicacion"><strong>Fecha de Publicación:</strong> {{ publication.fecha_publicacion | date }}</p>
+      <p *ngIf="publication.doi"><strong>DOI/URL:</strong> <a [href]="publication.doi" target="_blank">{{ publication.doi }}</a></p>
+      <p *ngIf="publication.evidencia"><strong>Evidencia:</strong> <a [href]="publication.evidencia_archivo" target="_blank">Ver evidencia</a></p>
+    </div>
+  </div>
+</div>

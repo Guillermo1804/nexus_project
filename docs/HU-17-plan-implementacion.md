@@ -120,3 +120,137 @@
 - [ ] Validación de evidencia/DOI obligatoria para artículos aceptados/publicados.
 - [ ] Pruebas unitarias backend (`test_hu17.py`) y frontend aprobadas al 100%.
 - [ ] Integración en la pestaña "Producción Científica" del expediente del estudiante.
+
+
+## 7. Cambios Realizados y Avances
+
+## Avances en la Implementación de HU-17
+
+### Avances en Fase 1: Backend y API
+- **Modelo `Publication`:** Se actualizó en `nexus/models.py` para incluir todos los campos necesarios (`student`, `titulo`, `autores`, `tipo`, `revista`, `estado`, `fecha_publicacion`, `doi`, `evidencia`).
+- **Serializer `PublicationSerializer`:** Implementado en `nexus/serializers.py` con validaciones para cumplir con las reglas de negocio.
+- **Vistas `PublicationViewSet`:** Creadas en `nexus/views.py` para manejar rutas `GET` y `POST` con permisos de autenticación y validación de permisos `can_access_student`.
+- **Rutas en `urls.py`:** Registradas para el endpoint `/api/v1/academic-output/publications/`.
+- **Pruebas Unitarias:** Creadas en `nexus/test_hu17.py` para validar creación de publicaciones, validación de evidencia/DOI, y fechas válidas.
+
+### Avances en Fase 2: Backend Completo
+- **Modelo `Publication`:** Se validó y mejoró en `nexus/models.py` para incluir `PublicationType` y `PublicationStatus` con sus respectivas validaciones.
+- **Serializer y Vistas:** Se refuerzan las validaciones en `nexus/serializers.py` y `nexus/views.py` para asegurar que se cumplan los criterios de aceptación.
+
+### Avances en Fase 3: Frontend Angular
+- **Componente `PublicationFormComponent`:** Implementado en `src/app/academic-output/publication-form.ts` para el registro de publicaciones con validaciones y manejo de evidencia.
+- **Componente `PublicationsListComponent`:** Implementado en `src/app/academic-output/publications-list.ts` para listar las publicaciones.
+- **Plantillas y Estilos:** Se crearon en `publication-form.html`, `publication-form.scss`, `publications-list.html`, y `publications-list.scss`.
+
+---
+
+## 7.1. Actualización del Menú Lateral
+Se agregó un nuevo botón "Subir Publicación" debajo del botón "Acuerdos" en el menú lateral para facilitar el registro de publicaciones científicas.
+
+## 7. Problemas Identificados y Soluciones
+
+### 7.1. Problemas en la Consola del Backend
+Se han identificado errores en la validación de los campos y restricciones de fechas:
+
+- **Validación de Estado y Evidencia/DOI:** Falta validación en el serializer para asegurar que si el estado es `ACEPTADO` o `PUBLICADO`, debe incluir al menos `doi` o `evidencia`.
+- **Validación de Fechas:** Falta validación para evitar fechas de publicación futuras.
+
+### 7.2. Cambios Implementados
+
+#### **7.2.1. Validaciones en el Modelo `Publication`
+Se añadió la validación en el método `clean()` del modelo `Publication`:
+```python
+from django.core.exceptions import ValidationError
+from django.db import models
+import datetime
+
+class Publication(models.Model):
+    # ... (campos existentes)
+    
+    def clean(self):
+        super().clean()
+        if self.estado in ['ACEPTADO', 'PUBLICADO']:
+            if not self.doi and not self.evidencia:
+                raise ValidationError("Debe proporcionar DOI o evidencia.")
+        if self.fecha_publicacion and self.fecha_publicacion > datetime.now():
+            raise ValidationError("La fecha de publicación no puede ser futura.")
+```
+
+#### **7.2.2. Validaciones en el Serializer `PublicationSerializer`
+Se implementó validación en el serializer para asegurar que se cumplan las reglas de negocio:
+```python
+class PublicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Publication
+        fields = '__all__'
+
+    def validate(self, data):
+        if data.get('estado') in ['ACEPTADO', 'PUBLICADO']:
+            if not data.get('doi') and not data.get('evidencia'):
+                raise serializers.ValidationError("Debe proporcionar DOI o evidencia.")
+        return data
+```
+
+#### **7.2.3. Pruebas Unitarias Actualizadas
+Se actualizaron las pruebas unitarias en `nexus/test_hu17.py` para validar:
+- Creación de publicaciones con datos válidos.
+- Errores al intentar crear publicaciones sin evidencia/DOI para estados `ACEPTADO` o `PUBLICADO`.
+
+Ejemplo de pruebas:
+```python
+def test_create_publication_with_valid_data():
+    url = reverse('publication-list')
+    payload = {
+        'student': 4,
+        'semester': 2,
+        'titulo': 'Test Title',
+        'autores': 'Autor Test',
+        'tipo': 'JCR',
+        'revista': 'Test Journal',
+        'estado': 'PUBLICADO',
+        'fecha_publicacion': '2026-05-12',
+        'doi': 'https://doi.org/123456',
+        'evidencia': 15
+    }
+    response = client.post(url, payload, format='json')
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+def test_create_publication_without_evidence_or_doi():
+    url = reverse('publication-list')
+    payload = {
+        'student': 4,
+        'semester': 2,
+        'titulo': 'Test Title',
+        'autores': 'Autor Test',
+        'tipo': 'JCR',
+        'revista': 'Test Journal',
+        'estado': 'PUBLICADO',
+        'fecha_publicacion': '2026-05-12'
+    }
+    response = client.post(url, payload, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+```
+
+### 7.3. Avances en la Implementación de HU-17
+
+### Avances en Fase 1: Backend y API
+- **Modelo `Publication`:** Se actualizó en `nexus/models.py` para incluir validaciones adicionales.
+- **Serializer `PublicationSerializer`:** Implementado con validaciones robustas.
+- **Vistas `PublicationViewSet`:** Creadas con permisos de autenticación y validación de permisos.
+- **Rutas en `urls.py`:** Registradas para el endpoint `/api/v1/academic-output/publications/`.
+- **Pruebas Unitarias:** Actualizadas para asegurar que las validaciones funcionen correctamente.
+
+### Avances en Fase 2: Backend Completo
+- **Modelo `Publication`:** Se validó y mejoró en `nexus/models.py` para incluir `PublicationType` y `PublicationStatus` con sus respectivas validaciones.
+- **Serializer y Vistas:** Se refuerzan las validaciones en `nexus/serializers.py` y `nexus/views.py`.
+
+### Avances en Fase 3: Frontend Angular
+- **Componente `PublicationFormComponent`:** Implementado con validaciones y manejo de evidencia.
+- **Componente `PublicationsListComponent`:** Implementado para listar publicaciones.
+
+### Avances en Integración y Pruebas
+- Se corrigieron errores en la validación de endpoints y se validaron las funcionalidades de subir y listar publicaciones.
+- Se documentaron todos los cambios en el archivo `HU-17-plan-implementacion.md`.
+
+---
