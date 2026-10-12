@@ -45,6 +45,7 @@ from .views import (
     ThesisProgressViewSet,
     TimelineView,
 )
+from .views_health import health_check
 
 router = DefaultRouter()
 router.register(r'students', StudentViewSet, basename='students')
@@ -54,6 +55,7 @@ router.register(r'evidence', EvidenceViewSet, basename='evidence')
 router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
 
 urlpatterns = [
+    path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/v1/', include(router.urls)),
     path('api/v1/auth/login/', LoginView.as_view(), name='auth-login'),
