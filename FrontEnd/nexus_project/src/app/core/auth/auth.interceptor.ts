@@ -2,13 +2,13 @@ import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpReq
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, switchMap, throwError } from 'rxjs';
-import { AuthService } from './auth.service';
+import { TokenService } from './token.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const auth = inject(AuthService);
+  const tokens = inject(TokenService);
   const router = inject(Router);
   const isAuthRequest = /\/api\/v1\/auth\/(login|token\/refresh)\/$/.test(request.url);
-  const token = auth.accessToken();
+  const token = tokens.access();
   const authorizedRequest = token && !isAuthRequest
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : request;
@@ -16,7 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(authorizedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status !== 401 || isAuthRequest) return throwError(() => error);
-      return reintentarConRefresh(auth, router, next, request, true);
+      return reintentarConRefresh(tokens, router, next, request, true);
     }),
   );
 };
@@ -31,26 +31,26 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
  * era la causa de que la sesión «se acabara sola».
  */
 function reintentarConRefresh(
-  auth: AuthService,
+  tokens: TokenService,
   router: Router,
   next: HttpHandlerFn,
   request: HttpRequest<unknown>,
   permitirSegundoIntento: boolean,
 ): Observable<HttpEvent<unknown>> {
-  return auth.refreshAccessToken().pipe(
+  return tokens.refreshAccessToken().pipe(
     switchMap(({ access }) =>
       next(request.clone({ setHeaders: { Authorization: `Bearer ${access}` } })).pipe(
         catchError((retryError: unknown) => {
           const rechazado = retryError instanceof HttpErrorResponse && retryError.status === 401;
           if (!rechazado || !permitirSegundoIntento) return throwError(() => retryError);
-          return reintentarConRefresh(auth, router, next, request, false);
+          return reintentarConRefresh(tokens, router, next, request, false);
         }),
       ),
     ),
     catchError((refreshError: unknown) => {
       const rechazoReal = refreshError instanceof HttpErrorResponse && [401, 403].includes(refreshError.status);
       if (!rechazoReal) return throwError(() => refreshError);
-      auth.handleSessionExpired();
+      tokens.handleSessionExpired();
       void router.navigate(['/login']);
       return throwError(() => refreshError);
     }),

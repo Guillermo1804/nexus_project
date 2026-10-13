@@ -1,4 +1,7 @@
 import { UserRole } from '../auth/auth.models';
+import { PaginatedResponse } from '../../shared/pagination';
+
+export type { PaginatedResponse } from '../../shared/pagination';
 
 export interface StudentRecord {
   id: number;
@@ -327,6 +330,22 @@ export interface TimelineSemester {
 export interface TimelineResponse {
   student: Pick<StudentRecord, 'id' | 'matricula' | 'nombre_completo'>;
   semestres: TimelineSemester[];
+}
+
+export interface Publication {
+  id: number;
+  student: number;
+  semester: number | null;
+  titulo: string;
+  autores: string;
+  tipo: 'JCR' | 'SCOPUS' | 'CONACYT' | 'OTRO_INDEXADO';
+  revista: string;
+  estado: 'PREPARACION' | 'ENVIADO' | 'EN_REVISION' | 'ACEPTADO' | 'PUBLICADO';
+  fecha_publicacion: string | null;
+  doi: string;
+  evidencia: number | null;
+  evidencia_archivo?: string | null;
+  created_at: string;
 }
 
 export type AcademicRole = UserRole;

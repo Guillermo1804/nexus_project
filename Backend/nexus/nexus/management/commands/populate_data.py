@@ -148,10 +148,10 @@ def componentes_tesis(porcentaje):
 
 
 PLAN_PRODUCCION = [
-    ("Artículo JCR Q1", "ACEPTADO", -33),
-    ("Artículo de conferencia", "ACEPTADO", -19),
-    ("Capítulo de libro", "ENVIADO", -5),
-    ("Artículo en revista indexada", "PUBLICADO", -9),
+    ("JCR", "ACEPTADO", -33),
+    ("SCOPUS", "ACEPTADO", -19),
+    ("CONACYT", "ENVIADO", -5),
+    ("OTRO_INDEXADO", "PUBLICADO", -9),
 ]
 
 # Siete semanas de uso simulado para la segunda ola de doctorandos, con un

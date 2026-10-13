@@ -270,7 +270,7 @@ class Evidence(models.Model):
 class AcademicOutputBase(models.Model):
 	student = models.ForeignKey(Student, on_delete=models.CASCADE, db_index=True)
 	semester = models.ForeignKey(Semester, null=True, blank=True, on_delete=models.SET_NULL)
-	evidence = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)
+	evidencia = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
@@ -295,10 +295,47 @@ class PublicationStatus(models.TextChoices):
 
 class Publication(AcademicOutputBase):
     titulo = models.CharField(max_length=255)
-    autores = models.TextField()
+    autores_texto = models.TextField()
     tipo = models.CharField(max_length=50, choices=PublicationType.choices)
-    revista = models.CharField(max_length=255)
+    revista_editorial = models.CharField(max_length=255)
     estado = models.CharField(max_length=30, choices=PublicationStatus.choices, default='PREPARACION')
     fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
-    doi = models.URLField(blank=True, default='')
-    evidencia = models.ForeignKey(Evidence, null=True, blank=True, on_delete=models.SET_NULL)
+    doi_url = models.CharField(blank=True, default='', max_length=500)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.estado in (PublicationStatus.ACEPTADO, PublicationStatus.PUBLICADO):
+            if not self.doi_url and not self.evidencia_id:
+                raise ValidationError({'doi_url': 'Debe proporcionar DOI o evidencia para un artículo aceptado o publicado.'})
+        if self.fecha_publicacion and self.fecha_publicacion > timezone.localdate():
+            raise ValidationError({'fecha_publicacion': 'La fecha de publicación no puede ser futura.'})
+
+
+class AcademicEvent(AcademicOutputBase):
+	tipo_evento = models.CharField(max_length=40)
+	nombre_evento = models.CharField(max_length=255)
+	titulo_ponencia = models.CharField(max_length=255)
+	fecha_presentacion = models.DateField(db_index=True)
+	sede_lugar = models.CharField(max_length=255)
+	modalidad = models.CharField(max_length=20, default='PRESENCIAL')
+
+
+class ResearchStay(AcademicOutputBase):
+	institucion_receptora = models.CharField(max_length=255)
+	pais = models.CharField(max_length=100)
+	fecha_inicio = models.DateField(db_index=True)
+	fecha_fin = models.DateField()
+	responsable_estancia = models.CharField(max_length=255)
+	objetivos = models.TextField(blank=True, default='')
+	resultados = models.TextField(blank=True, default='')
+
+	class Meta:
+		constraints = [models.CheckConstraint(condition=Q(fecha_fin__gte=models.F('fecha_inicio')), name='research_stay_end_after_start')]
+
+
+class OtherProduct(AcademicOutputBase):
+	tipo_producto = models.CharField(max_length=30)
+	titulo = models.CharField(max_length=255)
+	descripcion = models.TextField()
+	fecha_registro = models.DateField(default=timezone.now, db_index=True)

@@ -2,7 +2,7 @@
   <div class="form-group">
     <label for="titulo">Título</label>
     <input type="text" id="titulo" formControlName="titulo" class="form-control">
-    <div *ngIf="publicationForm.get('titulo').invalid && publicationForm.get('titulo').touched" class="text-danger">
+    <div *ngIf="publicationForm.get('titulo')!.invalid && publicationForm.get('titulo')!.touched" class="text-danger">
       El título es obligatorio.
     </div>
   </div>
@@ -10,7 +10,7 @@
   <div class="form-group">
     <label for="autores">Autores</label>
     <input type="text" id="autores" formControlName="autores" class="form-control">
-    <div *ngIf="publicationForm.get('autores').invalid && publicationForm.get('autores').touched" class="text-danger">
+    <div *ngIf="publicationForm.get('autores')!.invalid && publicationForm.get('autores')!.touched" class="text-danger">
       Los autores son obligatorios.
     </div>
   </div>
@@ -20,7 +20,7 @@
     <select id="tipo" formControlName="tipo" class="form-control">
       <option *ngFor="let type of publicationTypes" [value]="type.value">{{ type.label }}</option>
     </select>
-    <div *ngIf="publicationForm.get('tipo').invalid && publicationForm.get('tipo').touched" class="text-danger">
+    <div *ngIf="publicationForm.get('tipo')!.invalid && publicationForm.get('tipo')!.touched" class="text-danger">
       El tipo de publicación es obligatorio.
     </div>
   </div>
@@ -28,7 +28,7 @@
   <div class="form-group">
     <label for="revista">Revista/Editorial</label>
     <input type="text" id="revista" formControlName="revista" class="form-control">
-    <div *ngIf="publicationForm.get('revista').invalid && publicationForm.get('revista').touched" class="text-danger">
+    <div *ngIf="publicationForm.get('revista')!.invalid && publicationForm.get('revista')!.touched" class="text-danger">
       La revista/editorial es obligatoria.
     </div>
   </div>
@@ -38,7 +38,7 @@
     <select id="estado" formControlName="estado" class="form-control">
       <option *ngFor="let status of publicationStatuses" [value]="status.value">{{ status.label }}</option>
     </select>
-    <div *ngIf="publicationForm.get('estado').invalid && publicationForm.get('estado').touched" class="text-danger">
+    <div *ngIf="publicationForm.get('estado')!.invalid && publicationForm.get('estado')!.touched" class="text-danger">
       El estado es obligatorio.
     </div>
   </div>

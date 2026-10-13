@@ -10,7 +10,7 @@
       <p><strong>Estado:</strong> {{ publication.estado }}</p>
       <p *ngIf="publication.fecha_publicacion"><strong>Fecha de Publicación:</strong> {{ publication.fecha_publicacion | date }}</p>
       <p *ngIf="publication.doi"><strong>DOI/URL:</strong> <a [href]="publication.doi" target="_blank">{{ publication.doi }}</a></p>
-      <p *ngIf="publication.evidencia"><strong>Evidencia:</strong> <a [href]="publication.evidencia_archivo" target="_blank">Ver evidencia</a></p>
+      <p *ngIf="publication.evidencia_archivo"><strong>Evidencia:</strong> <a [href]="publication.evidencia_archivo" target="_blank">Ver evidencia</a></p>
     </div>
   </div>
 </div>

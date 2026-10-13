@@ -1,17 +1,19 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AcademicService } from '../../core/academic/academic.service';
-import { ToastService } from '../../shared/toast.service';
+import { AcademicService } from '../core/academic/academic.service';
+import { ToastService } from '../shared/toast.service';
 
 @Component({
   selector: 'app-publication-form',
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './publication-form.html',
   styleUrls: ['./publication-form.scss']
 })
 export class PublicationFormComponent implements OnInit {
-  publicationForm: FormGroup;
-  studentId: number;
+  publicationForm!: FormGroup;
+  studentId = 0;
   publicationTypes = [
     { value: 'JCR', label: 'JCR' },
     { value: 'SCOPUS', label: 'Scopus' },
@@ -35,7 +37,10 @@ export class PublicationFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.studentId = +this.route.snapshot.paramMap.get('studentId');
+    const studentIdParam = this.route.snapshot.paramMap.get('studentId');
+    if (studentIdParam) {
+      this.studentId = +studentIdParam;
+    }
     this.initializeForm();
   }
 
@@ -56,22 +61,25 @@ export class PublicationFormComponent implements OnInit {
     if (this.publicationForm.valid) {
       const formData = this.publicationForm.value;
       this.academicService.createPublication(this.studentId, formData).subscribe({
-        next: (response) => {
-          this.toastService.showSuccess('Publicación registrada exitosamente');
+        next: (response: unknown) => {
+          this.toastService.exito('Publicación registrada exitosamente');
           this.router.navigate(['/students', this.studentId, 'academic-output']);
         },
-        error: (err) => {
-          this.toastService.showError('Error al registrar la publicación');
+        error: (err: unknown) => {
+          this.toastService.error('Error al registrar la publicación');
           console.error(err);
         }
       });
     }
   }
 
-  onFileChange(event: any): void {
-    const file = event.target.files[0];
-    this.publicationForm.patchValue({
-      evidencia: file
-    });
+  onFileChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+      this.publicationForm.patchValue({
+        evidencia: file
+      });
+    }
   }
 }

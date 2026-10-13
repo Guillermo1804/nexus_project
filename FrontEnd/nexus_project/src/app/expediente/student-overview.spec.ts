@@ -5,6 +5,8 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { StudentOverviewComponent } from './student-overview';
 import { StudentOverview } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
+import { TokenService } from '../core/auth/token.service';
+import { signal } from '@angular/core';
 
 const mockOverview: StudentOverview = {
   id: 10,
@@ -211,14 +213,31 @@ describe('StudentOverviewComponent', () => {
   let fixture: ComponentFixture<StudentOverviewComponent>;
   let http: HttpTestingController;
   let authService: AuthService;
+  let tokenService: TokenService;
 
   beforeEach(async () => {
+    const mockTokenService = {
+      access: signal('mock-access-token'),
+      refresh: signal('mock-refresh-token'),
+      user: signal({
+        id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
+        role: 'STUDENT', roles: ['STUDENT'], permissions: [], student_id: 10, grammatical_gender: 'FEMININE'
+      }),
+      sessionExpired: signal(false),
+      setSession: jasmine.createSpy('setSession'),
+      clearSession: jasmine.createSpy('clearSession'),
+      handleSessionExpired: jasmine.createSpy('handleSessionExpired'),
+      dismissSessionExpired: jasmine.createSpy('dismissSessionExpired'),
+      persist: jasmine.createSpy('persist'),
+    };
+
     await TestBed.configureTestingModule({
       imports: [StudentOverviewComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: TokenService, useValue: mockTokenService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -232,6 +251,7 @@ describe('StudentOverviewComponent', () => {
 
     http = TestBed.inject(HttpTestingController);
     authService = TestBed.inject(AuthService);
+    tokenService = TestBed.inject(TokenService);
     fixture = TestBed.createComponent(StudentOverviewComponent);
     component = fixture.componentInstance;
   });
@@ -345,14 +365,10 @@ describe('StudentOverviewComponent', () => {
   });
 
   it('allows registering a semester when user has semesters.manage permission', () => {
-    authService.user.set({
-      id: 99,
-      email: 'coordinator@nexus.edu',
-      first_name: 'Coord',
-      last_name: 'Nexus',
-      role: 'PROGRAM_COORDINATOR',
-      roles: ['PROGRAM_COORDINATOR'],
-      permissions: ['semesters.manage', 'students.create'],
+    tokenService.user.set({
+      id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
+      role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'], permissions: ['semesters.manage', 'students.create'],
+      student_id: 99, grammatical_gender: 'UNSPECIFIED'
     });
 
     fixture.detectChanges();
@@ -408,9 +424,10 @@ describe('StudentOverviewComponent', () => {
   });
 
   it('rejects a semester whose end date is before its start date accessibly', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
       role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'], permissions: ['semesters.manage'],
+      student_id: 99, grammatical_gender: 'UNSPECIFIED'
     });
     fixture.detectChanges();
     http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
@@ -431,10 +448,11 @@ describe('StudentOverviewComponent', () => {
   });
 
   it('no cancela los eventos del ratón dentro de los modales para que los campos reciban foco y el envío funcione', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
       role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'],
       permissions: ['semesters.manage', 'tutoring.create', 'academic.read.global', 'students.create'],
+      student_id: 99, grammatical_gender: 'UNSPECIFIED'
     });
     fixture.detectChanges();
     http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
@@ -469,10 +487,11 @@ describe('StudentOverviewComponent', () => {
   });
 
   it('sigue cerrando el modal al pulsar el fondo, no los controles de dentro', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
       role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'],
       permissions: ['semesters.manage', 'tutoring.create', 'academic.read.global', 'students.create'],
+      student_id: 99, grammatical_gender: 'UNSPECIFIED'
     });
     fixture.detectChanges();
     http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
@@ -501,17 +520,33 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
   let fixture: ComponentFixture<StudentOverviewComponent>;
   let http: HttpTestingController;
   let authService: AuthService;
+  let tokenService: TokenService;
 
-  const MOCK_TIMELINE = {
+  const mockTokenService = {
+    access: signal('mock-access-token'),
+    refresh: signal('mock-refresh-token'),
+    user: signal({
+      id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
+      role: 'STUDENT', roles: ['STUDENT'], permissions: [], student_id: 10, grammatical_gender: 'FEMININE'
+    }),
+    sessionExpired: signal(false),
+    setSession: jasmine.createSpy('setSession'),
+    clearSession: jasmine.createSpy('clearSession'),
+    handleSessionExpired: jasmine.createSpy('handleSessionExpired'),
+    dismissSessionExpired: jasmine.createSpy('dismissSessionExpired'),
+    persist: jasmine.createSpy('persist'),
+  };
+
+const MOCK_TIMELINE = {
     student: { id: 10, matricula: 'DOC-2026-010', nombre_completo: 'Laura Méndez' },
     semestres: [{
       id: 2,
       numero: 2,
       activo: true,
       eventos: [{
-        id: 'E-1',
+        id: 'E-9',
         tipo: 'EVIDENCIA',
-        fecha: '2026-09-10',
+        fecha: '2026-10-01',
         titulo: 'Certificado de asistencia',
         descripcion: '',
         archivo_url: 'https://example.org/evidence.pdf',
@@ -528,6 +563,7 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: TokenService, useValue: mockTokenService },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ id: '10' }) } },
@@ -537,6 +573,7 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
 
     http = TestBed.inject(HttpTestingController);
     authService = TestBed.inject(AuthService);
+    tokenService = TestBed.inject(TokenService);
     fixture = TestBed.createComponent(StudentOverviewComponent);
     component = fixture.componentInstance;
   });
@@ -583,9 +620,10 @@ describe('StudentOverviewComponent, refresco automático tras guardar', () => {
   });
 
   it('vuelve a pedir la línea de tiempo aunque ya se haya cargado', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
       role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'], permissions: ['semesters.manage'],
+      student_id: 99, grammatical_gender: 'UNSPECIFIED'
     });
     cargarInicial();
 
@@ -645,6 +683,7 @@ describe('StudentOverviewComponent, estado vencido derivado y aviso flotante', (
   let fixture: ComponentFixture<StudentOverviewComponent>;
   let http: HttpTestingController;
   let authService: AuthService;
+  let tokenService!: TokenService;
 
   const OVERVIEW_URL = 'http://localhost:8000/api/v1/students/10/overview/';
   const ACUERDO_VENCIDO = {
@@ -816,9 +855,9 @@ describe('StudentOverviewComponent, estado vencido derivado y aviso flotante', (
   });
 
   it('al actualizar el estado, el resumen refleja de inmediato el estado recalculado por el servidor', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
-      role: 'STUDENT', roles: ['STUDENT'], permissions: [],
+      role: 'STUDENT', roles: ['STUDENT'], permissions: [], student_id: 10, grammatical_gender: 'FEMININE'
     });
     cargarCon([ACUERDO_ACTIVO]);
 
@@ -846,9 +885,10 @@ describe('StudentOverviewComponent, estado vencido derivado y aviso flotante', (
   });
 
   it('una respuesta vieja de acuerdos no pisa el estado recién refrescado', () => {
-    authService.user.set({
+    tokenService.user.set({
       id: 30, email: 'laura@nexus.edu', first_name: 'Laura', last_name: 'Méndez',
       role: 'STUDENT', roles: ['STUDENT'], permissions: [],
+      student_id: 10, grammatical_gender: 'FEMININE'
     });
     cargarCon([ACUERDO_ACTIVO]);
 

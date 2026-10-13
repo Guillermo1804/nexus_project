@@ -12,6 +12,9 @@ import { getRoleLabelByGender } from '../shared/presentation/role-labels';
 /** Mirrors the `allowedRoles` of the agreements route so the link never leads to a redirect. */
 const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
 
+/** Roles que pueden ver la sección de producción científica (publicaciones). */
+const ACADEMIC_OUTPUT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
+
 /** Techo de la escala global de movimiento: la animación de apertura del menú. */
 const MENU_ANIMATION_MS = 220;
 
@@ -41,10 +44,10 @@ export class AppShell implements OnInit {
    * lista de estudiantes de Inicio, porque su expediente depende de a quién consultan.
    */
   protected readonly canOpenOwnRecord = computed(() => {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return user?.role === 'STUDENT' && !!user.student_id;
   });
-  protected readonly ownRecordId = computed(() => this.auth.user()?.student_id ?? null);
+  protected readonly ownRecordId = computed(() => this.auth.user?.student_id ?? null);
 
   protected isLeaving = false;
 
@@ -59,6 +62,7 @@ export class AppShell implements OnInit {
     const url = this.router.url.split('?')[0];
     if (url === '/home') return 'Inicio';
     if (url === '/acuerdos') return 'Acuerdos';
+    if (url.startsWith('/students/') && url.includes('/academic-output')) return 'Producción Científica';
     if (url.startsWith('/expediente/')) return 'Expediente';
     if (url === '/coordinator/students/new') return 'Registrar estudiante';
     if (url === '/coordinator/committee') return 'Comité';
@@ -77,12 +81,12 @@ export class AppShell implements OnInit {
   }
 
   protected userName(): string {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return user ? `${user.first_name} ${user.last_name}`.trim() || user.email : '';
   }
 
   protected roleLabel(): string {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return getRoleLabelByGender(user?.role, user?.grammatical_gender);
   }
 
@@ -102,12 +106,17 @@ export class AppShell implements OnInit {
   protected hasVencidos(): boolean { return (this.alerts()?.vencidos_count ?? 0) > 0; }
 
   protected isSystemAdmin(): boolean {
-    return this.auth.user()?.role === 'SYSTEM_ADMIN';
+    return this.auth.user?.role === 'SYSTEM_ADMIN';
   }
 
   protected canViewAgreements(): boolean {
-    const role = this.auth.user()?.role;
-    return !!role && AGREEMENT_ROLES.includes(role);
+    const role = this.auth.user?.role;
+    return !!role && AGREEMENT_ROLES.includes(role as UserRole);
+  }
+
+  protected canViewAcademicOutput(): boolean {
+    const role = this.auth.user?.role;
+    return !!role && ACADEMIC_OUTPUT_ROLES.includes(role as UserRole);
   }
 
   protected logout(): void {

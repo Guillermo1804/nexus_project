@@ -19,6 +19,7 @@ from .models import (
     CustomUser,
     OtherProduct,
     Publication,
+    PublicationStatus,
     ResearchStay,
     Semester,
     Student,
@@ -30,6 +31,37 @@ from .models import (
     Evidence,
 )
 from .permissions import permissions_for_user
+
+
+class PublicationSerializer(serializers.ModelSerializer):
+    autores = serializers.CharField(source='autores_texto')
+    revista = serializers.CharField(source='revista_editorial')
+    doi = serializers.CharField(source='doi_url', allow_blank=True, required=False)
+
+    class Meta:
+        model = Publication
+        fields = (
+            'id', 'student', 'semester', 'titulo', 'autores', 'tipo', 'revista',
+            'estado', 'fecha_publicacion', 'doi', 'evidencia', 'created_at',
+        )
+        read_only_fields = ('id', 'created_at')
+
+    def validate(self, attrs):
+        estado = attrs.get('estado', getattr(self.instance, 'estado', None))
+        # map from attributes possibly still in db names
+        doi = attrs.get('doi_url', attrs.get('doi', getattr(self.instance, 'doi_url', '') if self.instance else ''))
+        evidencia = attrs.get('evidencia', getattr(self.instance, 'evidencia', None))
+        if estado in (PublicationStatus.ACEPTADO, PublicationStatus.PUBLICADO):
+            if not doi and not evidencia:
+                raise serializers.ValidationError(
+                    {'doi': 'Debe proporcionar DOI o evidencia para un artículo aceptado o publicado.'}
+                )
+        fecha_publicacion = attrs.get('fecha_publicacion', getattr(self.instance, 'fecha_publicacion', None))
+        if fecha_publicacion and fecha_publicacion > timezone.localdate():
+            raise serializers.ValidationError(
+                {'fecha_publicacion': 'La fecha de publicación no puede ser futura.'}
+            )
+        return attrs
 
 
 INVALID_CREDENTIALS = 'Correo o contrasena incorrectos.'
@@ -450,7 +482,7 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
                 'tipo': 'PUBLICACION',
                 'titulo': pub.titulo,
                 'fecha': str(pub.fecha_publicacion) if pub.fecha_publicacion else '',
-                'detalle': f"{pub.tipo} - {pub.revista_editorial}",
+                'detalle': f"{pub.tipo} - {pub.revista}",
             })
         for ev in list(student.academicevent_set.all())[:3]:
             activities.append({

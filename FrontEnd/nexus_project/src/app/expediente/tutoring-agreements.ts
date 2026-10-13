@@ -61,7 +61,7 @@ export class TutoringAgreementsComponent implements OnChanges {
   /** HU-13: solo el responsable puede avanzar el estado. */
   protected puedeActualizarEstado(agreement: Pick<Agreement, 'responsable' | 'estado' | 'is_vencido'>): boolean {
     if (agreement.is_vencido) return false;
-    const userId = this.auth.user()?.id;
+    const userId = this.auth.user?.id;
     if (!userId || agreement.responsable !== userId) return false;
     return this.siguienteEstado(agreement.estado) != null;
   }
@@ -180,7 +180,7 @@ export class TutoringAgreementsComponent implements OnChanges {
     const options = this.responsibleOptions;
     if (!options.length) return;
     if (current && options.some((o) => o.id === current)) return;
-    const me = this.auth.user()?.id;
+    const me = this.auth.user?.id;
     const preferred = (me && options.find((o) => o.id === me)) || options[0];
     this.form.controls.responsable.setValue(preferred.id);
   }

@@ -26,6 +26,7 @@ import {
   ThesisProgress,
   CreateThesisProgressData,
   TimelineResponse,
+  Publication,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -137,5 +138,14 @@ export class AcademicService {
 
   linkEvidence(data: EvidenceLinkData): Observable<Evidence> {
     return this.http.post<Evidence>(`${API}/evidence/`, data);
+  }
+
+  getPublications(studentId: number): Observable<PaginatedResponse<Publication>> {
+    return this.http.get<PaginatedResponse<Publication>>(`${API}/academic-output/publications/?student=${studentId}`);
+  }
+
+  createPublication(studentId: number, data: Partial<Publication>): Observable<Publication> {
+    const payload = { ...data, student: studentId };
+    return this.http.post<Publication>(`${API}/academic-output/publications/`, payload);
   }
 }

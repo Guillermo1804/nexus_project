@@ -401,7 +401,7 @@ export class AgreementsListComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private cargarEstudiantes(): void {
-    const user = this.auth.user();
+    const user = this.auth.user;
     if (!user) return;
 
     if (user.role === 'STUDENT' && user.student_id) {

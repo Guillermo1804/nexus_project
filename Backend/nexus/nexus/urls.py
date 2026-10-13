@@ -44,6 +44,7 @@ from .views import (
     EvidenceViewSet,
     ThesisProgressViewSet,
     TimelineView,
+    PublicationViewSet,
 )
 from .views_health import health_check
 
@@ -53,6 +54,7 @@ router.register(r'tutoring-sessions', TutoringSessionViewSet, basename='tutoring
 router.register(r'agreements', AgreementViewSet, basename='agreements')
 router.register(r'evidence', EvidenceViewSet, basename='evidence')
 router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
+router.register(r'academic-output/publications', PublicationViewSet, basename='publications')
 
 urlpatterns = [
     path('health/', health_check, name='health-check'),

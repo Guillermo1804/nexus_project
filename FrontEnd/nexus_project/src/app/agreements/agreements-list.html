@@ -30,7 +30,7 @@
     <div class="filters-grid">
       <label>
         <span>Estudiante</span>
-        <select class="input-field" [(ngModel)]="filtroStudent" (ngModelChange)="onStudentChange()" [disabled]="auth.user()?.role === 'STUDENT'">
+        <select class="input-field" [(ngModel)]="filtroStudent" (ngModelChange)="onStudentChange()" [disabled]="auth.user?.role === 'STUDENT'">
           <option value="">Todos</option>
           @for (est of students; track est.id) {
             <option [value]="est.id">{{ est.matricula ? est.matricula + ' — ' : '' }}{{ est.nombre_completo }}</option>
