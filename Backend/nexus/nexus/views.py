@@ -1,67 +1,746 @@
-from rest_framework import viewsets, generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import Publication, Student, Agreement
-from .serializers import PublicationSerializer, StudentSerializer, AgreementSerializer
-from .permissions import can_access_student
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-class GlobalAcademicOverviewView(generics.RetrieveAPIView):
+from django.db import connection, transaction
+from django.db.models import Case, CharField, IntegerField, Prefetch, Q, Value, When
+from django.utils import timezone
+
+from .models import (
+    AcademicCommittee,
+    AcademicEvent,
+    Agreement,
+    AgreementAuditLog,
+    CommitteeMembership,
+    AdminAuditLog,
+    CustomUser,
+    Publication,
+    ResearchStay,
+    Semester,
+    Student,
+    ThesisProgress,
+    TutoringSession,
+    TutoringParticipant,
+    TutoringObservation,
+    Evidence,
+)
+from .services.alert_service import agreement_alerts_for_user
+from .text_utils import Unaccent, remove_accents
+from .permissions import (
+    CanAssignRoles,
+    CanCreateTutoring,
+    CanManageCommittee,
+    CanManageSemesters,
+    CanReadGlobalAcademics,
+    permissions_for_user,
+)
+from .services import TimelineService
+from .serializers import (
+    LoginSerializer,
+    InstitutionalUserCreateSerializer,
+    CommitteeAssignmentReadSerializer,
+    CommitteeAssignmentSerializer,
+    AdminAuditLogSerializer,
+    RoleAssignmentSerializer,
+    SemesterSerializer,
+    StudentCreateSerializer,
+    StudentRecordSerializer,
+    TutoringSessionCreateSerializer,
+    TutoringSessionSerializer,
+    TutoringParticipantSerializer,
+    TutoringObservationSerializer,
+    AgreementSerializer,
+    AgreementAuditLogSerializer,
+    AgreementStatusSerializer,
+    UserSerializer,
+    EvidenceSerializer,
+    ThesisProgressSerializer,
+)
+
+
+class NexusPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class AgreementOffsetPagination(LimitOffsetPagination):
+    """Paginación por offset (`limit`/`offset`) para el scroll infinito de acuerdos.
+
+    La respuesta mantiene la misma forma `{count, next, previous, results}` que
+    PageNumberPagination, así que los consumidores actuales no notan el cambio;
+    los enlaces `next`/`previous` llevan los propios `limit`/`offset`.
+    """
+
+    default_limit = 10
+    max_limit = 100
+
+
+def paginated_response(request, queryset, serializer_class):
+    paginator = NexusPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    return paginator.get_paginated_response(serializer_class(page, many=True).data)
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {'access': str(refresh.access_token), 'refresh': str(refresh), 'user': UserSerializer(user).data},
+            status=status.HTTP_200_OK,
+        )
+
+
+class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request):
+        refresh = request.data.get('refresh')
+        if not refresh:
+            return Response({'detail': 'Refresh token requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            RefreshToken(refresh).blacklist()
+        except TokenError:
+            return Response({'detail': 'Refresh token inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'logout': True}, status=status.HTTP_200_OK)
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(UserSerializer(request.user).data)
+
+
+class UserRoleListView(APIView):
+    permission_classes = [CanAssignRoles | CanManageCommittee]
+
+    def get(self, request):
+        users = CustomUser.objects.order_by('email')
+        return paginated_response(request, users, UserSerializer)
+
+
+class UserRoleUpdateView(APIView):
+    permission_classes = [CanAssignRoles]
+
+    @transaction.atomic
+    def patch(self, request, user_id):
+        user = CustomUser.objects.filter(pk=user_id).first()
+        if user is None:
+            return Response({'detail': 'Usuario no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.role == CustomUser.Role.SYSTEM_ADMIN:
+            return Response(
+                {'detail': 'No se puede modificar el rol del administrador del sistema principal.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = RoleAssignmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_role = serializer.validated_data['role']
+        if new_role == CustomUser.Role.SYSTEM_ADMIN:
+            return Response(
+                {'detail': 'No está permitido promover usuarios al rol de administrador del sistema.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_role == CustomUser.Role.STUDENT and user.role != CustomUser.Role.STUDENT:
+            return Response(
+                {'detail': 'Un usuario que no sea estudiante no puede ser asignado como estudiante.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous_role = user.role
+        with transaction.atomic():
+            user.role = new_role
+            user.save(update_fields=['role', 'updated_at'])
+            AdminAuditLog.objects.create(
+                action=AdminAuditLog.Action.ROLE_ASSIGNED,
+                actor=request.user,
+                target_user=user,
+                details={'previous_role': previous_role, 'new_role': user.role},
+            )
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
+
+class InstitutionalUserCreateView(APIView):
+    permission_classes = [CanAssignRoles]
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = InstitutionalUserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        AdminAuditLog.objects.create(
+            action=AdminAuditLog.Action.INSTITUTIONAL_USER_CREATED,
+            actor=request.user,
+            target_user=user,
+            details={'role': user.role},
+        )
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+class CommitteeAssignmentListCreateView(APIView):
+    permission_classes = [CanManageCommittee]
+
+    def get(self, request):
+        committees = AcademicCommittee.objects.select_related('student').prefetch_related('memberships__user').order_by('student__matricula')
+        return paginated_response(request, committees, CommitteeAssignmentReadSerializer)
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = CommitteeAssignmentReadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        committee = serializer.save()
+        for membership in committee.memberships.all():
+            AdminAuditLog.objects.create(
+                action=AdminAuditLog.Action.COMMITTEE_ASSIGNED,
+                actor=request.user,
+                target_user=membership.user,
+                committee_assignment=membership,
+                details={'student_id': committee.student_id, 'role': membership.role},
+            )
+        return Response(CommitteeAssignmentReadSerializer(committee).data, status=status.HTTP_201_CREATED)
+
+
+class AdminStudentListView(APIView):
+    permission_classes = [CanManageCommittee]
+
+    def get(self, request):
+        students = Student.objects.order_by('matricula')
+        return paginated_response(request, students, StudentRecordSerializer)
+
+class CommitteeAssignmentUpdateView(APIView):
+    permission_classes = [CanManageCommittee]
+
+    @transaction.atomic
+    def delete(self, request, assignment_id):
+        membership = CommitteeMembership.objects.filter(pk=assignment_id).first()
+        if membership is None:
+            return Response({'detail': 'Membresía no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+        membership.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminAuditLogListView(APIView):
+    permission_classes = [CanAssignRoles]
+
+    def get(self, request):
+        logs = AdminAuditLog.objects.select_related('actor', 'target_user').order_by('-created_at')
+        return paginated_response(request, logs, AdminAuditLogSerializer)
+
+
+class StudentRecordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, student_id):
+        if request.user.role == CustomUser.Role.SYSTEM_ADMIN:
+            return Response({'detail': 'No tiene permisos para consultar expedientes académicos.'}, status=status.HTTP_403_FORBIDDEN)
+
+        permissions = permissions_for_user(request.user)
+        students = Student.objects.filter(pk=student_id)
+        if 'academic.read.global' not in permissions:
+            allowed = Q()
+            if 'records.read.own' in permissions:
+                allowed |= Q(user=request.user)
+            if 'records.read.assigned' in permissions:
+                allowed |= Q(academic_committee__memberships__user=request.user)
+            students = students.filter(allowed) if allowed else students.none()
+
+        student = students.select_related('user').prefetch_related(
+            Prefetch('semesters',queryset=Semester.objects.prefetch_related('tutoring_sessions').order_by('numero'),),
+            Prefetch('academic_committee__memberships', queryset=CommitteeMembership.objects.select_related('user')),
+            Prefetch('tutoring_sessions', queryset=TutoringSession.objects.order_by('-fecha_sesion', '-id')),
+            Prefetch(
+                'agreements',
+                queryset=Agreement.objects.filter(
+                    estado__in=[Agreement.Status.PENDING, Agreement.Status.IN_PROGRESS]
+                ).select_related('responsable').order_by('fecha_limite'),
+            ),
+            Prefetch('thesis_progresses', queryset=ThesisProgress.objects.order_by('-fecha_registro', '-id')),
+            Prefetch('publication_set', queryset=Publication.objects.order_by('-fecha_publicacion', '-id')),
+            Prefetch('academicevent_set', queryset=AcademicEvent.objects.order_by('-fecha_presentacion', '-id')),
+            Prefetch('researchstay_set', queryset=ResearchStay.objects.order_by('-fecha_inicio', '-id')),
+        ).first()
+        if student is None:
+            return Response({'detail': 'Expediente no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(StudentRecordSerializer(student).data)
+
+
+class StudentViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    permission_classes = [IsAuthenticated]
+    serializer_class = StudentRecordSerializer
+    pagination_class = NexusPagination
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StudentCreateSerializer
+        return StudentRecordSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Student.objects.none()
+        permissions = permissions_for_user(user)
+        if 'academic.read.global' in permissions:
+            return Student.objects.all().order_by('id')
+        elif 'records.read.assigned' in permissions:
+            return Student.objects.filter(
+                academic_committee__memberships__user=user,
+            ).distinct().order_by('id')
+        elif 'records.read.own' in permissions:
+            return Student.objects.filter(user=user).order_by('id')
+        return Student.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        if 'students.create' not in permissions_for_user(request.user):
+            return Response({'detail': 'No tiene permisos para crear estudiantes.'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        return Response(StudentRecordSerializer(student).data, status=status.HTTP_201_CREATED)
+
+
+def can_access_student(user, student, write=False):
+    if student.user_id == user.id:
+        return not write or user.role == CustomUser.Role.STUDENT
+    if not write and 'academic.read.global' in permissions_for_user(user):
+        return True
+    return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
+
+
+def buscar_en_descripcion(queryset, termino):
+    """Filtra `queryset` por texto sobre la descripción, sin distinguir acentos ni mayúsculas.
+
+    SQLite sólo ignora mayúsculas en ASCII, así que sin normalizar «analisis» no
+    encontraría «análisis»; en otros motores `unaccent` no existe y cae al icontains.
+    """
+    limpio = remove_accents(termino.strip())
+    if not limpio:
+        return queryset
+    if connection.vendor != 'sqlite':
+        return queryset.filter(descripcion__icontains=limpio)
+    return queryset.annotate(
+        descripcion_plana=Unaccent('descripcion', output_field=CharField())
+    ).filter(descripcion_plana__icontains=limpio)
+
+
+class TimelineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         student_id = request.query_params.get('student')
         if not student_id:
-            return Response({'error': 'student parameter is required'}, status=400)
+            return Response({'student': ['Este parámetro es obligatorio.']}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return Response({'error': 'Student not found'}, status=404)
+            student = Student.objects.filter(pk=student_id).first()
+        except (TypeError, ValueError):
+            student = None
+        if student is None or not can_access_student(request.user, student):
+            return Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
-        publications = Publication.objects.filter(student=student)
-        agreements = Agreement.objects.filter(student=student)
-        tutoring_sessions = TutoringSession.objects.filter(student=student)
-
-        data = {
-            'student': StudentSerializer(student).data,
-            'publications': PublicationSerializer(publications, many=True).data,
-            'agreements': AgreementSerializer(agreements, many=True).data,
-            'tutoring_sessions': TutoringSessionSerializer(tutoring_sessions, many=True).data,
-        }
-
-        return Response(data)
+        return Response({
+            'student': {
+                'id': student.id,
+                'matricula': student.matricula,
+                'nombre_completo': student.nombre_completo,
+            },
+            'semestres': TimelineService(student).build(base_url=request.build_absolute_uri('/')),
+        })
 
 
+class TutoringSessionViewSet(viewsets.ModelViewSet):
+    permission_classes = [CanCreateTutoring]
+    pagination_class = NexusPagination
 
-
-class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        student_id = self.request.query_params.get('student')
-        if student_id:
-            return self.queryset.filter(id=student_id)
-        return self.queryset
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [can_access_student(write=True)]
-        return super().get_permissions()
-
-class PublicationViewSet(viewsets.ModelViewSet):
-    queryset = Publication.objects.all()
-    serializer_class = PublicationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        student_id = self.request.query_params.get('student')
-        if student_id:
-            return self.queryset.filter(student_id=student_id)
-        return self.queryset
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        response_data = TutoringSessionSerializer(
+            serializer.instance,
+            context=self.get_serializer_context(),
+        ).data
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [can_access_student(write=True)]
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
         return super().get_permissions()
+
+    def get_serializer_class(self):
+        return TutoringSessionCreateSerializer if self.action in ('create', 'update', 'partial_update') else TutoringSessionSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if 'academic.read.global' in permissions_for_user(user):
+            return TutoringSession.objects.all().order_by(
+                '-fecha_sesion',
+                '-id',
+            )
+
+        return TutoringSession.objects.filter(
+            Q(student__user=user) |
+            Q(student__academic_committee__memberships__user=user)
+        ).distinct().order_by('-fecha_sesion', '-id')
+
+    def perform_create(self, serializer):
+        student = serializer.validated_data['student']
+        if (
+            'academic.read.global' not in permissions_for_user(self.request.user)
+            and not can_access_student(self.request.user, student)
+        ):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('No puede registrar tutorías para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if not can_access_student(self.request.user, self.get_object().student, write=True):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('No puede modificar esta tutoría.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if not can_access_student(self.request.user, instance.student, write=True):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('No puede eliminar esta tutoría.')
+        instance.delete()
+
+    from rest_framework.decorators import action
+
+    @action(detail=True, methods=['get', 'post'], url_path='participants')
+    def participants(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(TutoringParticipantSerializer(session.participants.select_related('user'), many=True).data)
+        serializer = TutoringParticipantSerializer(data=request.data, context={'session': session})
+        serializer.is_valid(raise_exception=True)
+        participant = serializer.save(session=session)
+        return Response(TutoringParticipantSerializer(participant).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'post'], url_path='observations')
+    def observations(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(TutoringObservationSerializer(session.observations.select_related('autor'), many=True).data)
+        # Una tutoría que aún no ocurre no tiene minuta: documentarla sólo daría lugar a
+        # observaciones sobre una sesión que todavía no hay.
+        if session.fecha_sesion > timezone.localdate():
+            return Response(
+                {'detail': 'No se pueden registrar observaciones en una tutoría que aún no se ha realizado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = TutoringObservationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        observation = serializer.save(session=session, autor=request.user)
+        return Response(TutoringObservationSerializer(observation).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'post'], url_path='agreements')
+    def agreements(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(AgreementSerializer(session.agreements.select_related('responsable'), many=True).data)
+        serializer = AgreementSerializer(data=request.data, context={'session': session})
+        serializer.is_valid(raise_exception=True)
+        agreement = serializer.save(session=session, student=session.student, created_by=request.user)
+        # El alta también es un movimiento de la bitácora: sin ella el acuerdo aparecía
+        # recién creado con «Sin cambios registrados aún», como si le faltara información.
+        AgreementAuditLog.objects.create(
+            agreement=agreement, user=request.user, estado_anterior='',
+            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
+        )
+        return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
+
+
+class AgreementAlertsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student_id = request.query_params.get('student')
+        if student_id is not None:
+            try:
+                student_id = int(student_id)
+            except (TypeError, ValueError):
+                return Response({'student': ['Debe ser un identificador válido.']}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(agreement_alerts_for_user(request.user, student_id=student_id))
+
+
+class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AgreementSerializer
+    pagination_class = NexusPagination
+
+    @property
+    def paginator(self):
+        """Elige el esquema de paginación por petición.
+
+        Con `limit` u `offset` en la query se usa el esquema por offset (scroll
+        infinito); sin ellos se conserva la paginación por página (`page`,
+        `page_size`) para no romper a los consumidores existentes.
+        """
+        if not hasattr(self, '_paginator'):
+            query = self.request.query_params
+            if 'limit' in query or 'offset' in query:
+                self._paginator = AgreementOffsetPagination()
+            else:
+                self._paginator = NexusPagination()
+        return self._paginator
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Agreement.objects.all() if 'academic.read.global' in permissions_for_user(user) else Agreement.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        if responsable := self.request.query_params.get('responsable'):
+            queryset = queryset.filter(responsable_id=responsable)
+        if semester := self.request.query_params.get('semester'):
+            queryset = queryset.filter(session__semester_id=semester)
+        # Varios estados a la vez, como los filtros múltiples de la línea de tiempo.
+        if estados := self.request.query_params.get('estados'):
+            propios, vencidos = [], []
+            for estado in estados.split(','):
+                estado = estado.strip()
+                if estado == Agreement.Status.OVERDUE:
+                    vencidos.append(estado)
+                elif estado in Agreement.Status.values:
+                    propios.append(estado)
+            condiciones = Q()
+            if propios:
+                condiciones |= Q(estado__in=propios)
+            if vencidos:
+                # Vencido es un estado derivado: no concluido y con fecha ya pasada.
+                # Filtrar sólo por `estado` no basta, porque hay filas guardadas como
+                # VENCIDO y otras que únicamente lo cumplen por su fecha.
+                condiciones |= ~Q(estado=Agreement.Status.COMPLETED) & Q(fecha_limite__lt=timezone.localdate())
+            if condiciones:
+                queryset = queryset.filter(condiciones)
+        if estado := self.request.query_params.get('estado'):
+            if estado == Agreement.Status.OVERDUE:
+                queryset = queryset.exclude(estado=Agreement.Status.COMPLETED).filter(
+                    fecha_limite__lt=timezone.localdate()
+                )
+            else:
+                queryset = queryset.filter(estado=estado)
+        if self.request.query_params.get('vencido') == 'true':
+            queryset = queryset.exclude(estado=Agreement.Status.COMPLETED).filter(fecha_limite__lt=timezone.localdate())
+        if fecha_limite := self.request.query_params.get('fecha_limite'):
+            queryset = queryset.filter(fecha_limite=fecha_limite)
+        if fecha_desde := self.request.query_params.get('fecha_desde'):
+            queryset = queryset.filter(fecha_limite__gte=fecha_desde)
+        if fecha_hasta := self.request.query_params.get('fecha_hasta'):
+            queryset = queryset.filter(fecha_limite__lte=fecha_hasta)
+        if busqueda := self.request.query_params.get('busqueda'):
+            queryset = buscar_en_descripcion(queryset, busqueda)
+        return (
+            queryset.select_related('student', 'responsable', 'session', 'session__semester')
+            .distinct()
+            .order_by(*self.ordenamiento())
+        )
+
+    #: Campos por los que se puede ordenar, con sufijo para invertir.
+    ORDENES = {
+        'fecha_limite': 'fecha_limite',
+        'fecha_limite_desc': '-fecha_limite',
+        'estado': 'estado',
+        'estado_desc': '-estado',
+        'estudiante': 'student__nombre_completo',
+        'estudiante_desc': '-student__nombre_completo',
+        'responsable': 'responsable__first_name',
+        'responsable_desc': '-responsable__first_name',
+        'creado': 'created_at',
+        'creado_desc': '-created_at',
+    }
+
+    def ordenamiento(self):
+        """Ordena por el campo pedido y, si no es válido, por urgencia.
+
+        Antes sólo había fecha límite ascendente. Ordenando por esa fecha los
+        vencidos ya salían primero, pero era un efecto colateral invisible: la
+        pantalla no explicaba que estuviera ordenada por urgencia. `urgencia` lo
+        hace explícito y separa lo concluido, que ya no requiere acción.
+        """
+        clave = self.request.query_params.get('orden', '')
+        if clave in ('urgencia', 'urgencia_desc'):
+            # 0 = vencido, 1 = abierto, 2 = concluido. Dentro de cada grupo, la
+            # fecha límite más próxima primero: es la que marca la urgencia.
+            prioridad = Case(
+                When(estado=Agreement.Status.COMPLETED, then=Value(2)),
+                When(fecha_limite__lt=timezone.localdate(), then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+            if clave == 'urgencia_desc':
+                return (prioridad.desc(), '-fecha_limite', '-id')
+            return (prioridad, 'fecha_limite', 'id')
+        return (self.ORDENES.get(clave, 'fecha_limite'), 'id')
+
+    from rest_framework.decorators import action
+
+    @action(detail=True, methods=['patch'], url_path='status')
+    @transaction.atomic
+    def status(self, request, pk=None):
+        agreement = self.get_object()
+        if agreement.responsable_id != request.user.id:
+            return Response({'detail': 'Sólo el responsable puede actualizar el estado.'}, status=status.HTTP_403_FORBIDDEN)
+        if agreement.is_vencido:
+            return Response(
+                {'estado': ['Los acuerdos vencidos están cerrados y no permiten cambios.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = AgreementStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_status = serializer.validated_data['estado']
+        allowed = {Agreement.Status.PENDING: Agreement.Status.IN_PROGRESS, Agreement.Status.IN_PROGRESS: Agreement.Status.COMPLETED}
+        if allowed.get(agreement.estado) != new_status:
+            return Response({'estado': ['Transición de estado no permitida.']}, status=status.HTTP_400_BAD_REQUEST)
+        previous = agreement.estado
+        agreement.estado = new_status
+        agreement.fecha_conclusion = timezone.localdate() if new_status == Agreement.Status.COMPLETED else None
+        agreement.save(update_fields=['estado', 'fecha_conclusion', 'updated_at'])
+        AgreementAuditLog.objects.create(agreement=agreement, user=request.user, estado_anterior=previous,
+                                         estado_nuevo=new_status, comentario=serializer.validated_data['comentario'])
+        return Response(AgreementSerializer(agreement).data)
+
+    @action(detail=True, methods=['get'], url_path='audit-log')
+    def audit_log(self, request, pk=None):
+        return Response(AgreementAuditLogSerializer(self.get_object().audit_logs.select_related('user'), many=True).data)
+
+
+class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ThesisProgressSerializer
+    queryset = ThesisProgress.objects.select_related('student', 'semester', 'registrado_por')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar avances para este estudiante.')
+        serializer.save(registrado_por=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest(self, request):
+        from rest_framework.exceptions import PermissionDenied
+        student_id = request.query_params.get('student')
+        student = Student.objects.filter(pk=student_id).first() if student_id else None
+        if student is None:
+            return Response({'student': 'Debe indicar un estudiante válido.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not can_access_student(request.user, student):
+            raise PermissionDenied('No puede consultar avances para este estudiante.')
+        progress = self.get_queryset().filter(student=student).order_by('-created_at', '-id').first()
+        return Response(self.get_serializer(progress).data if progress else None)
+
+
+class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = EvidenceSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Evidence.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('No puede cargar evidencias para este estudiante.')
+        try:
+            with transaction.atomic():
+                evidence = serializer.save()
+        except Exception:
+            upload = serializer.validated_data.get('archivo_adjunto')
+            if upload and getattr(upload, 'name', None):
+                Evidence._meta.get_field('archivo_adjunto').storage.delete(upload.name)
+            raise
+        return evidence
+
+
+class GlobalAcademicOverviewView(APIView):
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        students = Student.objects.filter(estatus_activo=True).order_by('matricula')
+        return paginated_response(request, students, StudentRecordSerializer)
+
+
+class StudentSemesterListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _get_student_and_check_access(self, request, student_id, write=False):
+        student = Student.objects.filter(pk=student_id).first()
+        if not student:
+            return None, Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        user_perms = permissions_for_user(request.user)
+        if write:
+            if 'semesters.manage' not in user_perms:
+                return None, Response({'detail': 'No tiene permisos para administrar semestres.'}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            is_owner = student.user_id == request.user.id
+            is_assigned = CommitteeMembership.objects.filter(committee__student=student, user=request.user).exists()
+            can_read = 'academic.read.global' in user_perms or (is_owner and 'records.read.own' in user_perms) or (is_assigned and 'records.read.assigned' in user_perms)
+            if not can_read:
+                return None, Response({'detail': 'No tiene permisos para consultar semestres de este estudiante.'}, status=status.HTTP_403_FORBIDDEN)
+        return student, None
+
+    def get(self, request, student_id):
+        student, error_response = self._get_student_and_check_access(request, student_id, write=False)
+        if error_response:
+            return error_response
+        semesters = Semester.objects.filter(student=student).order_by('numero')
+        return Response(SemesterSerializer(semesters, many=True).data, status=status.HTTP_200_OK)
+
+    def post(self, request, student_id):
+        student, error_response = self._get_student_and_check_access(request, student_id, write=True)
+        if error_response:
+            return error_response
+        serializer = SemesterSerializer(data=request.data, context={'student': student})
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if serializer.validated_data.get('is_active', True):
+                Semester.objects.filter(student=student).update(is_active=False)
+            semester = serializer.save(student=student)
+        return Response(SemesterSerializer(semester).data, status=status.HTTP_201_CREATED)
+
+
+class StudentSemesterDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, student_id, semester_id):
+        user_perms = permissions_for_user(request.user)
+        if 'semesters.manage' not in user_perms:
+            return Response({'detail': 'No tiene permisos para modificar semestres.'}, status=status.HTTP_403_FORBIDDEN)
+        semester = Semester.objects.filter(pk=semester_id, student_id=student_id).first()
+        if not semester:
+            return Response({'detail': 'Semestre no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SemesterSerializer(semester, data=request.data, partial=True, context={'student': semester.student})
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if serializer.validated_data.get('is_active') is True:
+                Semester.objects.filter(student=semester.student).exclude(pk=semester.pk).update(is_active=False)
+            semester = serializer.save()
+        return Response(SemesterSerializer(semester).data, status=status.HTTP_200_OK)

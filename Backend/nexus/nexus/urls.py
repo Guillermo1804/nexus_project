@@ -23,14 +23,36 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
-    PublicationViewSet,
+    GlobalAcademicOverviewView,
+    AgreementAlertsView,
+    AgreementViewSet,
+    CommitteeAssignmentListCreateView,
+    CommitteeAssignmentUpdateView,
+    AdminStudentListView,
+    AdminAuditLogListView,
+    InstitutionalUserCreateView,
+    LoginView,
+    LogoutView,
+    MeView,
+    StudentRecordView,
+    StudentSemesterDetailView,
+    StudentSemesterListCreateView,
+    StudentViewSet,
+    TutoringSessionViewSet,
+    UserRoleListView,
+    UserRoleUpdateView,
+    EvidenceViewSet,
+    ThesisProgressViewSet,
+    TimelineView,
 )
 from .views_health import health_check
 
 router = DefaultRouter()
-
-
-router.register(r'academic-output/publications', PublicationViewSet, basename='publications')
+router.register(r'students', StudentViewSet, basename='students')
+router.register(r'tutoring-sessions', TutoringSessionViewSet, basename='tutoring-sessions')
+router.register(r'agreements', AgreementViewSet, basename='agreements')
+router.register(r'evidence', EvidenceViewSet, basename='evidence')
+router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
 
 urlpatterns = [
     path('health/', health_check, name='health-check'),
@@ -51,7 +73,9 @@ urlpatterns = [
     path('api/v1/students/<int:student_id>/semesters/', StudentSemesterListCreateView.as_view(), name='v1-student-semesters'),
     path('api/v1/students/<int:student_id>/semesters/<int:semester_id>/', StudentSemesterDetailView.as_view(), name='v1-student-semester-detail'),
     path('api/v1/tutoring/', TutoringSessionViewSet.as_view({'post': 'create'}), name='legacy-tutoring-create'),
-    
+    path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
+    path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
+    path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
 ]
 
 # Sin esta ruta, Django responde 404 a `/media/...` y la evidencia subida nunca se
