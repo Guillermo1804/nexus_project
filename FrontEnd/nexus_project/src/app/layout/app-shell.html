@@ -56,6 +56,12 @@
           </a>
         }
 
+        @if (canViewAcademicOutput()) {
+          <a routerLink="/students/{{ auth.user?.student_id }}/academic-output" routerLinkActive="active">
+            Producción Científica
+          </a>
+        }
+
         @if (auth.hasPermission('students.create')) {
           <a routerLink="/coordinator/students/new" routerLinkActive="active">Registrar estudiante</a>
         }

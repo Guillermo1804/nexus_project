@@ -1,0 +1,151 @@
+<<<<<<< HEAD
+<form [formGroup]="form" (ngSubmit)="submit()" class="publication-form" aria-label="Formulario de publicacion">
+  <div class="form-group">
+    <label for="titulo">Título <span class="required">*</span></label>
+    <input type="text" id="titulo" formControlName="titulo" class="form-control" placeholder="Título del artículo o publicación">
+    @if (form.get('titulo')!.invalid && form.get('titulo')!.touched) {
+      <div class="text-danger">El título es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="autores">Autores <span class="required">*</span></label>
+    <input type="text" id="autores" formControlName="autores" class="form-control" placeholder="Surname, A. Surname, B. ...">
+    @if (form.get('autores')!.invalid && form.get('autores')!.touched) {
+      <div class="text-danger">Los autores son obligatorios.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="tipo">Tipo de Publicación <span class="required">*</span></label>
+    <select id="tipo" formControlName="tipo" class="form-control">
+      <option value="">Seleccionar tipo...</option>
+      @for (type of publicationTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+      }
+    </select>
+    @if (form.get('tipo')!.invalid && form.get('tipo')!.touched) {
+      <div class="text-danger">El tipo de publicación es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="revista">Revista/Editorial <span class="required">*</span></label>
+    <input type="text" id="revista" formControlName="revista" class="form-control" placeholder="Nombre de la revista o libro">
+    @if (form.get('revista')!.invalid && form.get('revista')!.touched) {
+      <div class="text-danger">La revista/editorial es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="estado">Estado <span class="required">*</span></label>
+    <select id="estado" formControlName="estado" class="form-control">
+      @for (status of publicationStatuses; track status.value) {
+        <option [value]="status.value">{{ status.label }}</option>
+      }
+    </select>
+    @if (form.get('estado')!.invalid && form.get('estado')!.touched) {
+      <div class="text-danger">El estado es obligatorio.</div>
+    }
+    <small class="form-hint">Para ACEPTADO o PUBLICADO se requiere DOI o evidencia</small>
+  </div>
+
+  <div class="form-group">
+    <label for="fecha_publicacion">Fecha de Publicación/Envío</label>
+    <input type="date" id="fecha_publicacion" formControlName="fecha_publicacion" class="form-control" [max]="maxDate">
+    @if (form.get('fecha_publicacion')!.hasError('futureDate')) {
+      <div class="text-danger">La fecha no puede ser futura.</div>
+    }
+=======
+<form [formGroup]="publicationForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="titulo">Título</label>
+    <input type="text" id="titulo" formControlName="titulo" class="form-control">
+    <div *ngIf="publicationForm.get('titulo')!.invalid && publicationForm.get('titulo')!.touched" class="text-danger">
+      El título es obligatorio.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="autores">Autores</label>
+    <input type="text" id="autores" formControlName="autores" class="form-control">
+    <div *ngIf="publicationForm.get('autores')!.invalid && publicationForm.get('autores')!.touched" class="text-danger">
+      Los autores son obligatorios.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="tipo">Tipo de Publicación</label>
+    <select id="tipo" formControlName="tipo" class="form-control">
+      <option *ngFor="let type of publicationTypes" [value]="type.value">{{ type.label }}</option>
+    </select>
+    <div *ngIf="publicationForm.get('tipo')!.invalid && publicationForm.get('tipo')!.touched" class="text-danger">
+      El tipo de publicación es obligatorio.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="revista">Revista/Editorial</label>
+    <input type="text" id="revista" formControlName="revista" class="form-control">
+    <div *ngIf="publicationForm.get('revista')!.invalid && publicationForm.get('revista')!.touched" class="text-danger">
+      La revista/editorial es obligatoria.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="estado">Estado</label>
+    <select id="estado" formControlName="estado" class="form-control">
+      <option *ngFor="let status of publicationStatuses" [value]="status.value">{{ status.label }}</option>
+    </select>
+    <div *ngIf="publicationForm.get('estado')!.invalid && publicationForm.get('estado')!.touched" class="text-danger">
+      El estado es obligatorio.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="fecha_publicacion">Fecha de Publicación</label>
+    <input type="date" id="fecha_publicacion" formControlName="fecha_publicacion" class="form-control">
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+  </div>
+
+  <div class="form-group">
+    <label for="doi">DOI/URL</label>
+<<<<<<< HEAD
+    <input type="text" id="doi" formControlName="doi" class="form-control" placeholder="https://doi.org/...">
+    @if (form.get('doi')!.invalid && form.get('doi')!.touched) {
+      <div class="text-danger">El DOI/URL es obligatorio para artículos aceptados o publicados.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="evidencia">Evidencia (PDF, imagen, docx, zip)</label>
+    <input type="file" id="evidencia" (change)="onFileChange($event)" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.docx,.zip">
+    @if (form.errors?.['doiOrEvidence']) {
+      <div class="text-danger">{{ form.errors!['doiOrEvidence'] }}</div>
+    }
+    @if (uploadedEvidenceId) {
+      <small class="text-success">Evidencia subida (ID: {{ uploadedEvidenceId }})</small>
+    }
+    @if (selectedFile) {
+      <small class="text-info">Archivo seleccionado: {{ selectedFile.name }}</small>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="cancelar()"> Cancelar</button>
+    <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">
+      {{ saving ? 'Guardando...' : (isEditMode ? ' actualizar Publicacion' : 'Registrar Publicacion') }}
+    </button>
+  </div>
+=======
+    <input type="text" id="doi" formControlName="doi" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="evidencia">Evidencia</label>
+    <input type="file" id="evidencia" (change)="onFileChange($event)" class="form-control">
+  </div>
+
+  <button type="submit" class="btn btn-primary" [disabled]="publicationForm.invalid">Registrar Publicación</button>
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+</form>

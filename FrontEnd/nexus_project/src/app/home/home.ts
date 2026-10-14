@@ -56,7 +56,7 @@ export class Home implements OnInit {
       return;
     }
 
-    const role = this.auth.user()?.role;
+    const role = this.auth.user?.role;
     if (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || this.auth.hasPermission('records.read.assigned')) {
       this.studentService.loadStudents();
     }
@@ -67,12 +67,12 @@ export class Home implements OnInit {
   }
 
   protected getWelcomeText(): string {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return formatWelcomeGreeting(user?.first_name || user?.email, user?.grammatical_gender);
   }
 
   protected getRoleLabel(role?: string): string {
-    return getRoleLabelByGender(role, this.auth.user()?.grammatical_gender);
+    return getRoleLabelByGender(role, this.auth.user?.grammatical_gender);
   }
 
   protected loadDashboard(): void {

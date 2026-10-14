@@ -250,7 +250,7 @@ class Evidence(models.Model):
 	actividad_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
 	titulo = models.CharField(max_length=255)
 	descripcion = models.TextField(blank=True, default='')
-	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])])
+	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])]) 
 	enlace_url = models.CharField(max_length=500, blank=True, default='')
 	mime_type = models.CharField(max_length=100, blank=True, default='')
 	file_size_bytes = models.BigIntegerField(default=0)
@@ -278,14 +278,38 @@ class AcademicOutputBase(models.Model):
 		abstract = True
 
 
+class PublicationType(models.TextChoices):
+    JCR = 'JCR', 'JCR'
+    SCOPUS = 'SCOPUS', 'Scopus'
+    CONACYT = 'CONACYT', 'Conacyt'
+    OTRO_INDEXADO = 'OTRO_INDEXADO', 'Otro Indexado'
+
+
+class PublicationStatus(models.TextChoices):
+    PREPARACION = 'PREPARACION', 'Preparación'
+    ENVIADO = 'ENVIADO', 'Enviado'
+    EN_REVISION = 'EN_REVISION', 'En Revisión'
+    ACEPTADO = 'ACEPTADO', 'Aceptado'
+    PUBLICADO = 'PUBLICADO', 'Publicado'
+
+
 class Publication(AcademicOutputBase):
-	titulo = models.CharField(max_length=255)
-	autores_texto = models.TextField()
-	tipo = models.CharField(max_length=30)
-	revista_editorial = models.CharField(max_length=255)
-	estado = models.CharField(max_length=30, default='PREPARACION')
-	fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
-	doi_url = models.CharField(max_length=500, blank=True, default='')
+    titulo = models.CharField(max_length=255)
+    autores_texto = models.TextField()
+    tipo = models.CharField(max_length=50, choices=PublicationType.choices)
+    revista_editorial = models.CharField(max_length=255)
+    estado = models.CharField(max_length=30, choices=PublicationStatus.choices, default='PREPARACION')
+    fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
+    doi_url = models.CharField(blank=True, default='', max_length=500)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.estado in (PublicationStatus.ACEPTADO, PublicationStatus.PUBLICADO):
+            if not self.doi_url and not self.evidencia_id:
+                raise ValidationError({'doi_url': 'Debe proporcionar DOI o evidencia para un artículo aceptado o publicado.'})
+        if self.fecha_publicacion and self.fecha_publicacion > timezone.localdate():
+            raise ValidationError({'fecha_publicacion': 'La fecha de publicación no puede ser futura.'})
 
 
 class AcademicEvent(AcademicOutputBase):

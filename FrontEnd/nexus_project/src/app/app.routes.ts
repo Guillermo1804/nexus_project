@@ -9,10 +9,13 @@ import { Login } from './login/login';
 import { RegistroEstudiante } from './coordinador/registro-estudiante';
 import { StudentOverviewComponent } from './expediente/student-overview';
 import { AgreementsListComponent } from './agreements/agreements-list';
+import { PublicationsListComponent } from './academic-output/publications-list';
+import { PublicationFormComponent } from './academic-output/publication-form';
 import { AppShell } from './layout/app-shell';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
     path: '',
     component: AppShell,
@@ -25,6 +28,27 @@ export const routes: Routes = [
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },
       {
+        path: 'students/:id/academic-output',
+        component: PublicationsListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/new',
+        component: PublicationFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+<<<<<<< HEAD
+        path: 'students/:id/academic-output/edit/:publicationId',
+        component: PublicationFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
         path: 'acuerdos',
         component: AgreementsListComponent,
         canActivate: [authGuard, roleGuard],
@@ -63,6 +87,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

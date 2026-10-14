@@ -1,5 +1,5 @@
 <main class="home-page">
-  @if (auth.user(); as user) {
+  @if (auth.user; as user) {
     @if (agreementAlerts && agreementAlerts.total_alertas > 0 && !alertsDismissed) {
       <section class="agreement-alert-banner" role="region" aria-label="Alertas de compromisos académicos">
         <span class="alert-symbol" aria-hidden="true">!</span>

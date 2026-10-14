@@ -188,12 +188,13 @@ export class StudentOverviewComponent implements OnInit {
   protected readonly motivoSinSemestreActivo =
     'El avance de tesis se registra sobre el semestre en curso. Este expediente no tiene uno marcado como activo.';
   protected get canAccessStudent(): boolean {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return !!user && (user.student_id === this.studentId || this.overview?.student.user_id === user.id || this.auth.hasPermission('records.read.assigned'));
   }
   protected get canCreateAgreement(): boolean { return this.canAccessStudent && this.canCreateTutoring; }
   protected get canUploadEvidence(): boolean { return this.canAccessStudent; }
   protected get canRegisterThesisProgress(): boolean { return this.canAccessStudent; }
+  protected get canCreatePublication(): boolean { return this.canAccessStudent; }
   protected get initials(): string {
     return (this.overview?.nombre_completo ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }
@@ -307,7 +308,7 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string; fecha_limite: string; is_vencido: boolean }): boolean {
-    return !this.esVencido(agreement) && this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
+    return !this.esVencido(agreement) && this.auth.user?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
   }
   protected siguienteEstado(estado: string): 'EN_PROCESO' | 'CONCLUIDO' | null {
     return estado === 'PENDIENTE' ? 'EN_PROCESO' : estado === 'EN_PROCESO' ? 'CONCLUIDO' : null;

@@ -59,6 +59,7 @@ from .serializers import (
     UserSerializer,
     EvidenceSerializer,
     ThesisProgressSerializer,
+    PublicationSerializer,
 )
 
 
@@ -744,3 +745,52 @@ class StudentSemesterDetailView(APIView):
                 Semester.objects.filter(student=semester.student).exclude(pk=semester.pk).update(is_active=False)
             semester = serializer.save()
         return Response(SemesterSerializer(semester).data, status=status.HTTP_200_OK)
+
+def can_access_student(user, student, write=False):
+    if student.user_id == user.id:
+        return not write or user.role == CustomUser.Role.STUDENT
+    if not write and 'academic.read.global' in permissions_for_user(user):
+        return True
+    return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
+
+
+<<<<<<< HEAD
+class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+=======
+class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+    permission_classes = [IsAuthenticated]
+    serializer_class = PublicationSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Publication.objects.all() if 'academic.read.global' in permissions_for_user(user) else Publication.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar publicaciones para este estudiante.')
+        serializer.save()
+<<<<<<< HEAD
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        publication = self.get_object()
+        if not can_access_student(self.request.user, publication.student, write=True):
+            raise PermissionDenied('No puede modificar esta publicación.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_access_student(self.request.user, instance.student, write=True):
+            raise PermissionDenied('No puede eliminar esta publicación.')
+        instance.delete()
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f

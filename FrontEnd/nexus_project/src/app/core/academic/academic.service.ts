@@ -26,6 +26,7 @@ import {
   ThesisProgress,
   CreateThesisProgressData,
   TimelineResponse,
+  Publication,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -138,4 +139,35 @@ export class AcademicService {
   linkEvidence(data: EvidenceLinkData): Observable<Evidence> {
     return this.http.post<Evidence>(`${API}/evidence/`, data);
   }
+
+  getPublications(studentId: number): Observable<PaginatedResponse<Publication>> {
+    return this.http.get<PaginatedResponse<Publication>>(`${API}/academic-output/publications/?student=${studentId}`);
+  }
+
+  createPublication(studentId: number, data: Partial<Publication>): Observable<Publication> {
+    const payload = { ...data, student: studentId };
+    return this.http.post<Publication>(`${API}/academic-output/publications/`, payload);
+  }
+<<<<<<< HEAD
+
+  updatePublication(publicationId: number, data: Partial<Publication>): Observable<Publication> {
+    return this.http.patch<Publication>(`${API}/academic-output/publications/${publicationId}/`, data);
+  }
+
+  deletePublication(publicationId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/publications/${publicationId}/`);
+  }
+
+  uploadPublicationEvidence(studentId: number, semesterId: number | null, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    if (semesterId) form.append('semester', String(semesterId));
+    form.append('tipo', 'ARCHIVO_LOCAL');
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 }
