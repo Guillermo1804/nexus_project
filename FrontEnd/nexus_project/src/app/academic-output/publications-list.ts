@@ -1,22 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { ActivatedRoute, Router } from '@angular/router';
 import { AcademicService } from '../core/academic/academic.service';
 import { Publication, PaginatedResponse } from '../core/academic/academic.models';
 import { ToastService } from '../shared/toast.service';
-=======
-import { ActivatedRoute } from '@angular/router';
-import { AcademicService } from '../core/academic/academic.service';
-import { Publication, PaginatedResponse } from '../core/academic/academic.models';
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
-import { ActivatedRoute } from '@angular/router';
-import { AcademicService } from '../core/academic/academic.service';
-import { Publication, PaginatedResponse } from '../core/academic/academic.models';
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 
 @Component({
   selector: 'app-publications-list',
@@ -27,8 +15,6 @@ import { Publication, PaginatedResponse } from '../core/academic/academic.models
 export class PublicationsListComponent implements OnInit {
   publications: Publication[] = [];
   studentId = 0;
-<<<<<<< HEAD
-<<<<<<< HEAD
   loading = false;
 
   constructor(
@@ -40,21 +26,6 @@ export class PublicationsListComponent implements OnInit {
 
   ngOnInit(): void {
     const studentIdParam = this.route.snapshot.paramMap.get('id');
-=======
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-
-  constructor(
-    private academicService: AcademicService,
-    private route: ActivatedRoute
-  ) {}
-
-  ngOnInit(): void {
-    const studentIdParam = this.route.snapshot.paramMap.get('studentId');
-<<<<<<< HEAD
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
     if (studentIdParam) {
       this.studentId = +studentIdParam;
     }
@@ -63,8 +34,6 @@ export class PublicationsListComponent implements OnInit {
 
   loadPublications(): void {
     if (this.studentId > 0) {
-<<<<<<< HEAD
-<<<<<<< HEAD
       this.loading = true;
       this.academicService.getPublications(this.studentId).subscribe({
         next: (data: PaginatedResponse<Publication>) => {
@@ -74,25 +43,14 @@ export class PublicationsListComponent implements OnInit {
         error: (err: unknown) => {
           console.error('Error al cargar las publicaciones', err);
           this.loading = false;
-=======
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-      this.academicService.getPublications(this.studentId).subscribe({
-        next: (data: PaginatedResponse<Publication>) => {
-          this.publications = data.results;
-        },
-        error: (err: unknown) => {
-          console.error('Error al cargar las publicaciones', err);
-<<<<<<< HEAD
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
         }
       });
     }
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+  newPublication(): void {
+    this.router.navigate(['/students', this.studentId, 'academic-output', 'new']);
+  }
 
   editPublication(publication: Publication): void {
     this.router.navigate(['/students', this.studentId, 'academic-output', 'edit', publication.id]);
@@ -134,12 +92,4 @@ export class PublicationsListComponent implements OnInit {
       default: return estado;
     }
   }
-
-  newPublication(): void {
-    this.router.navigate(['/students', this.studentId, 'academic-output', 'new']);
-  }
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 }

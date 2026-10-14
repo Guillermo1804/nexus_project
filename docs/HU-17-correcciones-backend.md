@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 # HU-17 — Plan de Implementación: Registrar Publicaciones Científicas
 
 ## Metadatos
@@ -122,9 +120,6 @@
 - [ ] Validación de evidencia/DOI obligatoria para artículos aceptados/publicados.
 - [ ] Pruebas unitarias backend (`test_hu17.py`) y frontend aprobadas al 100%.
 - [ ] Integración en la pestaña "Producción Científica" del expediente del estudiante.
-=======
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 # HU-17 — Correcciones de Backend y Respaldo de Funcionalidad Existente
 
 **Fecha:** 12 de octubre de 2026  
@@ -224,7 +219,3 @@ doi = CharField(source='doi_url')
 ## Resultado
 
 HU-17 queda operativa sin romper funcionalidad existente. Los endpoints heredados vuelven a responder y las nuevas publicaciones científicas cumplen criterios de aceptación y reglas de negocio.
-<<<<<<< HEAD
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f

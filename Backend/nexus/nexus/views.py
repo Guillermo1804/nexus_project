@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from django.db import connection, transaction
-from django.db.models import Case, CharField, IntegerField, Prefetch, Q, Value, When
+from django.db.models import Case, CharField, Func, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
 
 from .models import (
@@ -29,7 +29,6 @@ from .models import (
     Evidence,
 )
 from .services.alert_service import agreement_alerts_for_user
-from .text_utils import Unaccent, remove_accents
 from .permissions import (
     CanAssignRoles,
     CanCreateTutoring,
@@ -39,6 +38,27 @@ from .permissions import (
     permissions_for_user,
 )
 from .services import TimelineService
+
+
+def remove_accents(texto: str) -> str:
+    """Elimina acentos y diacríticos de una cadena."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+
+class Unaccent(Func):
+    function = 'UNACCENT'
+    template = '%(function)s(%(expressions)s)'
+    output_field = CharField()
+
+    def __init__(self, expression, output_field=None, **extra):
+        if output_field is not None:
+            self.output_field = output_field
+        super().__init__(expression, **extra)
+
+
 from .serializers import (
     LoginSerializer,
     InstitutionalUserCreateSerializer,
@@ -754,15 +774,7 @@ def can_access_student(user, student, write=False):
     return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
-=======
-class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
-class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
     permission_classes = [IsAuthenticated]
     serializer_class = PublicationSerializer
     pagination_class = NexusPagination
@@ -782,8 +794,6 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
         if not can_access_student(self.request.user, student):
             raise PermissionDenied('No puede registrar publicaciones para este estudiante.')
         serializer.save()
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
@@ -797,7 +807,3 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
         if not can_access_student(self.request.user, instance.student, write=True):
             raise PermissionDenied('No puede eliminar esta publicación.')
         instance.delete()
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f

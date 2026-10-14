@@ -2,8 +2,6 @@
   padding: 1rem;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 .publications-header {
   display: flex;
   justify-content: space-between;
@@ -55,23 +53,11 @@
 .publication-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-=======
-.publication-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
-.publication-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   gap: 1rem;
 }
 
 .publication-card {
   border: 1px solid #e0e0e0;
-<<<<<<< HEAD
-<<<<<<< HEAD
   border-radius: 0.5rem;
   padding: 1.25rem;
   background-color: #fff;
@@ -132,68 +118,11 @@
 }
 
 .publication-details a {
-=======
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-  border-radius: 0.25rem;
-  padding: 1rem;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.publication-card h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.publication-card p {
-  margin: 0.5rem 0;
-  color: #666;
-}
-
-.publication-card a {
-<<<<<<< HEAD
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   color: #007bff;
   text-decoration: none;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-.publication-details a:hover {
-  text-decoration: underline;
-}
-
-.publication-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.btn-danger {
-  color: #fff;
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #c82333;
-  border-color: #bd2130;
-=======
+.publication-details a:hover,
 .publication-card a:hover {
   text-decoration: underline;
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
-=======
-.publication-card a:hover {
-  text-decoration: underline;
->>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 }
