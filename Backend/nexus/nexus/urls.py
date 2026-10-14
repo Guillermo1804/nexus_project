@@ -26,6 +26,7 @@ from .views import (
     GlobalAcademicOverviewView,
     AgreementAlertsView,
     AgreementViewSet,
+    AcademicEventViewSet,
     CommitteeAssignmentListCreateView,
     CommitteeAssignmentUpdateView,
     AdminStudentListView,
@@ -55,6 +56,7 @@ router.register(r'agreements', AgreementViewSet, basename='agreements')
 router.register(r'evidence', EvidenceViewSet, basename='evidence')
 router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
 router.register(r'academic-output/publications', PublicationViewSet, basename='publications')
+router.register(r'academic-output/events', AcademicEventViewSet, basename='academic-events')
 
 urlpatterns = [
     path('health/', health_check, name='health-check'),

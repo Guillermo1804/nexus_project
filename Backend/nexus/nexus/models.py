@@ -293,6 +293,24 @@ class PublicationStatus(models.TextChoices):
     PUBLICADO = 'PUBLICADO', 'Publicado'
 
 
+class EventType(models.TextChoices):
+    CONGRESO = 'CONGRESO', 'Congreso'
+    COLOQUIO = 'COLOQUIO', 'Coloquio'
+    SIMPOSIO = 'SIMPOSIO', 'Simposio'
+
+
+class RoleParticipation(models.TextChoices):
+    PONENTE = 'PONENTE', 'Ponente'
+    CONFERENCISTA_MAGISTRAL = 'CONFERENCISTA_MAGISTRAL', 'Conferencista Magistral'
+    ASISTENTE = 'ASISTENTE', 'Asistente'
+
+
+class Modality(models.TextChoices):
+    PRESENCIAL = 'PRESENCIAL', 'Presencial'
+    VIRTUAL = 'VIRTUAL', 'Virtual'
+    HIBRIDA = 'HIBRIDA', 'Híbrida'
+
+
 class Publication(AcademicOutputBase):
     titulo = models.CharField(max_length=255)
     autores_texto = models.TextField()
@@ -313,12 +331,22 @@ class Publication(AcademicOutputBase):
 
 
 class AcademicEvent(AcademicOutputBase):
-	tipo_evento = models.CharField(max_length=40)
-	nombre_evento = models.CharField(max_length=255)
-	titulo_ponencia = models.CharField(max_length=255)
-	fecha_presentacion = models.DateField(db_index=True)
-	sede_lugar = models.CharField(max_length=255)
-	modalidad = models.CharField(max_length=20, default='PRESENCIAL')
+    titulo_trabajo = models.CharField(max_length=255)
+    nombre_evento = models.CharField(max_length=255)
+    tipo_evento = models.CharField(max_length=50, choices=EventType.choices)
+    modalidad = models.CharField(max_length=20, choices=Modality.choices, default=Modality.PRESENCIAL)
+    rol_participacion = models.CharField(max_length=50, choices=RoleParticipation.choices, default=RoleParticipation.PONENTE)
+    fecha_evento = models.DateField(db_index=True)
+    lugar = models.CharField(max_length=255, blank=True, default='')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.rol_participacion == RoleParticipation.PONENTE:
+            if not self.evidencia_id:
+                raise ValidationError({'evidencia': 'Debe adjuntar constancia o carta de aceptación para ponentes.'})
+        if self.fecha_evento and self.fecha_evento > timezone.localdate():
+            raise ValidationError({'fecha_evento': 'La fecha del evento no puede ser futura.'})
 
 
 class ResearchStay(AcademicOutputBase):

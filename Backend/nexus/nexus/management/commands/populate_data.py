@@ -812,10 +812,10 @@ def populate():
                 nombre_evento=evento_nombre,
                 defaults={
                     "semester": active_sem,
-                    "tipo_evento": "CONGRESO_INTERNACIONAL",
-                    "titulo_ponencia": ponencia,
-                    "fecha_presentacion": today - datetime.timedelta(days=19),
-                    "sede_lugar": "Ciudad de México / Virtual",
+                    "tipo_evento": "CONGRESO",
+                    "titulo_trabajo": ponencia,
+                    "fecha_evento": today - datetime.timedelta(days=19),
+                    "lugar": "Ciudad de México / Virtual",
                     "modalidad": "HIBRIDA",
                 },
             )

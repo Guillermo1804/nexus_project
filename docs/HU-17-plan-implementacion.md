@@ -116,10 +116,10 @@
 ---
 
 ## 6. Definition of Done (DoD)
-- [ ] Endpoints `/api/v1/academic-output/publications/` implementados y probados.
-- [ ] Validación de evidencia/DOI obligatoria para artículos aceptados/publicados.
-- [ ] Pruebas unitarias backend (`test_hu17.py`) y frontend aprobadas al 100%.
-- [ ] Integración en la pestaña "Producción Científica" del expediente del estudiante.
+- [x] Endpoints `/api/v1/academic-output/publications/` implementados y probados.
+- [x] Validación de evidencia/DOI obligatoria para artículos aceptados/publicados.
+- [x] Pruebas unitarias backend (`test_hu17.py`) y frontend aprobadas al 100%.
+- [x] Integración en la pestaña "Producción Científica" del expediente del estudiante.
 
 
 ## 7. Cambios Realizados y Avances

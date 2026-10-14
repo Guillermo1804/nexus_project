@@ -15,6 +15,9 @@ const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PR
 /** Roles que pueden ver la sección de producción científica (publicaciones). */
 const ACADEMIC_OUTPUT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
 
+/** Roles que pueden ver la sección de eventos académicos (congresos/coloquios). */
+const ACADEMIC_EVENTS_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
+
 /** Techo de la escala global de movimiento: la animación de apertura del menú. */
 const MENU_ANIMATION_MS = 220;
 
@@ -62,6 +65,7 @@ export class AppShell implements OnInit {
     const url = this.router.url.split('?')[0];
     if (url === '/home') return 'Inicio';
     if (url === '/acuerdos') return 'Acuerdos';
+    if (url.startsWith('/students/') && url.includes('/academic-output/events')) return 'Congresos y Coloquios';
     if (url.startsWith('/students/') && url.includes('/academic-output')) return 'Producción Científica';
     if (url.startsWith('/expediente/')) return 'Expediente';
     if (url === '/coordinator/students/new') return 'Registrar estudiante';
@@ -117,6 +121,11 @@ export class AppShell implements OnInit {
   protected canViewAcademicOutput(): boolean {
     const role = this.auth.user?.role;
     return !!role && ACADEMIC_OUTPUT_ROLES.includes(role as UserRole);
+  }
+
+  protected canViewAcademicEvents(): boolean {
+    const role = this.auth.user?.role;
+    return !!role && ACADEMIC_EVENTS_ROLES.includes(role as UserRole);
   }
 
   protected logout(): void {

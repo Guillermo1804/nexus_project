@@ -11,6 +11,8 @@ import { StudentOverviewComponent } from './expediente/student-overview';
 import { AgreementsListComponent } from './agreements/agreements-list';
 import { PublicationsListComponent } from './academic-output/publications-list';
 import { PublicationFormComponent } from './academic-output/publication-form';
+import { EventsListComponent } from './academic-output/events-list';
+import { EventFormComponent } from './academic-output/event-form';
 import { AppShell } from './layout/app-shell';
 
 export const routes: Routes = [
@@ -42,6 +44,24 @@ export const routes: Routes = [
       {
         path: 'students/:id/academic-output/edit/:publicationId',
         component: PublicationFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events',
+        component: EventsListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events/new',
+        component: EventFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events/edit/:eventId',
+        component: EventFormComponent,
         canActivate: [authGuard, roleGuard],
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },

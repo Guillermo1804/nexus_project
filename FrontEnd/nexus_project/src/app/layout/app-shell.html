@@ -62,6 +62,12 @@
           </a>
         }
 
+        @if (canViewAcademicEvents()) {
+          <a routerLink="/students/{{ auth.user?.student_id }}/academic-output/events" routerLinkActive="active">
+            Registrar participación
+          </a>
+        }
+
         @if (auth.hasPermission('students.create')) {
           <a routerLink="/coordinator/students/new" routerLinkActive="active">Registrar estudiante</a>
         }

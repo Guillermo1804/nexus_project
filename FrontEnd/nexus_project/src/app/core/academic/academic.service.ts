@@ -27,6 +27,7 @@ import {
   CreateThesisProgressData,
   TimelineResponse,
   Publication,
+  AcademicEvent,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -158,6 +159,34 @@ export class AcademicService {
   }
 
   uploadPublicationEvidence(studentId: number, semesterId: number | null, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    if (semesterId) form.append('semester', String(semesterId));
+    form.append('tipo', 'ARCHIVO_LOCAL');
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
+  getEvents(studentId: number): Observable<PaginatedResponse<AcademicEvent>> {
+    return this.http.get<PaginatedResponse<AcademicEvent>>(`${API}/academic-output/events/?student=${studentId}`);
+  }
+
+  createEvent(studentId: number, data: Partial<AcademicEvent>): Observable<AcademicEvent> {
+    const payload = { ...data, student: studentId };
+    return this.http.post<AcademicEvent>(`${API}/academic-output/events/`, payload);
+  }
+
+  updateEvent(eventId: number, data: Partial<AcademicEvent>): Observable<AcademicEvent> {
+    return this.http.patch<AcademicEvent>(`${API}/academic-output/events/${eventId}/`, data);
+  }
+
+  deleteEvent(eventId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/events/${eventId}/`);
+  }
+
+  uploadEventEvidence(studentId: number, semesterId: number | null, file: File): Observable<{ id: number }> {
     const form = new FormData();
     form.append('student', String(studentId));
     if (semesterId) form.append('semester', String(semesterId));

@@ -38,6 +38,7 @@ from .permissions import (
     permissions_for_user,
 )
 from .services import TimelineService
+from .serializers import AcademicEventSerializer
 
 
 def remove_accents(texto: str) -> str:
@@ -289,7 +290,7 @@ class StudentRecordView(APIView):
             ),
             Prefetch('thesis_progresses', queryset=ThesisProgress.objects.order_by('-fecha_registro', '-id')),
             Prefetch('publication_set', queryset=Publication.objects.order_by('-fecha_publicacion', '-id')),
-            Prefetch('academicevent_set', queryset=AcademicEvent.objects.order_by('-fecha_presentacion', '-id')),
+            Prefetch('academicevent_set', queryset=AcademicEvent.objects.order_by('-fecha_evento', '-id')),
             Prefetch('researchstay_set', queryset=ResearchStay.objects.order_by('-fecha_inicio', '-id')),
         ).first()
         if student is None:
@@ -442,6 +443,41 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         if not can_access_student(self.request.user, instance.student, write=True):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied('No puede eliminar esta tutoría.')
+        instance.delete()
+
+
+class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AcademicEventSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AcademicEvent.objects.all() if 'academic.read.global' in permissions_for_user(user) else AcademicEvent.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-fecha_evento', '-id')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar eventos académicos para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        event = self.get_object()
+        if not can_access_student(self.request.user, event.student, write=True):
+            raise PermissionDenied('No puede modificar este evento académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_access_student(self.request.user, instance.student, write=True):
+            raise PermissionDenied('No puede eliminar este evento académico.')
         instance.delete()
 
     from rest_framework.decorators import action
@@ -806,4 +842,39 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
         from rest_framework.exceptions import PermissionDenied
         if not can_access_student(self.request.user, instance.student, write=True):
             raise PermissionDenied('No puede eliminar esta publicación.')
+        instance.delete()
+
+
+class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AcademicEventSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AcademicEvent.objects.all() if 'academic.read.global' in permissions_for_user(user) else AcademicEvent.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-fecha_evento', '-id')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar eventos académicos para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        event = self.get_object()
+        if not can_access_student(self.request.user, event.student, write=True):
+            raise PermissionDenied('No puede modificar este evento académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_access_student(self.request.user, instance.student, write=True):
+            raise PermissionDenied('No puede eliminar este evento académico.')
         instance.delete()

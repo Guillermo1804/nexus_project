@@ -117,6 +117,6 @@
 ---
 
 ## 6. Definition of Done (DoD)
-- [ ] Endpoints `/api/v1/academic-output/events/` probados y operativos.
-- [ ] Validación de evidencia para ponentes probada en tests backend (`test_hu18.py`).
-- [ ] Interfaz de captura y visualización de eventos integrada en frontend con diseño responsivo.
+- [x] Endpoints `/api/v1/academic-output/events/` probados y operativos.
+- [x] Validación de evidencia para ponentes probada en tests backend (`test_hu18.py`).
+- [x] Interfaz de captura y visualización de eventos integrada en frontend con diseño responsivo.

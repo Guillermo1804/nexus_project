@@ -348,4 +348,24 @@ export interface Publication {
   created_at: string;
 }
 
+export type EventType = 'CONGRESO' | 'COLOQUIO' | 'SIMPOSIO';
+export type RoleParticipation = 'PONENTE' | 'CONFERENCISTA_MAGISTRAL' | 'ASISTENTE';
+export type Modality = 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA';
+
+export interface AcademicEvent {
+  id: number;
+  student: number;
+  semester: number | null;
+  titulo_trabajo: string;
+  nombre_evento: string;
+  tipo_evento: EventType;
+  modalidad: Modality;
+  rol_participacion: RoleParticipation;
+  lugar: string;
+  fecha_evento: string;
+  evidencia: number | null;
+  evidencia_archivo?: string | null;
+  created_at: string;
+}
+
 export type AcademicRole = UserRole;

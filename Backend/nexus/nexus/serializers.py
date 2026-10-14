@@ -29,6 +29,9 @@ from .models import (
     TutoringObservation,
     AgreementAuditLog,
     Evidence,
+    RoleParticipation,
+    Modality,
+    EventType,
 )
 from .permissions import permissions_for_user
 
@@ -60,6 +63,39 @@ class PublicationSerializer(serializers.ModelSerializer):
         if fecha_publicacion and fecha_publicacion > timezone.localdate():
             raise serializers.ValidationError(
                 {'fecha_publicacion': 'La fecha de publicación no puede ser futura.'}
+            )
+        return attrs
+
+
+class AcademicEventSerializer(serializers.ModelSerializer):
+    evidencia_archivo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AcademicEvent
+        fields = (
+            'id', 'student', 'semester', 'titulo_trabajo', 'nombre_evento',
+            'tipo_evento', 'modalidad', 'rol_participacion', 'lugar',
+            'fecha_evento', 'evidencia', 'evidencia_archivo', 'created_at',
+        )
+        read_only_fields = ('id', 'created_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, event):
+        if event.evidencia and event.evidencia.archivo_adjunto:
+            return event.evidencia.archivo_adjunto.url
+        return None
+
+    def validate(self, attrs):
+        rol = attrs.get('rol_participacion', getattr(self.instance, 'rol_participacion', None))
+        evidencia = attrs.get('evidencia', getattr(self.instance, 'evidencia', None))
+        if rol == RoleParticipation.PONENTE:
+            if not evidencia:
+                raise serializers.ValidationError(
+                    {'evidencia': 'Debe adjuntar constancia o carta de aceptación para ponentes.'}
+                )
+        fecha_evento = attrs.get('fecha_evento', getattr(self.instance, 'fecha_evento', None))
+        if fecha_evento and fecha_evento > timezone.localdate():
+            raise serializers.ValidationError(
+                {'fecha_evento': 'La fecha del evento no puede ser futura.'}
             )
         return attrs
 
@@ -482,14 +518,14 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
                 'tipo': 'PUBLICACION',
                 'titulo': pub.titulo,
                 'fecha': str(pub.fecha_publicacion) if pub.fecha_publicacion else '',
-                'detalle': f"{pub.tipo} - {pub.revista}",
+                'detalle': f"{pub.tipo} - {pub.revista_editorial}",
             })
         for ev in list(student.academicevent_set.all())[:3]:
             activities.append({
                 'tipo': 'EVENTO',
-                'titulo': ev.titulo_ponencia or ev.nombre_evento,
-                'fecha': str(ev.fecha_presentacion) if ev.fecha_presentacion else '',
-                'detalle': f"{ev.tipo_evento} - {ev.sede_lugar}",
+                'titulo': ev.titulo_trabajo or ev.nombre_evento,
+                'fecha': str(ev.fecha_evento) if ev.fecha_evento else '',
+                'detalle': f"{ev.tipo_evento} - {ev.lugar}",
             })
         for stay in list(student.researchstay_set.all())[:3]:
             activities.append({
