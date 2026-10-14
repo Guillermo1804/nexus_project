@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Component, computed, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, Reactive/Form, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink,ActivatedRoute } from '@angular/router';
@@ -174,6 +175,8 @@ export class PublicationFormComponent {
 
 
 =======
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -258,5 +261,9 @@ export class PublicationFormComponent implements OnInit {
       });
     }
   }
+<<<<<<< HEAD
+}
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+=======
 }
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f

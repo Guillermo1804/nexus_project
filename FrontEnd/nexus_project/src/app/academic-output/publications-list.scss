@@ -3,6 +3,7 @@
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 .publications-header {
   display: flex;
   justify-content: space-between;
@@ -59,11 +60,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+=======
+.publication-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   gap: 1rem;
 }
 
 .publication-card {
   border: 1px solid #e0e0e0;
+<<<<<<< HEAD
 <<<<<<< HEAD
   border-radius: 0.5rem;
   padding: 1.25rem;
@@ -126,6 +133,8 @@
 
 .publication-details a {
 =======
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   border-radius: 0.25rem;
   padding: 1rem;
   background-color: #fff;
@@ -143,11 +152,15 @@
 }
 
 .publication-card a {
+<<<<<<< HEAD
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+=======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   color: #007bff;
   text-decoration: none;
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 .publication-details a:hover {
   text-decoration: underline;
@@ -175,6 +188,10 @@
 .btn-danger:hover:not(:disabled) {
   background-color: #c82333;
   border-color: #bd2130;
+=======
+.publication-card a:hover {
+  text-decoration: underline;
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 =======
 .publication-card a:hover {
   text-decoration: underline;

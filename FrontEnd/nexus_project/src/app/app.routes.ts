@@ -41,12 +41,15 @@ export const routes: Routes = [
       },
       {
 <<<<<<< HEAD
+<<<<<<< HEAD
         path: 'students/:id/academic-output/edit/:publicationId',
         component: PublicationFormComponent,
         canActivate: [authGuard, roleGuard],
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },
       {
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 =======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
         path: 'acuerdos',

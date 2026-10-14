@@ -755,7 +755,11 @@ def can_access_student(user, student, write=False):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+=======
+class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 =======
 class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
@@ -779,6 +783,7 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
             raise PermissionDenied('No puede registrar publicaciones para este estudiante.')
         serializer.save()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
@@ -792,5 +797,7 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
         if not can_access_student(self.request.user, instance.student, write=True):
             raise PermissionDenied('No puede eliminar esta publicación.')
         instance.delete()
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 =======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f

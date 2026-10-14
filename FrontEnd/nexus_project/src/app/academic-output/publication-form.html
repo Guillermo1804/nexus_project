@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 <form [formGroup]="form" (ngSubmit)="submit()" class="publication-form" aria-label="Formulario de publicacion">
   <div class="form-group">
     <label for="titulo">Título <span class="required">*</span></label>
@@ -57,6 +58,8 @@
       <div class="text-danger">La fecha no puede ser futura.</div>
     }
 =======
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 <form [formGroup]="publicationForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
     <label for="titulo">Título</label>
@@ -105,11 +108,15 @@
   <div class="form-group">
     <label for="fecha_publicacion">Fecha de Publicación</label>
     <input type="date" id="fecha_publicacion" formControlName="fecha_publicacion" class="form-control">
+<<<<<<< HEAD
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+=======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
   </div>
 
   <div class="form-group">
     <label for="doi">DOI/URL</label>
+<<<<<<< HEAD
 <<<<<<< HEAD
     <input type="text" id="doi" formControlName="doi" class="form-control" placeholder="https://doi.org/...">
     @if (form.get('doi')!.invalid && form.get('doi')!.touched) {
@@ -138,6 +145,8 @@
     </button>
   </div>
 =======
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
     <input type="text" id="doi" formControlName="doi" class="form-control">
   </div>
 
@@ -147,5 +156,8 @@
   </div>
 
   <button type="submit" class="btn btn-primary" [disabled]="publicationForm.invalid">Registrar Publicación</button>
+<<<<<<< HEAD
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
+=======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 </form>

@@ -149,6 +149,7 @@ export class AcademicService {
     return this.http.post<Publication>(`${API}/academic-output/publications/`, payload);
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   updatePublication(publicationId: number, data: Partial<Publication>): Observable<Publication> {
     return this.http.patch<Publication>(`${API}/academic-output/publications/${publicationId}/`, data);
@@ -168,6 +169,8 @@ export class AcademicService {
     form.append('archivo_adjunto', file);
     return this.http.post<{ id: number }>(`${API}/evidence/`, form);
   }
+=======
+>>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 =======
 >>>>>>> 4c0af6e82979033c1688eb503960a299550db69f
 }
