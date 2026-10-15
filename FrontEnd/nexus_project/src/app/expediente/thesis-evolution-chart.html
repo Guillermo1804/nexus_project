@@ -1,0 +1,231 @@
+<section class="thesis-evolution" aria-labelledby="evolution-title">
+  <header class="evolution-header">
+    <h2 id="evolution-title">Evolución del avance de tesis</h2>
+    <p class="evolution-subtitle">Curva histórica semestral con detección de estancamiento</p>
+  </header>
+
+  @if (!history || history.total_registros === 0) {
+    <div class="empty-state" role="status">
+      <p>No hay registros de avance de tesis para mostrar la evolución.</p>
+      <p class="hint">Registre el primer avance para iniciar el seguimiento.</p>
+    </div>
+  } @else {
+    <!-- Gráfico SVG accesible -->
+    <div class="chart-container" role="img" aria-label="Gráfico de evolución del avance de tesis por semestre" tabindex="0">
+      <svg class="evolution-chart" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <!-- Ejes -->
+        <g class="chart-axes">
+          <!-- Eje Y -->
+          <line x1="5" y1="5" x2="5" y2="95" stroke="currentColor" stroke-width="0.5" />
+          <!-- Eje X -->
+          <line x1="5" y1="95" x2="95" y2="95" stroke="currentColor" stroke-width="0.5" />
+
+          <!-- Marcas Y -->
+          @for (mark of [0, 25, 50, 75, 100]; track mark) {
+            <g class="y-mark">
+              <line [attr.x1]="4.5" [attr.y1]="getYPosition(mark)" [attr.x2]="5.5" [attr.y2]="getYPosition(mark)" stroke="currentColor" stroke-width="0.5" />
+              <text [attr.x]="3.5" [attr.y]="getYPosition(mark) + 1.5" text-anchor="end" font-size="4" fill="currentColor">{{ 100 - mark }}%</text>
+            </g>
+          }
+
+          <!-- Marcas X (semestres) -->
+          @for (entry of chartData; track entry.id; let i = $index) {
+            <g class="x-mark">
+              <line [attr.x1]="getXPosition(i)" [attr.y1]="94.5" [attr.x2]="getXPosition(i)" [attr.y2]="95.5" stroke="currentColor" stroke-width="0.5" />
+              <text [attr.x]="getXPosition(i)" [attr.y]="98.5" text-anchor="middle" font-size="4" fill="currentColor">S{{ entry.semestre_numero }}</text>
+            </g>
+          }
+        </g>
+
+        <!-- Línea de evolución -->
+        @if (chartData.length > 1) {
+          <path class="evolution-line" [attr.d]="getLinePath()" fill="none" stroke="var(--color-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        }
+
+        <!-- Puntos de datos -->
+        @for (entry of chartData; track entry.id; let i = $index) {
+          <g class="data-point" [class.stagnation]="entry.estancamiento_detectado" [class.expanded]="expandedEntry === entry"
+              (click)="toggleExpand(entry)"
+              (keydown.enter)="toggleExpand(entry)"
+              (keydown.space)="toggleExpand(entry)"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'Semestre ' + entry.semestre_numero + ': ' + entry.porcentaje_avance + '%' + (entry.estancamiento_detectado ? ', estancamiento detectado' : '') + ', delta ' + (entry.delta_porcentaje >= 0 ? '+' : '') + entry.delta_porcentaje + '%'"
+              [attr.aria-expanded]="expandedEntry === entry">
+            <!-- Punto en la línea -->
+            <circle
+              [attr.cx]="getXPosition(i)"
+              [attr.cy]="getYPosition(entry.porcentaje_avance)"
+              r="3"
+              fill="var(--color-primary)"
+              stroke="var(--color-background)"
+              stroke-width="1"
+            />
+
+            <!-- Indicador de estancamiento -->
+            @if (entry.estancamiento_detectado) {
+              <circle
+                [attr.cx]="getXPosition(i)"
+                [attr.cy]="getYPosition(entry.porcentaje_avance)"
+                r="6"
+                fill="none"
+                stroke="var(--color-error)"
+                stroke-width="1.5"
+                stroke-dasharray="2,2"
+                class="stagnation-ring"
+              />
+            }
+
+            <!-- Tooltip visual al hover/focus -->
+            <title>Semestre {{ entry.semestre_numero }}: {{ entry.porcentaje_avance }}% (Δ {{ entry.delta_porcentaje >= 0 ? '+' : '' }}{{ entry.delta_porcentaje }}%)</title>
+          </g>
+        }
+      </svg>
+    </div>
+
+    <!-- Tabla comparativa (equivalente textual para accesibilidad) -->
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table" aria-label="Tabla comparativa histórica de avance de tesis por semestre">
+        <thead>
+          <tr>
+            <th scope="col">Semestre</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Avance global</th>
+            <th scope="col">Δ% vs anterior</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Registrado por</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of chartData; track entry.id) {
+            <tr [class.stagnation-row]="entry.estancamiento_detectado">
+              <td data-label="Semestre">Semestre {{ entry.semestre_numero }}</td>
+              <td data-label="Fecha">{{ entry.fecha }}</td>
+              <td data-label="Avance global">
+                <div class="progress-cell">
+                  <span class="progress-value">{{ entry.porcentaje_avance }}%</span>
+                  <div class="progress-bar"><span [style.width.%]="entry.porcentaje_avance"></span></div>
+                </div>
+              </td>
+              <td data-label="Δ% vs anterior" class="delta-cell">
+                <span [class]="getDeltaClass(entry.delta_porcentaje)">
+                  {{ entry.delta_porcentaje >= 0 ? '+' : '' }}{{ entry.delta_porcentaje }}%
+                </span>
+              </td>
+              <td data-label="Estado">
+                @if (entry.estancamiento_detectado) {
+                  <span class="badge badge-warning" aria-label="Estancamiento detectado">⚠ Estancamiento</span>
+                } @else if (entry.delta_porcentaje > 0) {
+                  <span class="badge badge-success" aria-label="Progreso positivo">Progreso</span>
+                } @else {
+                  <span class="badge badge-neutral" aria-label="Sin cambio">Estable</span>
+                }
+              </td>
+              <td data-label="Registrado por">{{ entry.registrado_por_nombre }}</td>
+              <td data-label="Acciones">
+                <button
+                  type="button"
+                  class="btn-icon"
+                  (click)="toggleExpand(entry)"
+                  [attr.aria-expanded]="expandedEntry === entry"
+                  [attr.aria-controls]="'details-' + entry.id"
+                  aria-label="{{ expandedEntry === entry ? 'Ocultar' : 'Mostrar' }} desglose de componentes del semestre {{ entry.semestre_numero }}">
+                  {{ expandedEntry === entry ? '▼' : '▶' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-icon"
+                  (click)="startCompare(entry)"
+                  [disabled]="chartData.length < 2"
+                  aria-label="Comparar componentes del semestre {{ entry.semestre_numero }} con otro semestre">
+                  ⇄
+                </button>
+              </td>
+            </tr>
+
+            <!-- Fila expandible con desglose de componentes -->
+            <tr [id]="'details-' + entry.id" class="detail-row" [hidden]="expandedEntry !== entry" aria-hidden="expandedEntry !== entry">
+              <td colspan="7" class="detail-content">
+                <div class="components-breakdown">
+                  <h4>Desglose de componentes - Semestre {{ entry.semestre_numero }}</h4>
+                  <div class="components-grid">
+                    @for (key of componentKeys; track key) {
+                      <div class="component-item">
+                        <span class="component-name">{{ getComponentLabel(key) }}</span>
+                        <span class="component-value">{{ getComponentValue(entry, key) }}%</span>
+                      </div>
+                    }
+                  </div>
+                  <p class="entry-observations" *ngIf="entry.observaciones">
+                    <strong>Observaciones:</strong> {{ entry.observaciones }}
+                  </p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Panel de comparación de componentes entre dos semestres -->
+    @if (showComparePanel && compareEntry) {
+      <div class="compare-panel" role="dialog" aria-labelledby="compare-title" aria-modal="true">
+        <div class="compare-panel-content">
+          <header class="compare-header">
+            <h3 id="compare-title">Comparar componentes</h3>
+            <button type="button" class="btn-close" (click)="closeCompare()" aria-label="Cerrar comparación">✕</button>
+          </header>
+          <div class="compare-body">
+            <p class="compare-base">Semestre base: <strong>S{{ compareEntry.semestre_numero }}</strong> ({{ compareEntry.porcentaje_avance }}%)</p>
+            <label for="compare-target">Comparar con:</label>
+            <select id="compare-target" [(ngModel)]="compareTargetId" (ngModelChange)="onCompareTargetChange($event)">
+              <option value="">Seleccionar semestre...</option>
+              @for (entry of chartData; track entry.id) {
+                @if (entry.id !== compareEntry.id) {
+                  <option [value]="entry.id">Semestre {{ entry.semestre_numero }} ({{ entry.porcentaje_avance }}%)</option>
+                }
+              }
+            </select>
+
+            @if (compareTarget) {
+              <div class="compare-grid">
+                <div class="compare-column">
+                  <h4>Semestre {{ compareEntry.semestre_numero }}</h4>
+                  @for (key of componentKeys; track key) {
+                    <div class="compare-item">
+                      <span>{{ getComponentLabel(key) }}</span>
+                      <span class="value">{{ getComponentValue(compareEntry, key) }}%</span>
+                    </div>
+                  }
+                </div>
+                <div class="compare-column">
+                  <h4>Semestre {{ compareTarget.semestre_numero }}</h4>
+                  @for (key of componentKeys; track key) {
+                    <div class="compare-item">
+                      <span>{{ getComponentLabel(key) }}</span>
+                      <span class="value">{{ getComponentValue(compareTarget, key) }}%</span>
+                    </div>
+                  }
+                </div>
+                <div class="compare-column delta-column">
+                  <h4>Diferencia</h4>
+                  @for (key of componentKeys; track key) {
+                    <div class="compare-item">
+                      <span>{{ getComponentLabel(key) }}</span>
+                      <span class="delta-value" [class]="getDeltaClass(getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key))">
+                        {{ (getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key)) >= 0 ? '+' : '' }}
+                        {{ getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key) }}%
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="compare-overlay" (click)="closeCompare()" aria-hidden="true"></div>
+    }
+  }
+</section>

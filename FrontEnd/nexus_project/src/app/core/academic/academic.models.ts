@@ -121,6 +121,25 @@ export interface CreateThesisProgressData {
   componentes_json: ThesisComponents;
 }
 
+export interface ThesisHistoryEntry {
+  id: number;
+  semestre_numero: number;
+  fecha: string;
+  porcentaje_avance: number;
+  delta_porcentaje: number;
+  estancamiento_detectado: boolean;
+  componentes_json: Partial<ThesisComponents>;
+  observaciones: string;
+  registrado_por_nombre: string;
+}
+
+export interface ThesisHistoryResponse {
+  student_id: number;
+  matricula: string;
+  total_registros: number;
+  historico: ThesisHistoryEntry[];
+}
+
 export interface StudentOverview {
   id: number;
   matricula: string;

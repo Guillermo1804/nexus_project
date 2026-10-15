@@ -44,6 +44,7 @@ from .views import (
     UserRoleUpdateView,
     EvidenceViewSet,
     ThesisProgressViewSet,
+    ThesisHistoryView,
     TimelineView,
     PublicationViewSet,
 )
@@ -80,6 +81,7 @@ urlpatterns = [
     path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
     path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
     path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
+    path('api/v1/thesis/history/', ThesisHistoryView.as_view(), name='thesis-history'),
 ]
 
 # Sin esta ruta, Django responde 404 a `/media/...` y la evidencia subida nunca se

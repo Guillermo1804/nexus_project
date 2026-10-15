@@ -37,7 +37,7 @@ from .permissions import (
     CanReadGlobalAcademics,
     permissions_for_user,
 )
-from .services import TimelineService
+from .services import ThesisHistoryService, TimelineService
 from .serializers import AcademicEventSerializer
 
 
@@ -705,6 +705,27 @@ class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             raise PermissionDenied('No puede consultar avances para este estudiante.')
         progress = self.get_queryset().filter(student=student).order_by('-created_at', '-id').first()
         return Response(self.get_serializer(progress).data if progress else None)
+
+
+class ThesisHistoryView(APIView):
+    """Endpoint para consultar el histórico de avances de tesis por semestre con deltas y detección de estancamiento."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student_id = request.query_params.get('student')
+        if not student_id:
+            return Response({'student': ['Este parámetro es obligatorio.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = Student.objects.filter(pk=student_id).first()
+        except (TypeError, ValueError):
+            student = None
+
+        if student is None or not can_access_student(request.user, student):
+            return Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        history = ThesisHistoryService(student).build_history()
+        return Response(history, status=status.HTTP_200_OK)
 
 
 class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):

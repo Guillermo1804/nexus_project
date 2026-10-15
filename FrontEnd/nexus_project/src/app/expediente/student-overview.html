@@ -44,6 +44,7 @@
     <div class="overview-tabs" role="tablist" aria-label="Vistas del expediente">
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'resumen'" [class.selected]="activeView === 'resumen'" (click)="selectView('resumen')">Resumen académico</button>
       <button type="button" role="tab" [attr.aria-selected]="activeView === 'timeline'" [class.selected]="activeView === 'timeline'" (click)="selectView('timeline')">Línea de Tiempo</button>
+      <button id="evolution-tab" type="button" role="tab" [attr.aria-selected]="activeView === 'evolucion'" [class.selected]="activeView === 'evolucion'" (click)="openThesisEvolution()">Evolución de Tesis</button>
       <button id="evidences-tab" type="button" role="tab" [attr.aria-selected]="activeView === 'evidencias'" [class.selected]="activeView === 'evidencias'" (click)="selectView('evidencias')">Evidencias</button>
     </div>
 
@@ -127,6 +128,16 @@
           <div class="timeline-state" role="alert"><p>{{ timelineError }}</p><button class="btn-secondary" (click)="loadTimeline()">Reintentar</button></div>
         } @else if (timeline) {
           <app-timeline [semesters]="timeline.semestres" [initialFilter]="timelineInitialFilter" />
+        }
+      </section>
+    } @else if (activeView === 'evolucion') {
+      <section class="nexus-card evolution-panel" role="tabpanel" aria-labelledby="evolution-tab">
+        @if (thesisHistoryLoading) {
+          <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando histórico de avances...</p></div>
+        } @else if (thesisHistoryError) {
+          <div class="timeline-state" role="alert"><p>{{ thesisHistoryError }}</p><button class="btn-secondary" (click)="loadThesisHistory()">Reintentar</button></div>
+        } @else if (thesisHistory) {
+          <app-thesis-evolution-chart [history]="thesisHistory" />
         }
       </section>
     } @else {

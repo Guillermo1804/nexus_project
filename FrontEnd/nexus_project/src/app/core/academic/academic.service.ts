@@ -25,6 +25,7 @@ import {
   UpdateNextMeetingData,
   ThesisProgress,
   CreateThesisProgressData,
+  ThesisHistoryResponse,
   TimelineResponse,
   Publication,
   AcademicEvent,
@@ -123,6 +124,10 @@ export class AcademicService {
 
   createThesisProgress(data: CreateThesisProgressData): Observable<ThesisProgress> {
     return this.http.post<ThesisProgress>(`${API}/thesis/`, data);
+  }
+
+  getThesisHistory(studentId: number): Observable<ThesisHistoryResponse> {
+    return this.http.get<ThesisHistoryResponse>(`${API}/thesis/history/?student=${studentId}`);
   }
 
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {
