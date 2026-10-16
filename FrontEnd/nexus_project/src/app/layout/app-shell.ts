@@ -13,10 +13,10 @@ import { getRoleLabelByGender } from '../shared/presentation/role-labels';
 const AGREEMENT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
 
 /** Roles que pueden ver la sección de producción científica (publicaciones). */
-const ACADEMIC_OUTPUT_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
+const ACADEMIC_OUTPUT_ROLES: UserRole[] = ['STUDENT'];
 
 /** Roles que pueden ver la sección de eventos académicos (congresos/coloquios). */
-const ACADEMIC_EVENTS_ROLES: UserRole[] = ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'];
+const ACADEMIC_EVENTS_ROLES: UserRole[] = ['STUDENT'];
 
 /** Techo de la escala global de movimiento: la animación de apertura del menú. */
 const MENU_ANIMATION_MS = 220;

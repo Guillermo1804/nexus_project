@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, ThesisHistoryResponse, TimelineEvent, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, ThesisHistoryEntry, ThesisHistoryResponse, TimelineEvent, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -18,7 +18,7 @@ import { TimelineComponent } from '../shared/timeline';
 import { ModalFocusDirective } from '../shared/modal-focus.directive';
 import { ToastService } from '../shared/toast.service';
 
-type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semestre' | 'condiciones' | null;
+type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'editar-avance' | 'semestre' | 'condiciones' | null;
 
 @Component({
   selector: 'app-student-overview',
@@ -58,6 +58,7 @@ export class StudentOverviewComponent implements OnInit {
   protected thesisHistoryError = '';
   protected showThesisEvolution = false;
   protected alertsDismissed = false;
+  protected editingThesisEntry: ThesisHistoryEntry | null = null;
   /** Estado del aviso flotante de compromisos vencidos: entra, se descarta en dos fases
    * (para animar la salida) y vuelve a aparecer sólo si aparecen vencidos nuevos. */
   protected avisoVencidos: 'visible' | 'cerrando' | 'cerrado' = 'cerrado';
@@ -200,6 +201,19 @@ export class StudentOverviewComponent implements OnInit {
   protected get canCreateAgreement(): boolean { return this.canAccessStudent && this.canCreateTutoring; }
   protected get canUploadEvidence(): boolean { return this.canAccessStudent; }
   protected get canRegisterThesisProgress(): boolean { return this.canAccessStudent; }
+  protected get canDeleteThesisProgress(): boolean {
+    const role = this.auth.user?.role;
+    return (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || role === 'PROGRAM_COORDINATOR' || role === 'SYSTEM_ADMIN') && this.canAccessStudent;
+  }
+  protected get canEditThesisProgress(): boolean {
+    const role = this.auth.user?.role;
+    return role !== 'STUDENT' && this.canAccessStudent;
+  }
+  protected get editingSemesterId(): number | null {
+    if (!this.editingThesisEntry) return null;
+    const semester = this.overview?.semesters.find(s => s.numero === this.editingThesisEntry!.semestre_numero);
+    return semester?.id ?? null;
+  }
   protected get canCreatePublication(): boolean { return this.canAccessStudent; }
   protected get initials(): string {
     return (this.overview?.nombre_completo ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
@@ -374,5 +388,30 @@ export class StudentOverviewComponent implements OnInit {
   protected semestreGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Semestre registrado.'); }
   protected evidenciaGuardada(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Evidencia vinculada al expediente.'); }
   protected avanceGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Avance de tesis registrado.'); }
+
+  protected eliminarAvance(entry: ThesisHistoryResponse['historico'][number]): void {
+    const confirmed = window.confirm(
+      `¿Eliminar el avance del ${entry.fecha} (Semestre ${entry.semestre_numero}, ${entry.porcentaje_avance}%)? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    this.academicService.deleteThesisProgress(entry.id).subscribe({
+      next: () => {
+        this.thesisHistory = null;
+        this.loadThesisHistory();
+        this.cargarExpediente(true);
+        this.toasts.exito('Registro de avance eliminado.');
+      },
+      error: err => {
+        this.toasts.error(err.status === 403
+          ? 'No tiene permisos para eliminar este avance.'
+          : 'No fue posible eliminar el registro de avance.');
+      },
+    });
+  }
+  protected editarAvance(entry: ThesisHistoryResponse['historico'][number]): void {
+    this.editingThesisEntry = entry;
+    this.modal = 'editar-avance';
+  }
   protected proximaReunionGuardada(): void { this.refrescar(); this.toasts.exito('Condiciones de tutoría actualizadas.'); }
 }

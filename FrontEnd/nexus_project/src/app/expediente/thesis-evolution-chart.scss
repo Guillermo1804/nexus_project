@@ -205,6 +205,10 @@
         }
       }
 
+      .delete-entry-button:hover, .delete-entry-button:focus {
+        color: var(--danger);
+      }
+
       .stagnation-row {
         background: rgba(var(--color-warning-rgb), 0.05);
 
@@ -265,144 +269,58 @@
     }
   }
 
-  .compare-panel {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-
-    .compare-panel-content {
-      width: 90%;
-      max-width: 800px;
-      max-height: 80vh;
-      background: var(--color-background);
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-      overflow: auto;
-
-      .compare-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--color-border);
-
-        h3 {
-          margin: 0;
-          color: var(--color-text);
-          font-size: 1.25rem;
-        }
-
-        .btn-close {
-          background: none;
-          border: none;
-          padding: 0.5rem;
-          cursor: pointer;
-          color: var(--color-text-secondary);
-          font-size: 1.25rem;
-          line-height: 1;
-          border-radius: 4px;
-
-          &:hover, &:focus {
-            background: var(--color-surface);
-            color: var(--color-text);
-          }
-        }
-      }
-
-      .compare-body {
-        padding: 1.5rem;
-
-        .compare-base {
-          margin-bottom: 1rem;
-          color: var(--color-text-secondary);
-        }
-
-        label {
-          display: block;
-          margin-bottom: 0.5rem;
-          color: var(--color-text);
-          font-weight: 500;
-        }
-
-        select {
-          width: 100%;
-          padding: 0.75rem;
-          margin-bottom: 1.5rem;
-          border: 1px solid var(--color-border);
-          border-radius: 6px;
-          background: var(--color-surface);
-          color: var(--color-text);
-          font-size: 1rem;
-
-          &:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
-          }
-        }
-
-        .compare-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-
-          .compare-column {
-            h4 {
-              margin: 0 0 1rem;
-              color: var(--color-text);
-              font-size: 1rem;
-              text-align: center;
-              padding-bottom: 0.5rem;
-              border-bottom: 1px solid var(--color-border);
-            }
-
-            .compare-item {
-              display: flex;
-              justify-content: space-between;
-              padding: 0.5rem 0;
-              border-bottom: 1px solid var(--color-border);
-
-              span {
-                font-size: 0.875rem;
-              }
-
-              .value {
-                font-weight: 600;
-                color: var(--color-primary);
-              }
-
-              .delta-value {
-                font-weight: 600;
-
-                &.delta-positive { color: var(--color-success); }
-                &.delta-negative { color: var(--color-error); }
-                &.delta-zero { color: var(--color-warning); }
-              }
-            }
-
-            &:last-child .compare-item {
-              border-bottom: none;
-            }
-          }
-
-          .delta-column {
-            .compare-item span:first-child {
-              display: none;
-            }
-          }
-        }
-      }
+  .small-modal {
+    .modal-form {
+      background: var(--surface-warm);
     }
   }
 
-  .compare-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+
+    .compare-column {
+      h4 {
+        margin: 0 0 1rem;
+        color: var(--color-text);
+        font-size: 1rem;
+        text-align: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .compare-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--color-border);
+
+        span {
+          font-size: 0.875rem;
+        }
+
+        .value {
+          font-weight: 600;
+          color: var(--color-primary);
+        }
+
+        .delta-value {
+          font-weight: 600;
+
+          &.delta-positive { color: var(--color-success); }
+          &.delta-negative { color: var(--color-error); }
+          &.delta-zero { color: var(--color-warning); }
+        }
+      }
+
+      &:last-child .compare-item {
+        border-bottom: none;
+      }
+    }
+
+    .delta-column .compare-item { gap: 0.75rem; }
   }
 
   @media (max-width: 768px) {

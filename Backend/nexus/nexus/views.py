@@ -445,6 +445,45 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('No puede eliminar esta tutoría.')
         instance.delete()
 
+    @action(detail=True, methods=['get', 'post'], url_path='participants')
+    def participants(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(TutoringParticipantSerializer(session.participants.select_related('user'), many=True).data)
+        serializer = TutoringParticipantSerializer(data=request.data, context={'session': session})
+        serializer.is_valid(raise_exception=True)
+        participant = serializer.save(session=session)
+        return Response(TutoringParticipantSerializer(participant).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'post'], url_path='observations')
+    def observations(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(TutoringObservationSerializer(session.observations.select_related('autor'), many=True).data)
+        if session.fecha_sesion > timezone.localdate():
+            return Response(
+                {'detail': 'No se pueden registrar observaciones en una tutoría que aún no se ha realizado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = TutoringObservationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        observation = serializer.save(session=session, autor=request.user)
+        return Response(TutoringObservationSerializer(observation).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get', 'post'], url_path='agreements')
+    def agreements(self, request, pk=None):
+        session = self.get_object()
+        if request.method == 'GET':
+            return Response(AgreementSerializer(session.agreements.select_related('responsable'), many=True).data)
+        serializer = AgreementSerializer(data=request.data, context={'session': session})
+        serializer.is_valid(raise_exception=True)
+        agreement = serializer.save(session=session, student=session.student, created_by=request.user)
+        AgreementAuditLog.objects.create(
+            agreement=agreement, user=request.user, estado_anterior='',
+            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
+        )
+        return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
+
 
 class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
@@ -479,52 +518,6 @@ class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixin
         if not can_access_student(self.request.user, instance.student, write=True):
             raise PermissionDenied('No puede eliminar este evento académico.')
         instance.delete()
-
-    from rest_framework.decorators import action
-
-    @action(detail=True, methods=['get', 'post'], url_path='participants')
-    def participants(self, request, pk=None):
-        session = self.get_object()
-        if request.method == 'GET':
-            return Response(TutoringParticipantSerializer(session.participants.select_related('user'), many=True).data)
-        serializer = TutoringParticipantSerializer(data=request.data, context={'session': session})
-        serializer.is_valid(raise_exception=True)
-        participant = serializer.save(session=session)
-        return Response(TutoringParticipantSerializer(participant).data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['get', 'post'], url_path='observations')
-    def observations(self, request, pk=None):
-        session = self.get_object()
-        if request.method == 'GET':
-            return Response(TutoringObservationSerializer(session.observations.select_related('autor'), many=True).data)
-        # Una tutoría que aún no ocurre no tiene minuta: documentarla sólo daría lugar a
-        # observaciones sobre una sesión que todavía no hay.
-        if session.fecha_sesion > timezone.localdate():
-            return Response(
-                {'detail': 'No se pueden registrar observaciones en una tutoría que aún no se ha realizado.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        serializer = TutoringObservationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        observation = serializer.save(session=session, autor=request.user)
-        return Response(TutoringObservationSerializer(observation).data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['get', 'post'], url_path='agreements')
-    def agreements(self, request, pk=None):
-        session = self.get_object()
-        if request.method == 'GET':
-            return Response(AgreementSerializer(session.agreements.select_related('responsable'), many=True).data)
-        serializer = AgreementSerializer(data=request.data, context={'session': session})
-        serializer.is_valid(raise_exception=True)
-        agreement = serializer.save(session=session, student=session.student, created_by=request.user)
-        # El alta también es un movimiento de la bitácora: sin ella el acuerdo aparecía
-        # recién creado con «Sin cambios registrados aún», como si le faltara información.
-        AgreementAuditLog.objects.create(
-            agreement=agreement, user=request.user, estado_anterior='',
-            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
-        )
-        return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
-
 
 class AgreementAlertsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -682,7 +675,7 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
         return Response(AgreementAuditLogSerializer(self.get_object().audit_logs.select_related('user'), many=True).data)
 
 
-class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class ThesisProgressViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ThesisProgressSerializer
     queryset = ThesisProgress.objects.select_related('student', 'semester', 'registrado_por')
@@ -693,6 +686,21 @@ class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if not can_access_student(self.request.user, student):
             raise PermissionDenied('No puede registrar avances para este estudiante.')
         serializer.save(registrado_por=self.request.user)
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        allowed_roles = {CustomUser.Role.TUTOR, CustomUser.Role.COMMITTEE_MEMBER, CustomUser.Role.PROGRAM_COORDINATOR, CustomUser.Role.SYSTEM_ADMIN}
+        instance = serializer.instance
+        if self.request.user.role not in allowed_roles or not can_access_student(self.request.user, instance.student):
+            raise PermissionDenied('No puede editar avances para este estudiante.')
+        serializer.save(registrado_por=self.request.user)
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        allowed_roles = {CustomUser.Role.TUTOR, CustomUser.Role.COMMITTEE_MEMBER, CustomUser.Role.PROGRAM_COORDINATOR, CustomUser.Role.SYSTEM_ADMIN}
+        if self.request.user.role not in allowed_roles or not can_access_student(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar avances para este estudiante.')
+        instance.delete()
 
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):

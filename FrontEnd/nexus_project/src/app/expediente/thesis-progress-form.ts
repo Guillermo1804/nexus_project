@@ -70,6 +70,7 @@ const COMPONENTS: { key: ThesisComponentKey; label: string }[] = [
 export class ThesisProgressFormComponent implements OnInit {
   @Input({ required: true }) studentId!: number;
   @Input({ required: true }) semesterId!: number;
+  @Input() progressId?: number;
   @Input() currentPercentage = 0;
   @Input() currentComponents: Record<string, unknown> = {};
   @Input() currentObservations = '';
@@ -145,11 +146,14 @@ export class ThesisProgressFormComponent implements OnInit {
     if (this.form.invalid || this.saving) { this.form.markAllAsTouched(); return; }
     const value = this.form.getRawValue();
     this.saving = true; this.error = '';
-    this.service.createThesisProgress({ student: this.studentId, semester: this.semesterId, porcentaje_avance: this.globalPercentage, componentes_json: value.componentes_json, observaciones: value.observaciones.trim() })
-      .pipe(finalize(() => this.saving = false)).subscribe({
-        next: () => this.saved.emit(),
-        error: err => this.error = err.status === 403 ? 'No tienes permiso para registrar avances de este estudiante.' : err.error?.porcentaje_avance?.[0] || err.error?.componentes_json?.[0] || err.error?.semester?.[0] || err.error?.detail || 'No fue posible registrar el avance de tesis.',
-      });
+    const payload = { componentes_json: value.componentes_json, observaciones: value.observaciones.trim() };
+    const request = this.progressId
+      ? this.service.updateThesisProgress(this.progressId, payload)
+      : this.service.createThesisProgress({ student: this.studentId, semester: this.semesterId, porcentaje_avance: this.globalPercentage, componentes_json: value.componentes_json, observaciones: value.observaciones.trim() });
+    request.pipe(finalize(() => this.saving = false)).subscribe({
+      next: () => this.saved.emit(),
+      error: err => this.error = err.status === 403 ? 'No tienes permiso para registrar avances de este estudiante.' : err.error?.porcentaje_avance?.[0] || err.error?.componentes_json?.[0] || err.error?.semester?.[0] || err.error?.detail || 'No fue posible registrar el avance de tesis.',
+    });
   }
 
   private validPercentage(value: unknown): number { return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100 ? value : 0; }

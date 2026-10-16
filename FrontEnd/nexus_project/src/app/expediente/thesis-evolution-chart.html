@@ -24,7 +24,7 @@
           @for (mark of [0, 25, 50, 75, 100]; track mark) {
             <g class="y-mark">
               <line [attr.x1]="4.5" [attr.y1]="getYPosition(mark)" [attr.x2]="5.5" [attr.y2]="getYPosition(mark)" stroke="currentColor" stroke-width="0.5" />
-              <text [attr.x]="3.5" [attr.y]="getYPosition(mark) + 1.5" text-anchor="end" font-size="4" fill="currentColor">{{ 100 - mark }}%</text>
+              <text [attr.x]="3.5" [attr.y]="getYPosition(mark) + 1.5" text-anchor="end" font-size="4" fill="currentColor">{{ mark }}%</text>
             </g>
           }
 
@@ -141,6 +141,24 @@
                   aria-label="Comparar componentes del semestre {{ entry.semestre_numero }} con otro semestre">
                   ⇄
                 </button>
+                @if (canEditEntries) {
+                  <button
+                    type="button"
+                    class="btn-icon edit-entry-button"
+                    (click)="editEntry.emit(entry)"
+                    aria-label="Editar registro del semestre {{ entry.semestre_numero }}">
+                    ✎
+                  </button>
+                }
+                @if (canDeleteEntries) {
+                  <button
+                    type="button"
+                    class="btn-icon delete-entry-button"
+                    (click)="deleteEntry.emit(entry)"
+                    aria-label="Eliminar registro del semestre {{ entry.semestre_numero }}">
+                    ×
+                  </button>
+                }
               </td>
             </tr>
 
@@ -168,30 +186,30 @@
       </table>
     </div>
 
-    <!-- Panel de comparación de componentes entre dos semestres -->
     @if (showComparePanel && compareEntry) {
-      <div class="compare-panel" role="dialog" aria-labelledby="compare-title" aria-modal="true">
-        <div class="compare-panel-content">
-          <header class="compare-header">
-            <h3 id="compare-title">Comparar componentes</h3>
-            <button type="button" class="btn-close" (click)="closeCompare()" aria-label="Cerrar comparación">✕</button>
+      <div class="modal-backdrop" (click)="closeCompare()">
+        <section class="modal-panel small-modal" appModalFocus role="dialog" aria-modal="true" aria-labelledby="compare-title">
+          <header class="modal-header">
+            <h2 id="compare-title">Comparar componentes</h2>
+            <button type="button" class="close-button" (click)="closeCompare()" aria-label="Cerrar">×</button>
           </header>
-          <div class="compare-body">
+          <div class="modal-form">
             <p class="compare-base">Semestre base: <strong>S{{ compareEntry.semestre_numero }}</strong> ({{ compareEntry.porcentaje_avance }}%)</p>
-            <label for="compare-target">Comparar con:</label>
-            <select id="compare-target" [(ngModel)]="compareTargetId" (ngModelChange)="onCompareTargetChange($event)">
-              <option value="">Seleccionar semestre...</option>
-              @for (entry of chartData; track entry.id) {
-                @if (entry.id !== compareEntry.id) {
-                  <option [value]="entry.id">Semestre {{ entry.semestre_numero }} ({{ entry.porcentaje_avance }}%)</option>
+            <label>Comparar con:
+              <select class="input-field" [(ngModel)]="compareTargetId" (ngModelChange)="onCompareTargetChange($event)" (click)="$event.stopPropagation()">
+                <option value="">Seleccionar semestre...</option>
+                @for (entry of chartData; track entry.id) {
+                  @if (entry.id !== compareEntry.id) {
+                    <option [value]="entry.id">Semestre {{ entry.semestre_numero }} ({{ entry.porcentaje_avance }}%)</option>
+                  }
                 }
-              }
-            </select>
+              </select>
+            </label>
 
             @if (compareTarget) {
               <div class="compare-grid">
                 <div class="compare-column">
-                  <h4>Semestre {{ compareEntry.semestre_numero }}</h4>
+                  <h4>S{{ compareEntry.semestre_numero }}</h4>
                   @for (key of componentKeys; track key) {
                     <div class="compare-item">
                       <span>{{ getComponentLabel(key) }}</span>
@@ -200,7 +218,7 @@
                   }
                 </div>
                 <div class="compare-column">
-                  <h4>Semestre {{ compareTarget.semestre_numero }}</h4>
+                  <h4>S{{ compareTarget.semestre_numero }}</h4>
                   @for (key of componentKeys; track key) {
                     <div class="compare-item">
                       <span>{{ getComponentLabel(key) }}</span>
@@ -209,13 +227,12 @@
                   }
                 </div>
                 <div class="compare-column delta-column">
-                  <h4>Diferencia</h4>
+                  <h4>Δ</h4>
                   @for (key of componentKeys; track key) {
                     <div class="compare-item">
-                      <span>{{ getComponentLabel(key) }}</span>
+                      <span class="component-name">{{ getComponentLabel(key) }}</span>
                       <span class="delta-value" [class]="getDeltaClass(getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key))">
-                        {{ (getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key)) >= 0 ? '+' : '' }}
-                        {{ getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key) }}%
+                        {{ (getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key)) >= 0 ? '+' : '' }}{{ getComponentValue(compareTarget, key) - getComponentValue(compareEntry, key) }}%
                       </span>
                     </div>
                   }
@@ -223,9 +240,8 @@
               </div>
             }
           </div>
-        </div>
+        </section>
       </div>
-      <div class="compare-overlay" (click)="closeCompare()" aria-hidden="true"></div>
     }
   }
 </section>

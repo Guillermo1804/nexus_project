@@ -126,8 +126,16 @@ export class AcademicService {
     return this.http.post<ThesisProgress>(`${API}/thesis/`, data);
   }
 
+  updateThesisProgress(progressId: number, data: Partial<CreateThesisProgressData>): Observable<ThesisProgress> {
+    return this.http.patch<ThesisProgress>(`${API}/thesis/${progressId}/`, data);
+  }
+
   getThesisHistory(studentId: number): Observable<ThesisHistoryResponse> {
     return this.http.get<ThesisHistoryResponse>(`${API}/thesis/history/?student=${studentId}`);
+  }
+
+  deleteThesisProgress(progressId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/thesis/${progressId}/`);
   }
 
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {

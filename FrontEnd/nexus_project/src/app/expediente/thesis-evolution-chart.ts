@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ThesisHistoryEntry, ThesisHistoryResponse } from '../core/academic/academic.models';
+import { ThesisComponentKey, ThesisHistoryEntry, ThesisHistoryResponse } from '../core/academic/academic.models';
 
 @Component({
   selector: 'app-thesis-evolution-chart',
@@ -12,6 +12,10 @@ import { ThesisHistoryEntry, ThesisHistoryResponse } from '../core/academic/acad
 })
 export class ThesisEvolutionChartComponent implements OnChanges {
   @Input({ required: true }) history!: ThesisHistoryResponse | null;
+  @Input() canDeleteEntries = false;
+  @Input() canEditEntries = false;
+  @Output() deleteEntry = new EventEmitter<ThesisHistoryEntry>();
+  @Output() editEntry = new EventEmitter<ThesisHistoryEntry>();
 
   protected chartData: ThesisHistoryEntry[] = [];
   protected maxPercentage = 100;
@@ -57,6 +61,8 @@ export class ThesisEvolutionChartComponent implements OnChanges {
 
   protected startCompare(entry: ThesisHistoryEntry): void {
     this.compareEntry = entry;
+    this.compareTargetId = '';
+    this.compareTarget = null;
     this.showComparePanel = true;
   }
 
@@ -66,9 +72,16 @@ export class ThesisEvolutionChartComponent implements OnChanges {
     this.compareTarget = null;
   }
 
+  protected onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeCompare();
+  }
+
   protected onCompareTargetChange(targetId: number | string): void {
     const id = Number(targetId);
-    this.compareTarget = this.chartData.find(e => e.id === id) ?? null;
+    this.compareTarget = this.chartData.find(e => e.id === id) || null;
+    if (this.compareTarget) {
+      this.compareTargetId = id.toString();
+    }
   }
 
   protected getComponentLabel(key: string): string {
@@ -94,6 +107,8 @@ export class ThesisEvolutionChartComponent implements OnChanges {
   }
 
   protected getComponentValue(entry: ThesisHistoryEntry, key: string): number {
-    return (entry.componentes_json as Record<string, number>)?.[key] ?? 0;
+    if (!entry || !entry.componentes_json) return 0;
+    const value = entry.componentes_json[key as ThesisComponentKey];
+    return value !== undefined ? value : 0;
   }
 }

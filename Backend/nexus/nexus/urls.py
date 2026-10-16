@@ -62,6 +62,7 @@ router.register(r'academic-output/events', AcademicEventViewSet, basename='acade
 urlpatterns = [
     path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
+    path('api/v1/thesis/history/', ThesisHistoryView.as_view(), name='thesis-history'),
     path('api/v1/', include(router.urls)),
     path('api/v1/auth/login/', LoginView.as_view(), name='auth-login'),
     path('api/v1/auth/token/refresh/', TokenRefreshView.as_view(), name='auth-token-refresh'),
@@ -81,7 +82,6 @@ urlpatterns = [
     path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
     path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
     path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
-    path('api/v1/thesis/history/', ThesisHistoryView.as_view(), name='thesis-history'),
 ]
 
 # Sin esta ruta, Django responde 404 a `/media/...` y la evidencia subida nunca se
