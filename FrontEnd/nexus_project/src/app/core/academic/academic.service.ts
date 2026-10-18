@@ -130,6 +130,18 @@ export class AcademicService {
     return this.http.patch<ThesisProgress>(`${API}/thesis/${progressId}/`, data);
   }
 
+  getResearchStays(studentId: number): Observable<any> {
+    return this.http.get<any>(`${API}/academic-output/research-stays/?student=${studentId}`);
+  }
+
+  createResearchStay(data: any): Observable<any> {
+    return this.http.post<any>(`${API}/academic-output/research-stays/`, data);
+  }
+
+  deleteResearchStay(stayId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/research-stays/${stayId}/`);
+  }
+
   getThesisHistory(studentId: number): Observable<ThesisHistoryResponse> {
     return this.http.get<ThesisHistoryResponse>(`${API}/thesis/history/?student=${studentId}`);
   }
@@ -208,5 +220,17 @@ export class AcademicService {
     form.append('titulo', file.name);
     form.append('archivo_adjunto', file);
     return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
+  getOtherProducts(studentId: number): Observable<any> {
+    return this.http.get<any>(`${API}/academic-output/other-products/?student=${studentId}`);
+  }
+
+  createOtherProduct(data: any): Observable<any> {
+    return this.http.post<any>(`${API}/academic-output/other-products/`, data);
+  }
+
+  deleteOtherProduct(productId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/other-products/${productId}/`);
   }
 }

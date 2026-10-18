@@ -1,0 +1,241 @@
+.other-products-panel {
+  padding: 1.5rem;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 0.5rem;
+}
+
+.section-heading h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #111827);
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 0.95rem;
+}
+
+.other-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.other-product-card {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.other-product-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--color-border-hover, #d1d5db);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.other-product-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.product-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  color: white;
+  border: 1px solid;
+}
+
+.product-type-badge.SOFTWARE {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.product-type-badge.PATENTE {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.product-type-badge.BASE_DATOS {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  color: #7c3aed;
+  border-color: #d8b4fe;
+}
+
+.product-type-badge.PROTOTIPO {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #a16207;
+  border-color: #fde047;
+}
+
+.product-type-badge.CAPITULO_LIBRO {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0369a1;
+  border-color: #bfdbfe;
+}
+
+.product-type-badge.OTRO {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--color-bg-hover, #f9fafb);
+  border-color: var(--color-border-hover, #d1d5db);
+}
+
+.btn-edit:hover .icon {
+  color: var(--color-primary, #3b82f6);
+}
+
+.btn-delete:hover {
+  border-color: var(--color-error, #ef4444);
+  background-color: #fef2f2;
+}
+
+.btn-delete:hover .icon {
+  color: var(--color-error, #ef4444);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.meta-value {
+  font-size: 0.9rem;
+  color: var(--color-text-primary, #374151);
+  font-weight: 450;
+}
+
+.product-description {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+}
+
+.product-description p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #6b7280);
+  line-height: 1.5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--color-bg-subtle, #f9fafb);
+  border-radius: 0.75rem;
+  border: 1px dashed var(--color-border, #e5e7eb);
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 1rem;
+}
+
+.timeline-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border-light, #f3f4f6);
+  border-top: 3px solid var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

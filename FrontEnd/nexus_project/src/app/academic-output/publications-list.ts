@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AcademicService } from '../core/academic/academic.service';
-import { Publication, PaginatedResponse } from '../core/academic/academic.models';
+import { Publication, PaginatedResponse, OtherProduct } from '../core/academic/academic.models';
 import { ToastService } from '../shared/toast.service';
 
 @Component({

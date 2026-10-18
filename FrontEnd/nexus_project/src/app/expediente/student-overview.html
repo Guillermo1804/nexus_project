@@ -117,7 +117,13 @@
           <div class="section-heading"><h2>Última Tutoría</h2>@if (canCreateTutoring) { <button class="link-button" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
           @if (overview.last_tutoring; as last) { <time>{{ last.fecha_sesion | date:'longDate' }}</time><span class="status-pill">{{ last.modalidad }}</span><p>{{ last.resumen }}</p><app-tutoring-observations [studentId]="studentId" [preferredSessionId]="last.id" /> } @else { <p class="empty-state">Aún no hay tutorías registradas.</p> }
         </article>
-        @if (canUploadEvidence) { <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button><button class="btn-primary evidence-button" [routerLink]="['/students', studentId, 'academic-output', 'new']">Subir Publicación</button><button type="button" class="btn-primary evidence-timeline-button" (click)="openEvidenceTimeline()">Ver evidencias en línea de tiempo</button> }
+        @if (canUploadEvidence) { 
+        <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button>
+        <button class="btn-primary evidence-button" (click)="selectOtherProductsView()">Otros Productos</button>
+        <button class="btn-primary evidence-button" [routerLink]="['/students', studentId, 'academic-output', 'new']">Subir Publicación</button>
+        <button class="btn-primary evidence-button" [routerLink]="['/students', studentId, 'academic-output']">Ver Producción Académica</button>
+        <button type="button" class="btn-primary evidence-timeline-button" (click)="openEvidenceTimeline()">Ver evidencias en línea de tiempo</button>
+      }
       </aside>
     </div>
     } @else if (activeView === 'timeline') {
@@ -188,7 +194,7 @@
     }
 
     @if (modal === 'editar-avance' && editingThesisEntry && editingSemesterId) {
-      <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel progress-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="edit-progress-modal-title"><header class="modal-header"><div><h2 id="edit-progress-modal-title">Editar Avance de Tesis</h2><span class="mono">{{ overview.matricula }} - Semestre {{ editingThesisEntry.semestre_numero }}</span></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-thesis-progress-form [studentId]="studentId" [semesterId]="editingSemesterId" [progressId]="editingThesisEntry.id" [currentPercentage]="editingThesisEntry.porcentaje_avance" [currentComponents]="editingThesisEntry.componentes_json ?? {}" [currentObservations]="editingThesisEntry.observaciones ?? ''" (saved)="avanceGuardado()" (cancelled)="cerrarModal()" /></section></div>
+      <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel progress-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="edit-progress-modal-title"><header class="modal-header"><div><h2 id="edit-progress-modal-title">Editar Avance de Tesis</h2><span class="mono">{{ overview.matricula }} - Semestre {{ editingThesisEntry.semestre_numero }}</span></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-thesis-progress-form [studentId]="studentId" [semesterId]="editingSemesterId" [progressId]=+editingThesisEntry.id [currentPercentage]="editingThesisEntry.porcentaje_avance" [currentComponents]="editingThesisEntry.componentes_json" [currentObservations]="editingThesisEntry.observaciones ?? ''" (saved)="avanceGuardado()" (cancelled)="cerrarModal()" /></section></div>
     }
 
     @if (modal === 'evidencia') { <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel evidence-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="evidence-modal-title"><header class="modal-header"><div class="modal-title"><span class="modal-icon">⇧</span><h2 id="evidence-modal-title">Carga de Evidencias</h2></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-evidence-upload [studentId]="studentId" [semesters]="overview.semesters" [currentSemesterId]="overview.current_semester?.id ?? null" [tutoringSessions]="tutoringSessions" [agreements]="agreements" [thesisProgress]="overview.thesis_progress" (saved)="evidenciaGuardada()" (cancelled)="cerrarModal()" /></section></div> }

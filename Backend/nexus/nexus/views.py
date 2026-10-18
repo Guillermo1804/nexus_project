@@ -18,6 +18,7 @@ from .models import (
     CommitteeMembership,
     AdminAuditLog,
     CustomUser,
+    OtherProduct,
     Publication,
     ResearchStay,
     Semester,
@@ -38,7 +39,7 @@ from .permissions import (
     permissions_for_user,
 )
 from .services import ThesisHistoryService, TimelineService
-from .serializers import AcademicEventSerializer
+from .serializers import AcademicEventSerializer, ResearchStaySerializer, OtherProductSerializer
 
 
 def remove_accents(texto: str) -> str:
@@ -734,6 +735,46 @@ class ThesisHistoryView(APIView):
 
         history = ThesisHistoryService(student).build_history()
         return Response(history, status=status.HTTP_200_OK)
+
+
+class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ResearchStaySerializer
+    queryset = ResearchStay.objects.select_related('student', 'semester', 'evidencia')
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+        return qs
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data.get('student')
+        if not can_access_student(self.request.user, student, write=True):
+            raise PermissionDenied('No puede registrar estancias para este estudiante.')
+        serializer.save()
+
+
+class OtherProductViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OtherProductSerializer
+    queryset = OtherProduct.objects.select_related('student', 'semester', 'evidencia')
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+        return qs
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data.get('student')
+        if not can_access_student(self.request.user, student, write=True):
+            raise PermissionDenied('No puede registrar otros productos para este estudiante.')
+        serializer.save()
 
 
 class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):

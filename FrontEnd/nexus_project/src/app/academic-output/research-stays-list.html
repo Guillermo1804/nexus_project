@@ -1,0 +1,57 @@
+<section class="nexus-card research-stays-panel" role="tabpanel" aria-labelledby="research-stays-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">Movilidad Académica</span>
+      <h2>Estancias de investigación</h2>
+      <p>Registra estancias nacionales e internacionales en instituciones receptoras.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="newStay()">Registrar estancia</button>
+  </div>
+
+  @if (loading) {
+    <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando estancias...</p></div>
+  } @else if (error) {
+    <div class="timeline-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="load()">Reintentar</button></div>
+  } @else if (stays.length) {
+    <div class="research-stays-grid">
+      @for (stay of stays; track stay.id) {
+        <article class="research-stay-card">
+          <header class="card-header">
+            <div class="header-content">
+              <h3>{{ stay.institucion_destino }}</h3>
+              <span class="country-badge">{{ stay.pais }}</span>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="btn-icon btn-edit" (click)="editStay(stay)" aria-label="Editar estancia">
+                <span class="icon">✎</span>
+              </button>
+              <button type="button" class="btn-icon btn-delete" (click)="deleteStay(stay)" aria-label="Eliminar estancia">
+                <span class="icon">🗑</span>
+              </button>
+            </div>
+          </header>
+          <div class="card-body">
+            <div class="meta-item">
+              <span class="meta-label">Periodo</span>
+              <span class="meta-value">{{ stay.fecha_inicio | date:'mediumDate' }} — {{ stay.fecha_fin | date:'mediumDate' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Anfitrión</span>
+              <span class="meta-value">{{ stay.investigador_anfitrion }}</span>
+            </div>
+            @if (stay.objetivos) { 
+              <div class="objectives">
+                <p>{{ stay.objetivos }}</p>
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>Aún no hay estancias registradas.</p>
+      <button class="btn-primary" (click)="newStay()">Registrar primera estancia</button>
+    </div>
+  }
+</section>

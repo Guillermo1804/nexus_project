@@ -795,13 +795,13 @@ def populate():
             institucion, pais, responsable = sdata["estancia"]
             ResearchStay.objects.get_or_create(
                 student=student,
-                institucion_receptora=institucion,
+                institucion_destino=institucion,
                 defaults={
                     "semester": active_sem,
                     "pais": pais,
                     "fecha_inicio": today - datetime.timedelta(days=42),
                     "fecha_fin": today + datetime.timedelta(days=45),
-                    "responsable_estancia": responsable,
+                    "investigador_anfitrion": responsable,
                     "objetivos": "Validación experimental en clúster de alto rendimiento y GPU distribuida.",
                     "resultados": "Generación de benchmarks reproducibles y análisis comparativo preliminar.",
                 },

@@ -1,0 +1,63 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="publication-form" aria-label="Formulario de estancia de investigación">
+  <div class="form-group">
+    <label for="institucion_destino">Institución destino <span class="required">*</span></label>
+    <input type="text" id="institucion_destino" formControlName="institucion_destino" class="form-control" placeholder="Nombre de la institución receptora">
+    @if (form.get('institucion_destino')!.invalid && form.get('institucion_destino')!.touched) {
+      <div class="text-danger">La institución es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="pais">País <span class="required">*</span></label>
+    <input type="text" id="pais" formControlName="pais" class="form-control" placeholder="País de la estancia">
+    @if (form.get('pais')!.invalid && form.get('pais')!.touched) {
+      <div class="text-danger">El país es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="fechaInicio">Fecha de inicio <span class="required">*</span></label>
+    <input type="date" id="fechaInicio" formControlName="fecha_inicio" class="form-control">
+    @if (form.get('fecha_inicio')!.invalid && form.get('fecha_inicio')!.touched) {
+      <div class="text-danger">La fecha de inicio es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="fechaFin">Fecha de fin <span class="required">*</span></label>
+    <input type="date" id="fechaFin" formControlName="fecha_fin" class="form-control">
+    @if (form.get('fecha_fin')!.invalid && form.get('fecha_fin')!.touched) {
+      <div class="text-danger">La fecha de fin es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="investigador_anfitrion">Investigador anfitrión <span class="required">*</span></label>
+    <input type="text" id="investigador_anfitrion" formControlName="investigador_anfitrion" class="form-control" placeholder="Nombre del responsable en la institución">
+    @if (form.get('investigador_anfitrion')!.invalid && form.get('investigador_anfitrion')!.touched) {
+      <div class="text-danger">El investigador anfitrión es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="objetivos">Objetivos <span class="required">*</span></label>
+    <textarea id="objetivos" formControlName="objetivos" class="form-control" rows="4" placeholder="Objetivos académicos de la estancia"></textarea>
+    @if (form.get('objetivos')!.invalid && form.get('objetivos')!.touched) {
+      <div class="text-danger">Los objetivos son obligatorios.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="resultados">Resultados</label>
+    <textarea id="resultados" formControlName="resultados" class="form-control" rows="4" placeholder="Resultados obtenidos o entregables pactados"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+  </div>
+
+  @if (error) {
+    <div class="form-error" role="alert">{{ error }}</div>
+  }
+</form>

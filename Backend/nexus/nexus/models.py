@@ -350,11 +350,11 @@ class AcademicEvent(AcademicOutputBase):
 
 
 class ResearchStay(AcademicOutputBase):
-	institucion_receptora = models.CharField(max_length=255)
+	institucion_destino = models.CharField(max_length=255, db_column='institucion_receptora')
 	pais = models.CharField(max_length=100)
 	fecha_inicio = models.DateField(db_index=True)
 	fecha_fin = models.DateField()
-	responsable_estancia = models.CharField(max_length=255)
+	investigador_anfitrion = models.CharField(max_length=255, db_column='responsable_estancia')
 	objetivos = models.TextField(blank=True, default='')
 	resultados = models.TextField(blank=True, default='')
 
@@ -362,8 +362,18 @@ class ResearchStay(AcademicOutputBase):
 		constraints = [models.CheckConstraint(condition=Q(fecha_fin__gte=models.F('fecha_inicio')), name='research_stay_end_after_start')]
 
 
+class OtherProductType(models.TextChoices):
+	SOFTWARE = 'SOFTWARE', 'Software'
+	PATENTE = 'PATENTE', 'Patente'
+	BASE_DATOS = 'BASE_DATOS', 'Base de datos'
+	PROTOTIPO = 'PROTOTIPO', 'Prototipo'
+	CAPITULO_LIBRO = 'CAPITULO_LIBRO', 'Capítulo de libro'
+	OTRO = 'OTRO', 'Otro'
+
+
 class OtherProduct(AcademicOutputBase):
-	tipo_producto = models.CharField(max_length=30)
+	tipo_producto = models.CharField(max_length=50, choices=OtherProductType.choices)
 	titulo = models.CharField(max_length=255)
 	descripcion = models.TextField()
 	fecha_registro = models.DateField(default=timezone.now, db_index=True)
+	enlace_web = models.URLField(blank=True, null=True)

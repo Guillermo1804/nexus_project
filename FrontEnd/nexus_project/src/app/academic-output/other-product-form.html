@@ -1,0 +1,54 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="other-product-form" aria-label="Formulario de otros productos académicos">
+  <div class="form-group">
+    <label for="titulo">Título o Nombre <span class="required">*</span></label>
+    <input type="text" id="titulo" formControlName="titulo" class="form-control" placeholder="Nombre completo del producto académico">
+    @if (form.get('titulo')!.invalid && form.get('titulo')!.touched) {
+      <div class="text-danger">El título es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="tipo_producto">Tipo de Producto <span class="required">*</span></label>
+    <select id="tipo_producto" formControlName="tipo_producto" class="form-control">
+      <option value="">Seleccione un tipo</option>
+      @for (type of productTypes; track type.value) {
+        <option [value]="type.value">{{ type.icon }} {{ type.label }}</option>
+      }
+    </select>
+    @if (form.get('tipo_producto')!.invalid && form.get('tipo_producto')!.touched) {
+      <div class="text-danger">El tipo de producto es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="descripcion">Descripción Técnica Detallada <span class="required">*</span></label>
+    <textarea id="descripcion" formControlName="descripcion" class="form-control" rows="4" placeholder="Describa el producto técnico, sus características y funcionalidades principales..."></textarea>
+    @if (form.get('descripcion')!.invalid && form.get('descripcion')!.touched) {
+      <div class="text-danger">La descripción es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="fecha_registro">Fecha de Registro o Liberación <span class="required">*</span></label>
+    <input type="date" id="fecha_registro" formControlName="fecha_registro" class="form-control">
+    @if (form.get('fecha_registro')!.invalid && form.get('fecha_registro')!.touched) {
+      <div class="text-danger">La fecha es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="enlace_web">Enlace Web o Repositorio (Opcional)</label>
+    <input type="url" id="enlace_web" formControlName="enlace_web" class="form-control" placeholder="https://github.com/usuario/proyecto o enlace de patente">
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">
+      {{ saving ? 'Guardando...' : 'Guardar Producto' }}
+    </button>
+  </div>
+
+  @if (error) {
+    <div class="form-error" role="alert">{{ error }}</div>
+  }
+</form>

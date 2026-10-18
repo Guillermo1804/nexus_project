@@ -13,6 +13,8 @@ import { PublicationsListComponent } from './academic-output/publications-list';
 import { PublicationFormComponent } from './academic-output/publication-form';
 import { EventsListComponent } from './academic-output/events-list';
 import { EventFormComponent } from './academic-output/event-form';
+import { ResearchStaysListComponent } from './academic-output/research-stays-list';
+import { ResearchStayFormPageComponent } from './academic-output/research-stay-form-page';
 import { AppShell } from './layout/app-shell';
 
 export const routes: Routes = [
@@ -62,6 +64,24 @@ export const routes: Routes = [
       {
         path: 'students/:id/academic-output/events/edit/:eventId',
         component: EventFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays',
+        component: ResearchStaysListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays/new',
+        component: ResearchStayFormPageComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays/edit/:stayId',
+        component: ResearchStayFormPageComponent,
         canActivate: [authGuard, roleGuard],
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },

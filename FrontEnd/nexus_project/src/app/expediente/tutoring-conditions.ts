@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { RolParticipanteTutoria, StudentOverview } from '../core/academic/academic.models';
+import { StudentOverview } from '../core/academic/academic.models';
 import { finalize, forkJoin } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
 import { AuthService } from '../core/auth/auth.service';
@@ -9,7 +9,7 @@ interface ParticipanteCondicion {
   participanteId: number | null;
   usuarioId: number;
   nombreCompleto: string;
-  rol: RolParticipanteTutoria;
+  rol: string;
   rolVisible: string;
   asistencia: boolean;
 }

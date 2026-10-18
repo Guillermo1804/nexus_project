@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, ThesisHistoryEntry, ThesisHistoryResponse, TimelineEvent, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, ThesisHistoryEntry, ThesisHistoryResponse, TimelineEvent, TimelineEventType, TimelineResponse, OtherProduct } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -31,6 +31,7 @@ export class StudentOverviewComponent implements OnInit {
   private readonly academicService = inject(AcademicService);
   protected readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+   private readonly router = inject(Router);
   protected studentId = 0;
   protected overview: StudentOverview | null = null;
   protected agreements: Agreement[] = [];
@@ -48,6 +49,7 @@ export class StudentOverviewComponent implements OnInit {
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
   protected activeView: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' = 'resumen';
+  protected activeViewOtherProducts: boolean = false;
   protected timelineInitialFilter: TimelineEventType | null = null;
   protected timeline: TimelineResponse | null = null;
   protected timelineLoading = false;
@@ -211,7 +213,7 @@ export class StudentOverviewComponent implements OnInit {
   }
   protected get editingSemesterId(): number | null {
     if (!this.editingThesisEntry) return null;
-    const semester = this.overview?.semesters.find(s => s.numero === this.editingThesisEntry!.semestre_numero);
+    const semester = this.overview?.semesters.find(s => s.numero === +this.editingThesisEntry!.semestre_numero);
     return semester?.id ?? null;
   }
   protected get canCreatePublication(): boolean { return this.canAccessStudent; }
@@ -359,7 +361,7 @@ export class StudentOverviewComponent implements OnInit {
     add(overview.student.user_id, overview.nombre_completo, 'Estudiante');
     add(overview.advisors.advisor?.id, overview.advisors.advisor?.nombre_completo ?? '', 'Asesor Principal');
     add(overview.advisors.coadvisor?.id, overview.advisors.coadvisor?.nombre_completo ?? '', 'Coasesor');
-    overview.advisors.members.forEach(m => add(m.id, m.nombre_completo, this.committeeRole(m.rol_comite)));
+    overview.advisors.members.forEach(m => add(m.id, m.nombre_completo, this.committeeRole(m.rol_comite ?? '')));
     return options;
   }
 
@@ -395,7 +397,7 @@ export class StudentOverviewComponent implements OnInit {
     );
     if (!confirmed) return;
 
-    this.academicService.deleteThesisProgress(entry.id).subscribe({
+    this.academicService.deleteThesisProgress(+entry.id).subscribe({
       next: () => {
         this.thesisHistory = null;
         this.loadThesisHistory();
@@ -414,4 +416,8 @@ export class StudentOverviewComponent implements OnInit {
     this.modal = 'editar-avance';
   }
   protected proximaReunionGuardada(): void { this.refrescar(); this.toasts.exito('Condiciones de tutoría actualizadas.'); }
+
+   protected selectOtherProductsView(): void {
+     this.router.navigate(['/students', this.studentId, 'academic-output']);
+   }
 }

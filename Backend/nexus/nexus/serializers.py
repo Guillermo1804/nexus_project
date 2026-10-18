@@ -780,6 +780,41 @@ class TutoringSessionSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ResearchStaySerializer(serializers.ModelSerializer):
+    duracion_dias = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ResearchStay
+        fields = (
+            'id', 'student', 'semester', 'institucion_destino', 'pais',
+            'fechaInicio', 'fechaFin', 'investigador_anfitrion',
+            'objetivos', 'resultados', 'evidencia',
+            'duracion_dias', 'created_at'
+        )
+        read_only_fields = ('id', 'created_at', 'duracion_dias')
+        extra_kwargs = {
+            'semester': {'required': False},
+            'student': {'required': False},
+            'evidencia': {'required': False},
+        }
+
+    def get_duracion_dias(self, obj):
+        if obj.fechaInicio and obj.fechaFin:
+            return (obj.fechaFin - obj.fechaInicio).days
+        return None
+
+
+class OtherProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherProduct
+        fields = (
+            'id', 'student', 'semester', 'tipo_producto', 'titulo',
+            ' descripcion', 'fecha_registro', 'enlace_web', 'evidencia',
+            'created_at', 'updated_at',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, trim_whitespace=False)

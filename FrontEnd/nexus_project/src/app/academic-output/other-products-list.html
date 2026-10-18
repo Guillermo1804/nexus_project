@@ -1,0 +1,56 @@
+<section class="nexus-card other-products-panel" role="tabpanel" aria-labelledby="other-products-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">TRANSFERENCIA TECNOLÓGICA</span>
+      <h2>Otros Productos Académicos</h2>
+      <p>Registra productos de valor tecnológico o transferencia académica.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="newOtherProduct()">Registrar producto</button>
+  </div>
+
+  @if (loading) {
+    <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando productos...</p></div>
+  } @else if (error) {
+    <div class="timeline-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="loadOtherProducts()">Reintentar</button></div>
+  } @else if (otherProducts.length) {
+    <div class="other-products-grid">
+      @for (product of otherProducts; track product.id) {
+        <article class="other-product-card">
+          <header class="card-header">
+            <div class="header-content">
+              <h3>{{ product.titulo }}</h3>
+              <span class="product-type-badge" [class]="badgeClass(product.tipo_producto)">
+                {{ typeLabel(product.tipo_producto) }}
+              </span>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="btn-icon btn-edit" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
+              <button type="button" class="btn-icon btn-delete" (click)="deleteOtherProduct(product)" aria-label="Eliminar producto">🗑</button>
+            </div>
+          </header>
+          <div class="card-body">
+            <div class="meta-item">
+              <span class="meta-label">Tipo</span>
+              <span class="meta-value">{{ typeLabel(product.tipo_producto) }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Fecha</span>
+              <span class="meta-value">{{ product.fecha_registro | date:'mediumDate' }}</span>
+            </div>
+            @if (product.enlace_web) {
+              <div class="meta-item">
+                <span class="meta-label">Enlace</span>
+                <a [href]="product.enlace_web" target="_blank" rel="noopener" class="meta-value">Ver enlace</a>
+              </div>
+            }
+            <div class="product-description">
+              <p>{{ product.descripcion }}</p>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <p class="empty-state large" role="status">Aún no hay productos registrados.</p>
+  }
+</section>
