@@ -41,10 +41,22 @@
     <input type="url" id="enlace_web" formControlName="enlace_web" class="form-control" placeholder="https://github.com/usuario/proyecto o enlace de patente">
   </div>
 
+  <div class="form-group">
+    <label>Evidencia / Archivo Adjunto (Opcional)</label>
+    <div class="evidence-upload">
+      <input type="file" id="evidencia" class="form-control" (change)="onFileSelected($event)" [disabled]="uploadingEvidence" accept=".pdf,.png,.jpg,.jpeg,.docx,.zip" />
+      @if (uploadingEvidence) {
+        <span class="uploading-text">Subiendo evidencia...</span>
+      } @else if (form.get('evidencia')!.value) {
+        <span class="success-text">✓ Evidencia subida (ID: {{ form.get('evidencia')!.value }})</span>
+      }
+    </div>
+  </div>
+
   <div class="form-actions">
     <button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button>
     <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">
-      {{ saving ? 'Guardando...' : 'Guardar Producto' }}
+      {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto') }}
     </button>
   </div>
 

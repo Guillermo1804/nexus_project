@@ -222,12 +222,26 @@ export class AcademicService {
     return this.http.post<{ id: number }>(`${API}/evidence/`, form);
   }
 
+  uploadOtherProductEvidence(studentId: number, semesterId: number, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    form.append('semester', String(semesterId));
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
   getOtherProducts(studentId: number): Observable<any> {
     return this.http.get<any>(`${API}/academic-output/other-products/?student=${studentId}`);
   }
 
   createOtherProduct(data: any): Observable<any> {
     return this.http.post<any>(`${API}/academic-output/other-products/`, data);
+  }
+
+  updateOtherProduct(productId: number, data: any): Observable<any> {
+    return this.http.patch<any>(`${API}/academic-output/other-products/${productId}/`, data);
   }
 
   deleteOtherProduct(productId: number): Observable<void> {

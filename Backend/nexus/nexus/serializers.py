@@ -530,9 +530,9 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
         for stay in list(student.researchstay_set.all())[:3]:
             activities.append({
                 'tipo': 'ESTANCIA',
-                'titulo': f"Estancia en {stay.institucion_receptora} ({stay.pais})",
-                'fecha': str(stay.fecha_inicio),
-                'detalle': stay.responsable_estancia,
+                'titulo': f"Estancia en {stay.institucion_destino} ({stay.pais})",
+                'fecha': str(stay.fecha_inicio) if stay.fecha_inicio else '',
+                'detalle': stay.investigador_anfitrion,
             })
         return sorted(activities, key=lambda x: x['fecha'] or '', reverse=True)[:5]
 
@@ -787,7 +787,7 @@ class ResearchStaySerializer(serializers.ModelSerializer):
         model = ResearchStay
         fields = (
             'id', 'student', 'semester', 'institucion_destino', 'pais',
-            'fechaInicio', 'fechaFin', 'investigador_anfitrion',
+            'fecha_inicio', 'fecha_fin', 'investigador_anfitrion',
             'objetivos', 'resultados', 'evidencia',
             'duracion_dias', 'created_at'
         )
@@ -799,8 +799,8 @@ class ResearchStaySerializer(serializers.ModelSerializer):
         }
 
     def get_duracion_dias(self, obj):
-        if obj.fechaInicio and obj.fechaFin:
-            return (obj.fechaFin - obj.fechaInicio).days
+        if obj.fecha_inicio and obj.fecha_fin:
+            return (obj.fecha_fin - obj.fecha_inicio).days
         return None
 
 
@@ -809,7 +809,7 @@ class OtherProductSerializer(serializers.ModelSerializer):
         model = OtherProduct
         fields = (
             'id', 'student', 'semester', 'tipo_producto', 'titulo',
-            ' descripcion', 'fecha_registro', 'enlace_web', 'evidencia',
+            'descripcion', 'fecha_registro', 'enlace_web', 'evidencia',
             'created_at', 'updated_at',
         )
         read_only_fields = ('id', 'created_at', 'updated_at')

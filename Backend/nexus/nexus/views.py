@@ -757,7 +757,7 @@ class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins
         serializer.save()
 
 
-class OtherProductViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class OtherProductViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OtherProductSerializer
     queryset = OtherProduct.objects.select_related('student', 'semester', 'evidencia')
