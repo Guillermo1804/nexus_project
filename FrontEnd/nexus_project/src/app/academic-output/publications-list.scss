@@ -52,7 +52,7 @@
 
 .publication-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
   gap: 1rem;
 }
 
@@ -125,4 +125,64 @@
 .publication-details a:hover,
 .publication-card a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 899px) {
+  .publications-container {
+    padding: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .publications-header {
+    align-items: stretch;
+  }
+
+  .publications-header h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .publications-header .btn-primary {
+    width: 100%;
+  }
+
+  .publication-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publication-card {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .publication-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .status-badge {
+    align-self: flex-start;
+  }
+
+  .publication-details p {
+    overflow-wrap: anywhere;
+  }
+
+  .publication-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .publication-actions button {
+    flex: 1 1 8rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .loading-state {
+    padding: 2rem 1rem;
+  }
 }

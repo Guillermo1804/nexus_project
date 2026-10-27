@@ -52,7 +52,7 @@
 
 .event-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
   gap: 1rem;
 }
 
@@ -165,4 +165,62 @@
 
 .btn-primary:hover:not(:disabled) {
   background-color: #0b5ed7;
+}
+
+@media (max-width: 899px) {
+  .events-container {
+    padding: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .events-header {
+    align-items: stretch;
+  }
+
+  .events-header h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .events-header .btn-primary {
+    width: 100%;
+  }
+
+  .event-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-card {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .event-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .type-badge {
+    align-self: flex-start;
+  }
+
+  .event-details p {
+    overflow-wrap: anywhere;
+  }
+
+  .event-actions {
+    flex-wrap: wrap;
+  }
+
+  .event-actions button {
+    flex: 1 1 8rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .loading-state {
+    padding: 2rem 1rem;
+  }
 }
