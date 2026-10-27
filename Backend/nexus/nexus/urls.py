@@ -49,6 +49,11 @@ from .views import (
     PublicationViewSet,
     ResearchStayViewSet,
     OtherProductViewSet,
+    DashboardView,
+    EstudiantesActivosView,
+    TutoriasPeriodoView,
+    AcuerdosSeguimientoView,
+    AcuerdosVencidosView,
 )
 from .views_health import health_check
 
@@ -86,6 +91,11 @@ urlpatterns = [
     path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
     path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
     path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
+    path('api/v1/monitoring/dashboard/', DashboardView.as_view(), name='monitoring-dashboard'),
+    path('api/v1/monitoring/dashboard/estudiantes-activos/', EstudiantesActivosView.as_view(), name='dashboard-estudiantes-activos'),
+    path('api/v1/monitoring/dashboard/tutorias-periodo/', TutoriasPeriodoView.as_view(), name='dashboard-tutorias-periodo'),
+    path('api/v1/monitoring/dashboard/acuerdos-seguimiento/', AcuerdosSeguimientoView.as_view(), name='dashboard-acuerdos-seguimiento'),
+    path('api/v1/monitoring/dashboard/acuerdos-vencidos/', AcuerdosVencidosView.as_view(), name='dashboard-acuerdos-vencidos'),
 ]
 
 # Sin esta ruta, Django responde 404 a `/media/...` y la evidencia subida nunca se

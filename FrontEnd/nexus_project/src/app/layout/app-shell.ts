@@ -66,6 +66,8 @@ export class AppShell implements OnInit {
     if (url === '/home') return 'Inicio';
     if (url === '/acuerdos') return 'Acuerdos';
     if (url.startsWith('/students/') && url.includes('/academic-output/events')) return 'Congresos y Coloquios';
+    if (url.startsWith('/students/') && url.includes('/academic-output/research-stays')) return 'Estancias de investigación';
+    if (url.startsWith('/students/') && url.includes('/academic-output/other-products')) return 'Otros Productos';
     if (url.startsWith('/students/') && url.includes('/academic-output')) return 'Producción Científica';
     if (url.startsWith('/expediente/')) return 'Expediente';
     if (url === '/coordinator/students/new') return 'Registrar estudiante';

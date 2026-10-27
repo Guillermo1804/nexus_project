@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="publication-form" aria-label="Formulario de estancia de investigación">
+<form [formGroup]="form" (ngSubmit)="submit()" class="research-stay-form" aria-label="Formulario de estancia de investigación">
   <div class="form-group">
     <label for="institucion_destino">Institución destino <span class="required">*</span></label>
     <input type="text" id="institucion_destino" formControlName="institucion_destino" class="form-control" placeholder="Nombre de la institución receptora">
@@ -52,9 +52,19 @@
     <textarea id="resultados" formControlName="resultados" class="form-control" rows="4" placeholder="Resultados obtenidos o entregables pactados"></textarea>
   </div>
 
+  <div class="form-group">
+    <label for="evidencia">Constancia / Evidencia</label>
+    <input type="file" id="evidencia" (change)="onFileChange($event)" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.docx">
+    @if (uploadedEvidenceId) {
+      <small class="form-hint text-success">Evidencia subida (ID: {{ uploadedEvidenceId }})</small>
+    }
+  </div>
+
   <div class="form-actions">
-    <button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button>
-    <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+    <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+      @if (saving) { <span class="spinner-sm"></span> Guardando... } @else { {{ isEditMode() ? 'Actualizar' : 'Registrar' }} Estancia }
+    </button>
   </div>
 
   @if (error) {

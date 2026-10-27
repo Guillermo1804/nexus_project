@@ -57,7 +57,11 @@
         }
 
         @if (canViewAcademicOutput()) {
-          <a routerLink="/students/{{ auth.user?.student_id }}/academic-output" routerLinkActive="active">
+          <a
+            routerLink="/students/{{ auth.user?.student_id }}/academic-output"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
             Producción Científica
           </a>
         }

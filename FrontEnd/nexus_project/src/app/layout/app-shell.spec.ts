@@ -34,7 +34,7 @@ describe('AppShell (menú lateral)', () => {
     await TestBed.configureTestingModule({
       imports: [AppShell],
       providers: [
-        provideRouter([{ path: 'prueba', component: SpecEmpty }]),
+        provideRouter([{ path: '**', component: SpecEmpty }]),
         { provide: AuthService, useValue: { user: signal(current), isAuthenticated: () => true, hasPermission: () => false } },
         { provide: AcademicService, useValue: { getAgreementAlerts: alertSpy } },
       ],
@@ -145,6 +145,19 @@ describe('AppShell (menú lateral)', () => {
       wide.remove();
       fixture.detectChanges();
       expect(shell.hasHorizontalOverflow()).withContext('tras retirarlo').toBeFalse();
+    });
+
+    it('no marca Producción Científica al estar en Estancias', async () => {
+      await configure(user('STUDENT', ['records.read.own'], { student_id: 1 }));
+
+      await TestBed.inject(Router).navigate(['/students/1/academic-output/research-stays']);
+      fixture.detectChanges();
+
+      const activeLinks = [...fixture.nativeElement.querySelectorAll('.nav-list a.active')]
+        .map((link: Element) => (link.textContent ?? '').replace(/\s+/g, ' ').trim());
+
+      expect(activeLinks).not.toContain('Producción Científica');
+      expect(activeLinks).toContain('Estancias');
     });
   });
 });

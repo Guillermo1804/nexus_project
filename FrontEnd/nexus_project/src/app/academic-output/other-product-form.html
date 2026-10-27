@@ -42,21 +42,19 @@
   </div>
 
   <div class="form-group">
-    <label>Evidencia / Archivo Adjunto (Opcional)</label>
-    <div class="evidence-upload">
-      <input type="file" id="evidencia" class="form-control" (change)="onFileSelected($event)" [disabled]="uploadingEvidence" accept=".pdf,.png,.jpg,.jpeg,.docx,.zip" />
-      @if (uploadingEvidence) {
-        <span class="uploading-text">Subiendo evidencia...</span>
-      } @else if (form.get('evidencia')!.value) {
-        <span class="success-text">✓ Evidencia subida (ID: {{ form.get('evidencia')!.value }})</span>
-      }
-    </div>
+    <label for="evidencia">Evidencia / Archivo Adjunto (Opcional)</label>
+    <input type="file" id="evidencia" class="form-control" (change)="onFileChange($event)" [disabled]="uploadingEvidence" accept=".pdf,.png,.jpg,.jpeg,.docx,.zip">
+    @if (uploadingEvidence) {
+      <small class="form-hint">Subiendo evidencia...</small>
+    } @else if (form.get('evidencia')!.value) {
+      <small class="form-hint text-success">✓ Evidencia subida (ID: {{ form.get('evidencia')!.value }})</small>
+    }
   </div>
 
   <div class="form-actions">
-    <button type="button" class="btn-secondary" (click)="cancelled.emit()">Cancelar</button>
-    <button type="submit" class="btn-primary" [disabled]="saving || form.invalid">
-      {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar Producto' : 'Guardar Producto') }}
+    <button type="button" class="btn btn-secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="submit" class="btn btn-primary" [disabled]="saving || form.invalid">
+      @if (saving) { <span class="spinner-sm"></span> Guardando... } @else { {{ isEditMode ? 'Actualizar Producto' : 'Guardar Producto' }} }
     </button>
   </div>
 

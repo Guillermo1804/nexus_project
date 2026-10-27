@@ -39,6 +39,7 @@ from .permissions import (
     permissions_for_user,
 )
 from .services import ThesisHistoryService, TimelineService
+from .services.dashboard_service import DashboardService
 from .serializers import AcademicEventSerializer, ResearchStaySerializer, OtherProductSerializer
 
 
@@ -813,6 +814,76 @@ class GlobalAcademicOverviewView(APIView):
     def get(self, request):
         students = Student.objects.filter(estatus_activo=True).order_by('matricula')
         return paginated_response(request, students, StudentRecordSerializer)
+
+
+class DashboardView(APIView):
+    """Executive dashboard for program coordinators - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        kpis = DashboardService.get_kpis()
+        distribucion_semestres = DashboardService.get_distribucion_semestres()
+        distribucion_avance_tesis = DashboardService.get_distribucion_avance_tesis()
+        estudiantes_en_rezago = DashboardService.get_estudiantes_en_rezago()
+        estudiantes_activos = DashboardService.get_estudiantes_activos()
+        tutorias_periodo = DashboardService.get_tutorias_periodo()
+        acuerdos_segumiento = DashboardService.get_acuerdos_segumiento()
+        acuerdos_vencidos = DashboardService.get_acuerdos_vencidos()
+
+        return Response({
+            'kpis': kpis,
+            'distribucion_semestres': distribucion_semestres,
+            'distribucion_avance_tesis': distribucion_avance_tesis,
+            'estudiantes_en_rezago': estudiantes_en_rezago,
+            'estudiantes_activos': estudiantes_activos,
+            'tutorias_periodo': tutorias_periodo,
+            'acuerdos_segumiento': acuerdos_segumiento,
+            'acuerdos_vencidos': acuerdos_vencidos,
+        })
+
+    def get_estudiantes_activos(self, request):
+        return Response(DashboardService.get_estudiantes_activos())
+
+    def get_tutorias_periodo(self, request):
+        return Response(DashboardService.get_tutorias_periodo())
+
+    def get_acuerdos_segumiento(self, request):
+        return Response(DashboardService.get_acuerdos_segumiento())
+
+    def get_acuerdos_vencidos(self, request):
+        return Response(DashboardService.get_acuerdos_vencidos())
+
+
+class EstudiantesActivosView(APIView):
+    """Endpoint para lista detallada de estudiantes activos - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_estudiantes_activos())
+
+
+class TutoriasPeriodoView(APIView):
+    """Endpoint para lista detallada de tutorías del período - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_tutorias_periodo())
+
+
+class AcuerdosSeguimientoView(APIView):
+    """Endpoint para lista detallada de acuerdos en seguimiento - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_acuerdos_segumiento())
+
+
+class AcuerdosVencidosView(APIView):
+    """Endpoint para lista detallada de acuerdos vencidos - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_acuerdos_vencidos())
 
 
 class StudentSemesterListCreateView(APIView):

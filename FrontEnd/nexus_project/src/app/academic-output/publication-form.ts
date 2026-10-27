@@ -48,6 +48,7 @@ export class PublicationFormComponent {
   protected saving = false;
   protected selectedFile: File | null = null;
   protected uploadedEvidenceId: number | null = null;
+  protected error = '';
 
   protected readonly publicationTypes = [
     { value: 'JCR', label: 'JCR' },
@@ -135,6 +136,7 @@ export class PublicationFormComponent {
       error: (err) => {
         this.toast.error(this.publicationId ? 'Error al actualizar la publicacion' : 'Error al registrar la publicacion');
         console.error(err);
+        this.error = err.error?.detail || err.error?.non_field_errors?.[0] || 'No fue posible registrar la publicación.';
       },
     });
   }

@@ -1,0 +1,46 @@
+<div class="modal-container">
+  <h2 mat-dialog-title>Tutorías del Periodo</h2>
+  <mat-dialog-content class="mat-elevation-z8">
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="fecha" matSortDirection="desc">
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.fecha | date:'dd/MM/yyyy' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="modalidad">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Modalidad</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.modalidad }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estudiante">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estudiante</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.estudiante }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="matricula">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Matrícula</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.matricula }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="semestre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Semestre</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.semestre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="resumen">
+          <th mat-header-cell *matHeaderCellDef>Resumen</th>
+          <td mat-cell *matCellDef="let tutoria">{{ tutoria.resumen }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onNoClick()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

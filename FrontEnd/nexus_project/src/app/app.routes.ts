@@ -17,6 +17,7 @@ import { ResearchStaysListComponent } from './academic-output/research-stays-lis
 import { ResearchStayFormPageComponent } from './academic-output/research-stay-form-page';
 import { OtherProductsListComponent } from './academic-output/other-products-list';
 import { OtherProductFormPageComponent } from './academic-output/other-product-form-page';
+import { CoordinatorDashboardComponent } from './coordinator/coordinator-dashboard';
 import { AppShell } from './layout/app-shell';
 
 export const routes: Routes = [
@@ -141,6 +142,12 @@ export const routes: Routes = [
         component: RegistroEstudiante,
         canActivate: [authGuard, roleGuard, permissionGuard],
         data: { requiredPermission: 'students.create', allowedRoles: ['PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'coordinator/dashboard',
+        component: CoordinatorDashboardComponent,
+        canActivate: [authGuard, roleGuard, permissionGuard],
+        data: { requiredPermission: 'academic.read.global', allowedRoles: ['PROGRAM_COORDINATOR'] },
       },
     ],
   },

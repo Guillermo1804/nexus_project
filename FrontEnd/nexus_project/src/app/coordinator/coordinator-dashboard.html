@@ -1,0 +1,250 @@
+<section class="dashboard-page" aria-label="Dashboard ejecutivo del coordinador">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <span class="eyebrow">SEGUIMIENTO LONGITUDINAL</span>
+      <h1>Panel Ejecutivo del Coordinador</h1>
+      <p>Métricas consolidadas en tiempo real de la cohorte doctoral</p>
+    </div>
+    <div class="header-actions">
+      <span class="last-update" aria-live="polite" [attr.data-updated]="data ? 'true' : 'false'">
+        @if (data) {
+          Actualizado: {{ data.kpis.total_estudiantes_activos }} estudiantes activos
+        }
+      </span>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="loading-state" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Cargando métricas...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-state" role="alert">
+      <p>{{ error }}</p>
+      <button class="btn-primary" (click)="loadDashboard()">Reintentar</button>
+    </div>
+  } @else if (data) {
+    <!-- KPI Cards -->
+    <section class="kpi-grid" aria-labelledby="kpi-title">
+      <h2 id="kpi-title" class="sr-only">Indicadores Clave de Rendimiento</h2>
+
+      <article class="kpi-card kpi-primary" aria-live="polite">
+        <button mat-button class="kpi-button" (click)="openEstudiantesActivosModal()" aria-label="Ver detalles de estudiantes activos">
+          <div class="kpi-icon" aria-hidden="true">👥</div>
+          <div class="kpi-content">
+            <span class="kpi-value">{{ data.kpis.total_estudiantes_activos }}</span>
+            <span class="kpi-label">Estudiantes Activos</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="kpi-card kpi-warning" aria-live="polite">
+        <button mat-button class="kpi-button" (click)="openTutoriasPeriodoModal()" aria-label="Ver detalles de tutorías del período">
+          <div class="kpi-icon" aria-hidden="true">📋</div>
+          <div class="kpi-content">
+            <span class="kpi-value">{{ data.kpis.total_acuerdos_pendientes }}</span>
+            <span class="kpi-label">Tutorías del Periodo</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="kpi-card kpi-danger" aria-live="polite">
+        <button mat-button class="kpi-button" (click)="openAcuerdosVencidosModal()" aria-label="Ver detalles de acuerdos vencidos">
+          <div class="kpi-icon" aria-hidden="true">⚠️</div>
+          <div class="kpi-content">
+            <span class="kpi-value">{{ data.kpis.total_acuerdos_vencidos }}</span>
+            <span class="kpi-label">Acuerdos Vencidos</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="kpi-card kpi-info" aria-live="polite">
+        <button mat-button class="kpi-button" (click)="openAcuerdosSegumientoModal()" aria-label="Ver detalles de acuerdos en seguimiento">
+          <div class="kpi-icon" aria-hidden="true">📅</div>
+          <div class="kpi-content">
+            <span class="kpi-value">{{ data.kpis.estudiantes_sin_tutoria_reciente }}</span>
+            <span class="kpi-label">Acuerdos en Seguimiento</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="kpi-card kpi-success" aria-live="polite">
+        <div class="kpi-icon" aria-hidden="true">📊</div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ data.kpis.promedio_avance_tesis }}%</span>
+          <span class="kpi-label">Promedio Avance Tesis</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- Charts Row -->
+    <section class="charts-grid" aria-labelledby="charts-title">
+      <h2 id="charts-title" class="sr-only">Visualizaciones Gráficas</h2>
+
+      <!-- Distribución por Semestre - Donut Chart -->
+      <article class="chart-card" aria-labelledby="semestre-title">
+        <h3 id="semestre-title" class="chart-title">Estudiantes por Semestre Actual</h3>
+        <div class="chart-wrapper">
+          <div class="donut-chart" role="img" [attr.aria-label]="getSemestreAriaLabel()">
+            <svg viewBox="0 0 200 200" class="donut-svg">
+              <circle
+                cx="100" cy="100" r="80"
+                fill="none" stroke="#e5e7eb" stroke-width="32"
+                aria-hidden="true"
+              />
+              @for (item of data.distribucion_semestres; track item.semestre; let i = $index) {
+                <circle
+                  cx="100" cy="100" r="80"
+                  fill="none" [attr.stroke]="getSemestreColor(i)" stroke-width="32"
+                  [attr.stroke-dasharray]="getCircumference(item.total_alumnos, getTotalSemestres())"
+                  [attr.stroke-dashoffset]="getStrokeDashoffset(item, i)"
+                  stroke-linecap="round"
+                  [attr.data-semestre]="item.semestre"
+                  [attr.data-total]="item.total_alumnos"
+                  role="graphics-symbol"
+                  [attr.aria-label]="'Semestre ' + item.semestre + ': ' + item.total_alumnos + ' estudiantes'"
+                />
+              }
+            </svg>
+            <div class="donut-center">
+              <span class="donut-total">{{ getTotalSemestres() }}</span>
+              <span class="donut-label">Total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessible table alternative -->
+        <table class="chart-table sr-only" aria-hidden="false">
+          <caption>Distribución por semestre</caption>
+          <thead>
+            <tr><th>Semestre</th><th>Total Alumnos</th></tr>
+          </thead>
+          <tbody>
+            @for (item of data.distribucion_semestres; track item.semestre) {
+              <tr>
+                <td>Semestre {{ item.semestre }}</td>
+                <td>{{ item.total_alumnos }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <ul class="chart-legend" aria-label="Leyenda de semestres">
+          @for (item of data.distribucion_semestres; track item.semestre; let i = $index) {
+            <li>
+              <span class="legend-color" [style.background-color]="getSemestreColor(i)"></span>
+              <span>Semestre {{ item.semestre }}: {{ item.total_alumnos }}</span>
+            </li>
+          }
+        </ul>
+      </article>
+
+      <!-- Distribución Avance Tesis - Bar Chart -->
+      <article class="chart-card" aria-labelledby="avance-title">
+        <h3 id="avance-title" class="chart-title">Avance de Tesis (Distribución)</h3>
+        <div class="chart-wrapper">
+          <div class="bar-chart" role="img" [attr.aria-label]="getAvanceAriaLabel()">
+            <div class="bars-container">
+              @for (range of getAvanceRanges(); track range.label) {
+                <div class="bar-group">
+                  <div class="bar-wrapper">
+                    <div
+                      class="bar"
+                      [style.height.%]="getBarHeight(range.value, getTotalAvance())"
+                      [style.background-color]="range.color"
+                      role="graphics-symbol"
+                      [attr.aria-label]="range.label + ': ' + range.value + ' estudiantes'"
+                    ></div>
+                  </div>
+                  <span class="bar-label">{{ range.label }}</span>
+                  <span class="bar-value">{{ range.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessible table alternative -->
+        <table class="chart-table sr-only" aria-hidden="false">
+          <caption>Distribución de avance de tesis</caption>
+          <thead>
+            <tr><th>Rango</th><th>Estudiantes</th></tr>
+          </thead>
+          <tbody>
+            @for (range of getAvanceRanges(); track range.label) {
+              <tr>
+                <td>{{ range.label }}</td>
+                <td>{{ range.value }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <ul class="chart-legend" aria-label="Leyenda de avances">
+          @for (range of getAvanceRanges(); track range.label) {
+            <li>
+              <span class="legend-color" [style.background-color]="range.color"></span>
+              <span>{{ range.label }}: {{ range.value }}</span>
+            </li>
+          }
+        </ul>
+      </article>
+    </section>
+
+    <!-- Alertas de Rezago -->
+    <section class="alerts-section" aria-labelledby="alerts-title">
+      <h2 id="alerts-title" class="section-title">⚠️ Estudiantes en Situación de Rezago</h2>
+
+      @if (data.estudiantes_en_rezago.length === 0) {
+        <div class="empty-alerts" role="status">
+          <p>✅ No hay estudiantes en situación de rezago detectada.</p>
+        </div>
+      } @else {
+        <div class="table-wrapper" role="region" aria-label="Tabla de estudiantes en rezago" tabindex="0">
+          <table class="alerts-table">
+            <thead>
+              <tr>
+                <th scope="col">Matrícula</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Motivo de Rezago</th>
+                <th scope="col">Asesor Principal</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (est of data.estudiantes_en_rezago; track est.student_id) {
+                <tr>
+                  <td>{{ est.matricula }}</td>
+                  <td>{{ est.nombre_completo }}</td>
+                  <td class="motivo-cell">{{ est.motivo_rezago }}</td>
+                  <td>{{ est.asesor_principal }}</td>
+                  <td>
+                    <a
+                      [routerLink]="['/expediente', est.student_id]"
+                      class="btn-link"
+                      aria-label="Ver expediente de {{ est.nombre_completo }}"
+                    >
+                      Ver expediente
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Accessible alternative list for screen readers -->
+        <ul class="alerts-list sr-only" aria-label="Lista de estudiantes en rezago">
+          @for (est of data.estudiantes_en_rezago; track est.student_id) {
+            <li>
+              <strong>{{ est.matricula }} - {{ est.nombre_completo }}</strong>:
+              {{ est.motivo_rezago }}. Asesor: {{ est.asesor_principal }}.
+              <a [routerLink]="['/expediente', est.student_id]">Ver expediente</a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</section>
