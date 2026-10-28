@@ -83,6 +83,25 @@ td {
   color: var(--brand);
 }
 
+.pagination {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.pagination-summary {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.pagination-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .state-message,
 .empty-state {
   color: var(--text-muted);
@@ -117,4 +136,6 @@ td {
 @media (max-width: 720px) {
   .page-shell { padding: 24px 16px; }
   .section-header, th, td { padding-left: 16px; padding-right: 16px; }
+  .pagination { align-items: stretch; flex-direction: column; }
+  .pagination-actions { justify-content: space-between; }
 }

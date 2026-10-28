@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
@@ -10,9 +10,10 @@ import { AcademicService } from '../core/academic/academic.service';
   templateUrl: './research-stay-form.html',
   styleUrl: './research-stay-form.scss',
 })
-export class ResearchStayFormComponent {
+export class ResearchStayFormComponent implements OnInit {
   @Input({ required: true }) studentId!: number;
   @Input({ required: true }) semesterId!: number;
+  @Input() stayId: number | null = null;
   @Output() saved = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -25,7 +26,39 @@ export class ResearchStayFormComponent {
   maxDate = new Date().toISOString().split('T')[0];
 
   isEditMode(): boolean {
-    return false;
+    return this.stayId !== null;
+  }
+
+  ngOnInit(): void {
+    if (!this.stayId) return;
+
+    this.saving = true;
+    this.service.getResearchStays(this.studentId).pipe(
+      finalize(() => this.saving = false)
+    ).subscribe({
+      next: (data: any) => {
+        const stay = (data.results || data).find((item: any) => item.id === this.stayId);
+        if (!stay) {
+          this.error = 'No fue posible encontrar la estancia que desea editar.';
+          return;
+        }
+
+        this.form.patchValue({
+          institucion_destino: stay.institucion_destino,
+          pais: stay.pais,
+          fecha_inicio: stay.fecha_inicio,
+          fecha_fin: stay.fecha_fin,
+          investigador_anfitrion: stay.investigador_anfitrion,
+          objetivos: stay.objetivos,
+          resultados: stay.resultados,
+          evidencia: stay.evidencia ?? null,
+        });
+        this.uploadedEvidenceId = stay.evidencia ?? null;
+      },
+      error: () => {
+        this.error = 'No fue posible cargar la estancia para editar.';
+      },
+    });
   }
 
   cancelar(): void {
@@ -72,7 +105,7 @@ export class ResearchStayFormComponent {
     const v = this.form.getRawValue();
     if (v.fecha_fin < v.fecha_inicio) { this.error = 'La fecha de fin debe ser posterior a la de inicio.'; return; }
     this.saving = true; this.error = '';
-    this.service.createResearchStay({
+    const data = {
       student: this.studentId,
       semester: this.semesterId || null,
       institucion_destino: v.institucion_destino,
@@ -83,7 +116,12 @@ export class ResearchStayFormComponent {
       objetivos: v.objetivos,
       resultados: v.resultados,
       evidencia: v.evidencia,
-    }).pipe(finalize(() => this.saving = false)).subscribe({
+    };
+    const request = this.isEditMode()
+      ? this.service.updateResearchStay(this.stayId!, data)
+      : this.service.createResearchStay(data);
+
+    request.pipe(finalize(() => this.saving = false)).subscribe({
       next: () => this.saved.emit(),
       error: err => this.error = err.error?.detail || err.error?.non_field_errors?.[0] || 'No fue posible registrar la estancia.',
     });

@@ -55,7 +55,9 @@ export class AuthService {
     return this.tokens.refreshAccessToken();
   }
 
-  loadUsers(): Observable<PaginatedResponse<AuthenticatedUser>> { return this.http.get<PaginatedResponse<AuthenticatedUser>>(`${AUTH_API}/users/`); }
+  loadUsers(page = 1): Observable<PaginatedResponse<AuthenticatedUser>> {
+    return this.http.get<PaginatedResponse<AuthenticatedUser>>(`${AUTH_API}/users/?page=${page}`);
+  }
   assignRole(userId: number, role: UserRole): Observable<AuthenticatedUser> { return this.http.patch<AuthenticatedUser>(`${AUTH_API}/users/${userId}/role/`, { role } satisfies RoleAssignment); }
   hasPermission(permission: Permission): boolean { return this.tokens.user()?.permissions.includes(permission) ?? false; }
   accessToken(): string | null { return this.tokens.access(); }

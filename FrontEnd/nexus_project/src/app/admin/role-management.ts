@@ -23,6 +23,10 @@ export class RoleManagement {
   protected users: AuthenticatedUser[] = [];
   protected loading = true;
   protected error = '';
+  protected currentPage = 1;
+  protected totalUsers = 0;
+  protected hasNextPage = false;
+  protected hasPreviousPage = false;
   protected readonly updatingUserIds = new Set<number>();
 
   constructor() {
@@ -65,8 +69,25 @@ export class RoleManagement {
   }
 
   private loadUsers(): void {
-    this.auth.loadUsers().pipe(finalize(() => this.loading = false)).subscribe({
-      next: (response) => this.users = response.results,
+    this.loadPage(1);
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 1 || page === this.currentPage || this.loading) return;
+    this.loadPage(page);
+  }
+
+  private loadPage(page: number): void {
+    this.loading = true;
+    this.error = '';
+    this.auth.loadUsers(page).pipe(finalize(() => this.loading = false)).subscribe({
+      next: (response) => {
+        this.users = response.results;
+        this.currentPage = page;
+        this.totalUsers = response.count;
+        this.hasNextPage = response.next !== null;
+        this.hasPreviousPage = response.previous !== null;
+      },
       error: () => this.error = 'No fue posible cargar los usuarios.',
     });
   }

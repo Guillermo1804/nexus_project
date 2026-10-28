@@ -23,6 +23,7 @@ export interface OtherProduct {
   fecha_registro: string;
   enlace_web?: string;
   evidencia?: number | null;
+  evidencia_archivo?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -13,12 +13,13 @@ import { ThesisComponentKey, ThesisHistoryEntry, ThesisHistoryResponse } from '.
 export class ThesisEvolutionChartComponent implements OnChanges {
   @Input({ required: true }) history!: ThesisHistoryResponse | null;
   @Input() canDeleteEntries = false;
-  @Input() canEditEntries = false;
   @Output() deleteEntry = new EventEmitter<ThesisHistoryEntry>();
-  @Output() editEntry = new EventEmitter<ThesisHistoryEntry>();
 
   protected chartData: ThesisHistoryEntry[] = [];
   protected maxPercentage = 100;
+  protected readonly chartWidth = 450;
+  protected readonly chartHeight = 100;
+  protected readonly chartPadding = { top: 8, right: 8, bottom: 14, left: 24 };
   protected expandedEntry: ThesisHistoryEntry | null = null;
   protected compareEntry: ThesisHistoryEntry | null = null;
   protected compareTarget: ThesisHistoryEntry | null = null;
@@ -37,12 +38,15 @@ export class ThesisEvolutionChartComponent implements OnChanges {
   }
 
   protected getYPosition(percentage: number): number {
-    return 100 - (percentage / this.maxPercentage) * 90;
+    const boundedPercentage = Math.min(Math.max(percentage, 0), this.maxPercentage);
+    const plotHeight = this.chartHeight - this.chartPadding.top - this.chartPadding.bottom;
+    return this.chartPadding.top + (1 - boundedPercentage / this.maxPercentage) * plotHeight;
   }
 
   protected getXPosition(index: number): number {
-    if (this.chartData.length <= 1) return 50;
-    return (index / (this.chartData.length - 1)) * 90 + 5;
+    const plotWidth = this.chartWidth - this.chartPadding.left - this.chartPadding.right;
+    if (this.chartData.length <= 1) return this.chartWidth / 2;
+    return this.chartPadding.left + (index / (this.chartData.length - 1)) * plotWidth;
   }
 
   protected getLinePath(): string {

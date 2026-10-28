@@ -8,7 +8,12 @@ import { ToastService } from '../shared/toast.service';
 
 const DOI_REQUIRED_STATES = new Set(['ACEPTADO', 'PUBLICADO']);
 
-const DOI_OR_EVIDENCE = (control: AbstractControl): ValidationErrors | null => {
+export const doiOrEvidenceValidator = (control: AbstractControl): ValidationErrors | null => {
+  const estado = control.get('estado')?.value;
+  if (!DOI_REQUIRED_STATES.has(estado)) {
+    return null;
+  }
+
   const doi = control.get('doi')?.value;
   const evidencia = control.get('evidencia')?.value;
   if (!doi && !evidencia) {
@@ -43,7 +48,7 @@ export class PublicationFormComponent {
     fecha_publicacion: [''],
     doi: [''],
     evidencia: [null as number | null],
-  }, { validators: DOI_OR_EVIDENCE });
+  }, { validators: doiOrEvidenceValidator });
 
   protected saving = false;
   protected selectedFile: File | null = null;
@@ -72,12 +77,12 @@ export class PublicationFormComponent {
       const doiControl = this.form.controls.doi;
 
       if (DOI_REQUIRED_STATES.has(estado)) {
-        doiControl.setValidators([Validators.required]);
-        doiControl.updateValueAndValidity();
+        doiControl.clearValidators();
       } else {
         doiControl.clearValidators();
-        doiControl.updateValueAndValidity();
       }
+      doiControl.updateValueAndValidity();
+      this.form.updateValueAndValidity();
     });
 
     if (this.publicationId) {
@@ -172,5 +177,4 @@ export class PublicationFormComponent {
     });
   }
 }
-
 

@@ -20,7 +20,7 @@
         <span>{{ roleLabel() }}</span>
       </div>
       <button class="btn-secondary" type="button" (click)="logout()" [disabled]="isLeaving">
-        {{ isLeaving ? 'Closing...' : 'Close session' }}
+        {{ isLeaving ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>
     </div>
   </header>
@@ -74,13 +74,13 @@
 
         @if (canViewAcademicEvents()) {
           <a routerLink="/students/{{ auth.user?.student_id }}/academic-output/events" routerLinkActive="active">
-            Registrar participación
+            Registrar Congresos
           </a>
         }
 
         @if (auth.user?.role === 'STUDENT') {
           <a routerLink="/students/{{ auth.user?.student_id }}/academic-output/research-stays" routerLinkActive="active">
-            Estancias
+            Estancias Académicas
           </a>
         }
 

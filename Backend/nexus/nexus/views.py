@@ -738,7 +738,7 @@ class ThesisHistoryView(APIView):
         return Response(history, status=status.HTTP_200_OK)
 
 
-class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ResearchStaySerializer
     queryset = ResearchStay.objects.select_related('student', 'semester', 'evidencia')
@@ -755,6 +755,13 @@ class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins
         student = serializer.validated_data.get('student')
         if not can_access_student(self.request.user, student, write=True):
             raise PermissionDenied('No puede registrar estancias para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        stay = self.get_object()
+        if not can_access_student(self.request.user, stay.student, write=True):
+            raise PermissionDenied('No puede modificar esta estancia.')
         serializer.save()
 
 

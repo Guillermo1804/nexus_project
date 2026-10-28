@@ -143,7 +143,7 @@
         } @else if (thesisHistoryError) {
           <div class="timeline-state" role="alert"><p>{{ thesisHistoryError }}</p><button class="btn-secondary" (click)="loadThesisHistory()">Reintentar</button></div>
         } @else if (thesisHistory) {
-          <app-thesis-evolution-chart [history]="thesisHistory" [canEditEntries]="canEditThesisProgress" [canDeleteEntries]="canDeleteThesisProgress" (deleteEntry)="eliminarAvance($event)" (editEntry)="editarAvance($event)" />
+          <app-thesis-evolution-chart [history]="thesisHistory" [canDeleteEntries]="canDeleteThesisProgress" (deleteEntry)="eliminarAvance($event)" />
         }
       </section>
     } @else {
@@ -191,10 +191,6 @@
 
     @if (modal === 'avance' && overview.current_semester; as semester) {
       <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel progress-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="progress-modal-title"><header class="modal-header"><div><h2 id="progress-modal-title">Registrar Avance de Tesis</h2><span class="mono">{{ overview.matricula }}</span></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-thesis-progress-form [studentId]="studentId" [semesterId]="semester.id" [currentPercentage]="overview.thesis_progress?.porcentaje_avance ?? 0" [currentComponents]="overview.thesis_progress?.componentes_json ?? {}" [currentObservations]="overview.thesis_progress?.observaciones ?? ''" (saved)="avanceGuardado()" (cancelled)="cerrarModal()" /></section></div>
-    }
-
-    @if (modal === 'editar-avance' && editingThesisEntry && editingSemesterId) {
-      <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel progress-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="edit-progress-modal-title"><header class="modal-header"><div><h2 id="edit-progress-modal-title">Editar Avance de Tesis</h2><span class="mono">{{ overview.matricula }} - Semestre {{ editingThesisEntry.semestre_numero }}</span></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-thesis-progress-form [studentId]="studentId" [semesterId]="editingSemesterId" [progressId]=+editingThesisEntry.id [currentPercentage]="editingThesisEntry.porcentaje_avance" [currentComponents]="editingThesisEntry.componentes_json" [currentObservations]="editingThesisEntry.observaciones ?? ''" (saved)="avanceGuardado()" (cancelled)="cerrarModal()" /></section></div>
     }
 
     @if (modal === 'evidencia') { <div class="modal-backdrop" (click)="onBackdropClick($event)"><section class="modal-panel evidence-modal" appModalFocus role="dialog" aria-modal="true" (appModalEscape)="cerrarModal()" aria-labelledby="evidence-modal-title"><header class="modal-header"><div class="modal-title"><span class="modal-icon">⇧</span><h2 id="evidence-modal-title">Carga de Evidencias</h2></div><button class="close-button" (click)="cerrarModal()" aria-label="Cerrar">×</button></header><app-evidence-upload [studentId]="studentId" [semesters]="overview.semesters" [currentSemesterId]="overview.current_semester?.id ?? null" [tutoringSessions]="tutoringSessions" [agreements]="agreements" [thesisProgress]="overview.thesis_progress" (saved)="evidenciaGuardada()" (cancelled)="cerrarModal()" /></section></div> }

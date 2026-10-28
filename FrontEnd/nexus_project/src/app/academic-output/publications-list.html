@@ -1,41 +1,53 @@
-<div class="publications-container">
-  <div class="publications-header">
-    <h2>Producción Científica</h2>
-    <button class="btn-primary" (click)="newPublication()">+ Nueva Publicación</button>
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="publications-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">PRODUCCIÓN ACADÉMICA</span>
+      <h2>Producción Científica</h2>
+      <p>Registra publicaciones y evidencias de tu producción científica.</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="newPublication()">Registrar publicación</button>
   </div>
 
   @if (loading) {
-    <div class="loading-state">
-      <div class="spinner"></div>
+    <div class="output-state" role="status">
+      <div class="output-spinner"></div>
       <p>Cargando publicaciones...</p>
     </div>
   } @else if (publications.length === 0) {
-    <div class="empty-state">
+    <div class="output-empty" role="status">
       <p>No hay publicaciones registradas.</p>
       <button class="btn-primary" (click)="newPublication()">Registrar primera publicación</button>
     </div>
   } @else {
-    <div class="publication-cards">
-      <article *ngFor="let publication of publications" class="publication-card">
-        <div class="publication-header">
-          <h3>{{ publication.titulo }}</h3>
-          <span class="status-badge" [class]="getStatusClass(publication.estado)">
+    <div class="output-grid">
+      <article *ngFor="let publication of publications" class="output-card">
+        <div class="output-card-header">
+          <div class="output-card-title">
+            <h3>{{ publication.titulo }}</h3>
+            <span class="output-badge" [class]="getStatusClass(publication.estado)">
             {{ getStatusLabel(publication.estado) }}
-          </span>
+            </span>
+          </div>
+          <div class="output-card-actions">
+            <button type="button" class="output-icon-button" (click)="editPublication(publication)" aria-label="Editar publicación">✎</button>
+            <button type="button" class="output-icon-button delete" (click)="deletePublication(publication)" aria-label="Eliminar publicación">🗑</button>
+          </div>
         </div>
-        <div class="publication-details">
-          <p><strong>Autores:</strong> {{ publication.autores }}</p>
-          <p><strong>Tipo:</strong> {{ publication.tipo }}</p>
-          <p><strong>Revista/Editorial:</strong> {{ publication.revista }}</p>
-          <p *ngIf="publication.fecha_publicacion"><strong>Fecha:</strong> {{ publication.fecha_publicacion | date }}</p>
-          <p *ngIf="publication.doi"><strong>DOI/URL:</strong> <a [href]="publication.doi" target="_blank" rel="noopener">{{ publication.doi }}</a></p>
-          <p *ngIf="publication.evidencia_archivo"><strong>Evidencia:</strong> <a [href]="publication.evidencia_archivo" target="_blank" rel="noopener">Ver archivo</a></p>
-        </div>
-        <div class="publication-actions">
-          <button class="btn-secondary btn-sm" (click)="editPublication(publication)">Editar</button>
-          <button class="btn-danger btn-sm" (click)="deletePublication(publication)">Eliminar</button>
+        <div class="output-card-body">
+          <div class="output-meta-item"><span class="output-meta-label">Autores</span><span class="output-meta-value">{{ publication.autores }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Tipo</span><span class="output-meta-value">{{ publication.tipo }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Revista / Editorial</span><span class="output-meta-value">{{ publication.revista }}</span></div>
+          @if (publication.fecha_publicacion) {
+            <div class="output-meta-item"><span class="output-meta-label">Fecha</span><span class="output-meta-value">{{ publication.fecha_publicacion | date }}</span></div>
+          }
+          @if (publication.doi) {
+            <div class="output-meta-item"><span class="output-meta-label">DOI / URL</span><a class="output-meta-value" [href]="publication.doi" target="_blank" rel="noopener">Ver enlace</a></div>
+          }
+          @if (publication.evidencia_archivo) {
+            <div class="output-meta-item"><span class="output-meta-label">Evidencia</span><a class="output-meta-value" [href]="publication.evidencia_archivo" target="_blank" rel="noopener">Ver archivo adjunto</a></div>
+          }
         </div>
       </article>
     </div>
   }
-</div>
+</section>

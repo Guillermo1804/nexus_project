@@ -48,7 +48,6 @@ export class EventFormComponent {
 
   protected readonly roles: { value: RoleParticipation; label: string }[] = [
     { value: 'PONENTE', label: 'Ponente' },
-    { value: 'CONFERENCISTA_MAGISTRAL', label: 'Conferencista Magistral' },
     { value: 'ASISTENTE', label: 'Asistente' },
   ];
 
@@ -88,6 +87,7 @@ export class EventFormComponent {
     const file = target.files?.[0];
     if (file) {
       this.selectedFile = file;
+      this.form.updateValueAndValidity({ onlySelf: false, emitEvent: false });
     }
   }
 

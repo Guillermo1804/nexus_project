@@ -40,14 +40,23 @@ class PublicationSerializer(serializers.ModelSerializer):
     autores = serializers.CharField(source='autores_texto')
     revista = serializers.CharField(source='revista_editorial')
     doi = serializers.CharField(source='doi_url', allow_blank=True, required=False)
+    evidencia_archivo = serializers.SerializerMethodField()
 
     class Meta:
         model = Publication
         fields = (
             'id', 'student', 'semester', 'titulo', 'autores', 'tipo', 'revista',
-            'estado', 'fecha_publicacion', 'doi', 'evidencia', 'created_at',
+            'estado', 'fecha_publicacion', 'doi', 'evidencia', 'evidencia_archivo', 'created_at',
         )
-        read_only_fields = ('id', 'created_at')
+        read_only_fields = ('id', 'created_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, publication):
+        if not publication.evidencia or not publication.evidencia.archivo_adjunto:
+            return None
+
+        url = publication.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
     def validate(self, attrs):
         estado = attrs.get('estado', getattr(self.instance, 'estado', None))
@@ -782,6 +791,7 @@ class TutoringSessionSerializer(serializers.ModelSerializer):
 
 class ResearchStaySerializer(serializers.ModelSerializer):
     duracion_dias = serializers.SerializerMethodField(read_only=True)
+    evidencia_archivo = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ResearchStay
@@ -789,9 +799,9 @@ class ResearchStaySerializer(serializers.ModelSerializer):
             'id', 'student', 'semester', 'institucion_destino', 'pais',
             'fecha_inicio', 'fecha_fin', 'investigador_anfitrion',
             'objetivos', 'resultados', 'evidencia',
-            'duracion_dias', 'created_at'
+            'evidencia_archivo', 'duracion_dias', 'created_at'
         )
-        read_only_fields = ('id', 'created_at', 'duracion_dias')
+        read_only_fields = ('id', 'created_at', 'duracion_dias', 'evidencia_archivo')
         extra_kwargs = {
             'semester': {'required': False},
             'student': {'required': False},
@@ -803,16 +813,34 @@ class ResearchStaySerializer(serializers.ModelSerializer):
             return (obj.fecha_fin - obj.fecha_inicio).days
         return None
 
+    def get_evidencia_archivo(self, stay):
+        if not stay.evidencia or not stay.evidencia.archivo_adjunto:
+            return None
+
+        url = stay.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
+
 
 class OtherProductSerializer(serializers.ModelSerializer):
+    evidencia_archivo = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = OtherProduct
         fields = (
             'id', 'student', 'semester', 'tipo_producto', 'titulo',
             'descripcion', 'fecha_registro', 'enlace_web', 'evidencia',
-            'created_at', 'updated_at',
+            'evidencia_archivo', 'created_at', 'updated_at',
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, product):
+        if not product.evidencia or not product.evidencia.archivo_adjunto:
+            return None
+
+        url = product.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
 
 class LoginSerializer(serializers.Serializer):

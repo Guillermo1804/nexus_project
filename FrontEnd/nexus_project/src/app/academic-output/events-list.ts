@@ -92,7 +92,6 @@ export class EventsListComponent implements OnInit {
   getRoleLabel(rol: string): string {
     switch (rol) {
       case 'PONENTE': return 'Ponente';
-      case 'CONFERENCISTA_MAGISTRAL': return 'Conferencista Magistral';
       case 'ASISTENTE': return 'Asistente';
       default: return rol;
     }

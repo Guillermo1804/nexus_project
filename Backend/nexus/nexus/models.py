@@ -301,7 +301,6 @@ class EventType(models.TextChoices):
 
 class RoleParticipation(models.TextChoices):
     PONENTE = 'PONENTE', 'Ponente'
-    CONFERENCISTA_MAGISTRAL = 'CONFERENCISTA_MAGISTRAL', 'Conferencista Magistral'
     ASISTENTE = 'ASISTENTE', 'Asistente'
 
 

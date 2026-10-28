@@ -138,6 +138,10 @@ export class AcademicService {
     return this.http.post<any>(`${API}/academic-output/research-stays/`, data);
   }
 
+  updateResearchStay(stayId: number, data: any): Observable<any> {
+    return this.http.patch<any>(`${API}/academic-output/research-stays/${stayId}/`, data);
+  }
+
   deleteResearchStay(stayId: number): Observable<void> {
     return this.http.delete<void>(`${API}/academic-output/research-stays/${stayId}/`);
   }

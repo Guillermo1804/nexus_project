@@ -59,6 +59,21 @@ describe('AppShell (menú lateral)', () => {
     expect(alertSpy).not.toHaveBeenCalled();
   });
 
+  it('muestra el botón de cerrar sesión en español', async () => {
+    await configure(user('STUDENT', ['records.read.own']));
+
+    const button = fixture.nativeElement.querySelector('.account .btn-secondary') as HTMLButtonElement;
+
+    expect(button.textContent?.trim()).toBe('Cerrar sesión');
+  });
+
+  it('muestra las etiquetas académicas actualizadas para el alumno', async () => {
+    await configure(user('STUDENT', ['records.read.own', 'academic_events.create'], { student_id: 7 }));
+
+    expect(links()).toContain('Registrar Congresos');
+    expect(links()).toContain('Estancias Académicas');
+  });
+
   const AGREEMENT_ROLES: [UserRole, string[]][] = [
     ['STUDENT', ['records.read.own']],
     ['TUTOR', ['records.read.assigned', 'tutoring.create']],

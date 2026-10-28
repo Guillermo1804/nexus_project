@@ -1,66 +1,80 @@
 .thesis-evolution {
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: var(--color-background);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 
   .evolution-header {
-    margin-bottom: 1.5rem;
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
 
     h2 {
-      margin: 0 0 0.5rem;
-      color: var(--color-text);
-      font-size: 1.5rem;
+      color: var(--heading);
+      font-size: 20px;
+      line-height: 1.3;
+      margin: 0 0 6px;
     }
 
     .evolution-subtitle {
       margin: 0;
-      color: var(--color-text-secondary);
-      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-size: 13px;
     }
   }
 
   .empty-state {
-    padding: 2rem;
+    background: var(--surface-warm);
+    border-radius: var(--radius-control);
+    padding: 32px 24px;
     text-align: center;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 
     .hint {
       margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--color-text-tertiary);
+      color: var(--text-muted);
+      font-size: 13px;
     }
   }
 
   .chart-container {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: var(--color-surface);
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
+    background: var(--surface-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    margin: 0 0 24px;
+    min-height: 280px;
+    padding: 20px;
 
     &:focus {
-      outline: 2px solid var(--color-primary);
+      outline: 2px solid var(--brand);
       outline-offset: 2px;
     }
 
     .evolution-chart {
       width: 100%;
-      height: 250px;
-      max-height: 300px;
+      height: 280px;
+      max-height: 360px;
 
       .chart-axes {
-        stroke: var(--color-text-tertiary);
+        stroke: var(--text-muted);
+        font-weight: 400;
 
         .y-mark, .x-mark {
-          stroke: var(--color-text-tertiary);
-          fill: var(--color-text-tertiary);
+          stroke: var(--text-muted);
+          fill: var(--text-muted);
+          font-weight: 400;
+
+          text {
+            stroke: none;
+          }
         }
       }
 
       .evolution-line {
-        stroke: var(--color-primary);
+        stroke: var(--brand);
         stroke-width: 2;
         fill: none;
       }
@@ -101,9 +115,8 @@
 
   .comparison-table-wrapper {
     overflow-x: auto;
-    margin-top: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
 
     .comparison-table {
       width: 100%;
@@ -112,14 +125,14 @@
       th, td {
         padding: 0.75rem 1rem;
         text-align: left;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--border);
       }
 
       th {
-        background: var(--color-surface);
+        background: var(--surface-soft);
         font-weight: 600;
-        color: var(--color-text-secondary);
-        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
@@ -132,12 +145,12 @@
         .progress-value {
           display: block;
           font-weight: 600;
-          color: var(--color-text);
+          color: var(--heading);
         }
 
         .progress-bar {
           height: 8px;
-          background: var(--color-background);
+          background: var(--surface-warm);
           border-radius: 4px;
           overflow: hidden;
           margin-top: 0.25rem;
@@ -145,7 +158,7 @@
           span {
             display: block;
             height: 100%;
-            background: var(--color-primary);
+            background: var(--brand);
             border-radius: 4px;
             transition: width 0.3s ease;
           }
@@ -179,8 +192,8 @@
         }
 
         &.badge-neutral {
-          background: var(--color-surface);
-          color: var(--color-text-secondary);
+          background: var(--surface);
+          color: var(--text-secondary);
         }
       }
 
@@ -189,14 +202,14 @@
         border: none;
         padding: 0.25rem;
         cursor: pointer;
-        color: var(--color-text-secondary);
+        color: var(--text-secondary);
         font-size: 0.875rem;
         border-radius: 4px;
         transition: all 0.2s ease;
 
         &:hover, &:focus {
-          background: var(--color-surface);
-          color: var(--color-text);
+          background: var(--surface-soft);
+          color: var(--heading);
         }
 
         &:disabled {
@@ -218,7 +231,7 @@
       }
 
       .detail-row {
-        background: var(--color-surface);
+        background: var(--surface-soft);
 
         .detail-content {
           padding: 1rem;
@@ -226,7 +239,7 @@
           .components-breakdown {
             h4 {
               margin: 0 0 1rem;
-              color: var(--color-text);
+              color: var(--heading);
               font-size: 1rem;
             }
 
@@ -239,17 +252,17 @@
                 display: flex;
                 justify-content: space-between;
                 padding: 0.5rem;
-                background: var(--color-background);
+                background: var(--surface-warm);
                 border-radius: 6px;
 
                 .component-name {
                   font-size: 0.875rem;
-                  color: var(--color-text-secondary);
+                  color: var(--text-secondary);
                 }
 
                 .component-value {
                   font-weight: 600;
-                  color: var(--color-primary);
+                  color: var(--brand);
                 }
               }
             }
@@ -257,10 +270,10 @@
             .entry-observations {
               margin-top: 1rem;
               padding: 0.75rem;
-              background: var(--color-background);
+              background: var(--surface-warm);
               border-radius: 6px;
               font-size: 0.875rem;
-              color: var(--color-text-secondary);
+              color: var(--text-secondary);
               white-space: pre-wrap;
             }
           }
@@ -284,18 +297,18 @@
     .compare-column {
       h4 {
         margin: 0 0 1rem;
-        color: var(--color-text);
+        color: var(--heading);
         font-size: 1rem;
         text-align: center;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--border);
       }
 
       .compare-item {
         display: flex;
         justify-content: space-between;
         padding: 0.5rem 0;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--border);
 
         span {
           font-size: 0.875rem;
@@ -303,7 +316,7 @@
 
         .value {
           font-weight: 600;
-          color: var(--color-primary);
+          color: var(--brand);
         }
 
         .delta-value {

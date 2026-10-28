@@ -1,4 +1,4 @@
-<section class="nexus-card research-stays-panel" role="tabpanel" aria-labelledby="research-stays-tab">
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="research-stays-tab">
   <div class="section-heading">
     <div>
       <span class="eyebrow">Movilidad Académica</span>
@@ -9,39 +9,47 @@
   </div>
 
   @if (loading) {
-    <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando estancias...</p></div>
+    <div class="output-state" role="status"><div class="output-spinner"></div><p>Cargando estancias...</p></div>
   } @else if (error) {
-    <div class="timeline-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="load()">Reintentar</button></div>
+    <div class="output-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="load()">Reintentar</button></div>
   } @else if (stays.length) {
-    <div class="research-stays-grid">
+    <div class="output-grid">
       @for (stay of stays; track stay.id) {
-        <article class="research-stay-card">
-          <header class="card-header">
-            <div class="header-content">
+        <article class="output-card">
+          <header class="output-card-header">
+            <div class="output-card-title">
               <h3>{{ stay.institucion_destino }}</h3>
-              <span class="country-badge">{{ stay.pais }}</span>
+              <span class="output-badge country-badge">{{ stay.pais }}</span>
             </div>
-            <div class="card-actions">
-              <button type="button" class="btn-icon btn-edit" (click)="editStay(stay)" aria-label="Editar estancia">
+            <div class="output-card-actions">
+              <button type="button" class="output-icon-button" (click)="editStay(stay)" aria-label="Editar estancia">
                 <span class="icon">✎</span>
               </button>
-              <button type="button" class="btn-icon btn-delete" (click)="deleteStay(stay)" aria-label="Eliminar estancia">
+              <button type="button" class="output-icon-button delete" (click)="deleteStay(stay)" aria-label="Eliminar estancia">
                 <span class="icon">🗑</span>
               </button>
             </div>
           </header>
-          <div class="card-body">
-            <div class="meta-item">
-              <span class="meta-label">Periodo</span>
-              <span class="meta-value">{{ stay.fecha_inicio | date:'mediumDate' }} — {{ stay.fecha_fin | date:'mediumDate' }}</span>
+          <div class="output-card-body">
+            <div class="output-meta-item">
+              <span class="output-meta-label">Periodo</span>
+              <span class="output-meta-value">{{ stay.fecha_inicio | date:'mediumDate' }} — {{ stay.fecha_fin | date:'mediumDate' }}</span>
             </div>
-            <div class="meta-item">
-              <span class="meta-label">Anfitrión</span>
-              <span class="meta-value">{{ stay.investigador_anfitrion }}</span>
+            <div class="output-meta-item">
+              <span class="output-meta-label">Anfitrión</span>
+              <span class="output-meta-value">{{ stay.investigador_anfitrion }}</span>
             </div>
             @if (stay.objetivos) { 
-              <div class="objectives">
+              <div class="output-description objectives">
                 <p>{{ stay.objetivos }}</p>
+              </div>
+            }
+            @if (stay.evidencia_archivo) {
+              <div class="output-meta-item">
+                <span class="output-meta-label">Evidencia</span>
+                <a class="output-meta-value" [href]="stay.evidencia_archivo" target="_blank" rel="noopener">
+                  Ver archivo adjunto
+                </a>
               </div>
             }
           </div>
@@ -49,7 +57,7 @@
       }
     </div>
   } @else {
-    <div class="empty-state">
+    <div class="output-empty">
       <p>Aún no hay estancias registradas.</p>
       <button class="btn-primary" (click)="newStay()">Registrar primera estancia</button>
     </div>

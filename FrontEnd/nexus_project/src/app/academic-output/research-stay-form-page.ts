@@ -12,6 +12,7 @@ import { ResearchStayFormComponent } from './research-stay-form';
     <app-research-stay-form
       [studentId]="studentId"
       [semesterId]="selectedSemesterId"
+      [stayId]="stayId"
       (saved)="onSaved()"
       (cancelled)="onCancel()"
     />
@@ -22,6 +23,7 @@ export class ResearchStayFormPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly service = inject(AcademicService);
   protected readonly studentId = Number(this.route.snapshot.paramMap.get('id') ?? 0);
+  protected readonly stayId = Number(this.route.snapshot.paramMap.get('stayId') ?? 0) || null;
   protected selectedSemesterId = 0;
 
   ngOnInit(): void {

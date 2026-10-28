@@ -1,41 +1,51 @@
-<div class="events-container">
-  <div class="events-header">
-    <h2>Congresos y Coloquios</h2>
-    <button class="btn-primary" (click)="newEvent()">+ Nuevo Evento</button>
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="events-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">CONGRESOS Y COLOQUIOS</span>
+      <h2>Congresos y Coloquios</h2>
+      <p>Registra tu participación en congresos, coloquios y simposios.</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="newEvent()">Registrar congreso</button>
   </div>
 
   @if (loading) {
-    <div class="loading-state">
-      <div class="spinner"></div>
+    <div class="output-state" role="status">
+      <div class="output-spinner"></div>
       <p>Cargando eventos...</p>
     </div>
   } @else if (events.length === 0) {
-    <div class="empty-state">
+    <div class="output-empty" role="status">
       <p>No hay eventos registrados.</p>
       <button class="btn-primary" (click)="newEvent()">Registrar primer evento</button>
     </div>
   } @else {
-    <div class="event-cards">
-      <article *ngFor="let event of events" class="event-card">
-        <div class="event-header">
-          <h3>{{ event.titulo_trabajo }}</h3>
-          <span class="type-badge" [class]="getTypeClass(event.tipo_evento)">
+    <div class="output-grid">
+      <article *ngFor="let event of events" class="output-card">
+        <div class="output-card-header">
+          <div class="output-card-title">
+            <h3>{{ event.titulo_trabajo }}</h3>
+            <span class="output-badge" [class]="getTypeClass(event.tipo_evento)">
             {{ getTypeLabel(event.tipo_evento) }}
-          </span>
+            </span>
+          </div>
+          <div class="output-card-actions">
+            <button type="button" class="output-icon-button" (click)="editEvent(event)" aria-label="Editar congreso">✎</button>
+            <button type="button" class="output-icon-button delete" (click)="deleteEvent(event)" aria-label="Eliminar congreso">🗑</button>
+          </div>
         </div>
-        <div class="event-details">
-          <p><strong>Evento:</strong> {{ event.nombre_evento }}</p>
-          <p><strong>Rol:</strong> {{ getRoleLabel(event.rol_participacion) }}</p>
-          <p><strong>Modalidad:</strong> {{ getModalityLabel(event.modalidad) }}</p>
-          <p><strong>Fecha:</strong> {{ event.fecha_evento | date }}</p>
-          <p *ngIf="event.lugar"><strong>Lugar:</strong> {{ event.lugar }}</p>
-          <p *ngIf="event.evidencia_archivo"><strong>Constancia:</strong> <a [href]="event.evidencia_archivo" target="_blank" rel="noopener">Ver archivo adjunto</a></p>
-        </div>
-        <div class="event-actions">
-          <button class="btn-secondary btn-sm" (click)="editEvent(event)">Editar</button>
-          <button class="btn-danger btn-sm" (click)="deleteEvent(event)">Eliminar</button>
+        <div class="output-card-body">
+          <div class="output-meta-item"><span class="output-meta-label">Evento</span><span class="output-meta-value">{{ event.nombre_evento }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Rol</span><span class="output-meta-value">{{ getRoleLabel(event.rol_participacion) }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Modalidad</span><span class="output-meta-value">{{ getModalityLabel(event.modalidad) }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Fecha</span><span class="output-meta-value">{{ event.fecha_evento | date }}</span></div>
+          @if (event.lugar) {
+            <div class="output-meta-item"><span class="output-meta-label">Lugar</span><span class="output-meta-value">{{ event.lugar }}</span></div>
+          }
+          @if (event.evidencia_archivo) {
+            <div class="output-meta-item"><span class="output-meta-label">Constancia</span><a class="output-meta-value" [href]="event.evidencia_archivo" target="_blank" rel="noopener">Ver archivo adjunto</a></div>
+          }
         </div>
       </article>
     </div>
   }
-</div>
+</section>

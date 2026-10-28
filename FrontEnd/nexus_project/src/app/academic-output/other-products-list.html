@@ -1,4 +1,4 @@
-<section class="nexus-card other-products-panel" role="tabpanel" aria-labelledby="other-products-tab">
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="other-products-tab">
   <div class="section-heading">
     <div>
       <span class="eyebrow">TRANSFERENCIA TECNOLÓGICA</span>
@@ -9,41 +9,49 @@
   </div>
 
   @if (loading) {
-    <div class="timeline-state" role="status"><div class="spinner"></div><p>Cargando productos...</p></div>
+    <div class="output-state" role="status"><div class="output-spinner"></div><p>Cargando productos...</p></div>
   } @else if (error) {
-    <div class="timeline-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="loadOtherProducts()">Reintentar</button></div>
+    <div class="output-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="loadOtherProducts()">Reintentar</button></div>
   } @else if (otherProducts.length) {
-    <div class="other-products-grid">
+    <div class="output-grid">
       @for (product of otherProducts; track product.id) {
-        <article class="other-product-card">
-          <header class="card-header">
-            <div class="header-content">
+        <article class="output-card">
+          <header class="output-card-header">
+            <div class="output-card-title">
               <h3>{{ product.titulo }}</h3>
-              <span class="product-type-badge" [class]="badgeClass(product.tipo_producto)">
+              <span class="output-badge product-type-badge" [class]="badgeClass(product.tipo_producto)">
                 {{ typeLabel(product.tipo_producto) }}
               </span>
             </div>
-            <div class="card-actions">
-              <button type="button" class="btn-icon btn-edit" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
-              <button type="button" class="btn-icon btn-delete" (click)="deleteOtherProduct(product)" aria-label="Eliminar producto">🗑</button>
+            <div class="output-card-actions">
+              <button type="button" class="output-icon-button" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
+              <button type="button" class="output-icon-button delete" (click)="deleteOtherProduct(product)" aria-label="Eliminar producto">🗑</button>
             </div>
           </header>
-          <div class="card-body">
-            <div class="meta-item">
-              <span class="meta-label">Tipo</span>
-              <span class="meta-value">{{ typeLabel(product.tipo_producto) }}</span>
+          <div class="output-card-body">
+            <div class="output-meta-item">
+              <span class="output-meta-label">Tipo</span>
+              <span class="output-meta-value">{{ typeLabel(product.tipo_producto) }}</span>
             </div>
-            <div class="meta-item">
-              <span class="meta-label">Fecha</span>
-              <span class="meta-value">{{ product.fecha_registro | date:'mediumDate' }}</span>
+            <div class="output-meta-item">
+              <span class="output-meta-label">Fecha</span>
+              <span class="output-meta-value">{{ product.fecha_registro | date:'mediumDate' }}</span>
             </div>
             @if (product.enlace_web) {
-              <div class="meta-item">
-                <span class="meta-label">Enlace</span>
-                <a [href]="product.enlace_web" target="_blank" rel="noopener" class="meta-value">Ver enlace</a>
+              <div class="output-meta-item">
+                <span class="output-meta-label">Enlace</span>
+                <a [href]="product.enlace_web" target="_blank" rel="noopener" class="output-meta-value">Ver enlace</a>
               </div>
             }
-            <div class="product-description">
+            @if (product.evidencia_archivo) {
+              <div class="output-meta-item">
+                <span class="output-meta-label">Evidencia</span>
+                <a [href]="product.evidencia_archivo" target="_blank" rel="noopener" class="output-meta-value">
+                  Ver archivo adjunto
+                </a>
+              </div>
+            }
+            <div class="output-description product-description">
               <p>{{ product.descripcion }}</p>
             </div>
           </div>
@@ -51,6 +59,6 @@
       }
     </div>
   } @else {
-    <p class="empty-state large" role="status">Aún no hay productos registrados.</p>
+    <p class="output-empty" role="status">Aún no hay productos registrados.</p>
   }
 </section>
