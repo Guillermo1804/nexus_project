@@ -4,7 +4,7 @@ Provides executive KPIs, distributions, and alert listings for program coordinat
 """
 from datetime import timedelta
 
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, OuterRef, Q, Subquery
 from django.utils import timezone
 
 from ..models import (
@@ -20,7 +20,29 @@ from ..models import (
 class DashboardService:
     """Aggregates global academic metrics for the coordinator dashboard."""
 
-    TUTORING_RECENCY_DAYS = 45
+    TUTORING_RECENCY_DAYS = 21
+
+    @classmethod
+    def _active_students(cls):
+        return Student.objects.filter(
+            estatus_activo=True,
+            semesters__isnull=False,
+        ).distinct()
+
+    @classmethod
+    def _overdue_agreements(cls, today):
+        return Agreement.objects.filter(
+            estado__in=[
+                Agreement.Status.PENDING,
+                Agreement.Status.IN_PROGRESS,
+                Agreement.Status.OVERDUE,
+            ],
+            fecha_limite__lt=today,
+        )
+
+    @staticmethod
+    def _user_name(user):
+        return f'{user.first_name} {user.last_name}'.strip()
 
     @classmethod
     def get_kpis(cls):
@@ -29,9 +51,7 @@ class DashboardService:
         cutoff_date = today - timedelta(days=cls.TUTORING_RECENCY_DAYS)
 
         # Total estudiantes activos (que tienen semestre actual asignado)
-        total_estudiantes_activos = Student.objects.filter(
-            semesters__isnull=False
-        ).distinct().count()
+        total_estudiantes_activos = cls._active_students().count()
 
         # Total acuerdos pendientes (PENDIENTE + EN_PROCESO)
         total_acuerdos_pendientes = Agreement.objects.exclude(
@@ -39,36 +59,26 @@ class DashboardService:
         ).count()
 
         # Total acuerdos vencidos (no concluidos y fecha_limite < today)
-        total_acuerdos_vencidos = Agreement.objects.filter(
-            is_vencido=True
-        ).count()
-
-        # Estudiantes sin tutoría reciente (> 45 días sin sesión)
-        # Subconsulta: última tutoría por estudiante
-        from django.db.models import OuterRef, Subquery, Max
-
-        latest_tutoring = TutoringSession.objects.filter(
-            student=OuterRef('pk')
-        ).order_by('-fecha_sesion')
+        total_acuerdos_vencidos = cls._overdue_agreements(today).count()
 
         students_with_recent_tutoring = Student.objects.filter(
-            tutoring_sessions__fecha_sesion__gte=cutoff_date
+            Q(tutoring_sessions__fecha_sesion__gte=cutoff_date)
+            | Q(
+                tutoring_sessions__proxima_reunion_fecha__gte=today,
+                tutoring_sessions__proxima_reunion_fecha__lte=today + timedelta(days=cls.TUTORING_RECENCY_DAYS),
+            )
         ).distinct()
 
-        estudiantes_sin_tutoria_reciente = Student.objects.exclude(
+        estudiantes_sin_tutoria_reciente = cls._active_students().exclude(
             pk__in=students_with_recent_tutoring.values('pk')
-        ).filter(
-            semesters__isnull=False
-        ).distinct().count()
+        ).count()
 
         # Promedio global de avance de tesis (últimos registros por estudiante)
         latest_thesis = ThesisProgress.objects.filter(
             student=OuterRef('pk')
         ).order_by('-fecha_registro')
 
-        thesis_avg = Student.objects.filter(
-            semesters__isnull=False
-        ).annotate(
+        thesis_avg = cls._active_students().annotate(
             latest_avance=Subquery(latest_thesis.values('porcentaje_avance')[:1])
         ).aggregate(
             avg_avance=Avg('latest_avance')
@@ -83,12 +93,54 @@ class DashboardService:
         }
 
     @classmethod
+    def get_estudiantes_sin_tutoria_reciente(cls):
+        """Return active students without a recent or scheduled tutoring session."""
+        today = timezone.localdate()
+        cutoff_date = today - timedelta(days=cls.TUTORING_RECENCY_DAYS)
+        students_with_recent_or_scheduled_tutoring = Student.objects.filter(
+            Q(tutoring_sessions__fecha_sesion__gte=cutoff_date)
+            | Q(
+                tutoring_sessions__proxima_reunion_fecha__gte=today,
+                tutoring_sessions__proxima_reunion_fecha__lte=today + timedelta(days=cls.TUTORING_RECENCY_DAYS),
+            )
+        ).distinct()
+        students = cls._active_students().exclude(
+            pk__in=students_with_recent_or_scheduled_tutoring.values('pk')
+        ).select_related('user').prefetch_related(
+            'academic_committee__memberships__user',
+        ).order_by('matricula')
+
+        result = []
+        for student in students:
+            latest = TutoringSession.objects.filter(student=student).order_by('-fecha_sesion').first()
+            days_without_tutoring = (today - latest.fecha_sesion).days if latest else None
+            committee = getattr(student, 'academic_committee', None)
+            advisor = next(
+                (
+                    membership.user
+                    for membership in committee.memberships.all()
+                    if membership.role == 'ASESOR'
+                ),
+                None,
+            ) if committee else None
+            result.append({
+                'student_id': student.id,
+                'matricula': student.matricula,
+                'nombre_completo': cls._user_name(student.user) if student.user else student.nombre_completo,
+                'motivo_rezago': (
+                    f'{days_without_tutoring} días sin tutoría registrada'
+                    if days_without_tutoring is not None
+                    else 'Sin tutorías registradas'
+                ),
+                'asesor_principal': cls._user_name(advisor) if advisor else '—',
+            })
+        return result
+
+    @classmethod
     def get_distribucion_semestres(cls):
         """Return distribution of active students by current semester (1-6)."""
         # Obtener el semestre actual de cada estudiante activo
-        students = Student.objects.filter(
-            semesters__isnull=False
-        ).select_related('semesters').distinct()
+        students = cls._active_students().prefetch_related('semesters')
 
         # Agrupar por semestre actual
         from django.db.models import F
@@ -124,9 +176,7 @@ class DashboardService:
             student=OuterRef('pk')
         ).order_by('-fecha_registro')
 
-        students_with_avance = Student.objects.filter(
-            semesters__isnull=False
-        ).annotate(
+        students_with_avance = cls._active_students().annotate(
             latest_avance=Subquery(latest_thesis.values('porcentaje_avance')[:1])
         ).exclude(latest_avance__isnull=True)
 
@@ -145,17 +195,35 @@ class DashboardService:
     @classmethod
     def get_estudiantes_activos(cls):
         """Return list of active students with details."""
-        estudiantes = Student.objects.filter(
-            semesters__isnull=False
-        ).select_related('user', 'current_semester', 'asesor_principal').order_by('matricula')
+        estudiantes = cls._active_students().select_related('user').prefetch_related(
+            'semesters',
+            'academic_committee__memberships__user',
+        ).order_by('matricula')
 
-        return [{
-            'id': s.id,
-            'matricula': s.matricula,
-            'nombre': s.user.get_full_name(),
-            'semestre': s.current_semester.numero if s.current_semester else 'N/A',
-            'asesor': s.asesor_principal.user.get_full_name() if s.asesor_principal else 'N/A'
-        } for s in estudiantes]
+        result = []
+        for student in estudiantes:
+            current_semester = max(student.semesters.all(), key=lambda semester: semester.numero, default=None)
+            committee = getattr(student, 'academic_committee', None)
+            advisor = next(
+                (
+                    membership.user
+                    for membership in committee.memberships.all()
+                    if membership.role == 'ASESOR'
+                ),
+                None,
+            ) if committee else None
+            result.append({
+                'id': student.id,
+                'matricula': student.matricula,
+                'nombre': cls._user_name(student.user) if student.user else student.nombre_completo,
+                'nombre_completo': cls._user_name(student.user) if student.user else student.nombre_completo,
+                'programa_doctoral': student.programa_doctoral,
+                'cohorte': student.cohorte,
+                'estatus_activo': student.estatus_activo,
+                'semestre': current_semester.numero if current_semester else 'N/A',
+                'asesor': cls._user_name(advisor) if advisor else 'N/A',
+            })
+        return result
 
     @classmethod
     def get_tutorias_periodo(cls):
@@ -171,7 +239,7 @@ class DashboardService:
             'id': ts.id,
             'fecha': ts.fecha_sesion,
             'modalidad': ts.get_modalidad_display(),
-            'estudiante': ts.student.user.get_full_name(),
+            'estudiante': cls._user_name(ts.student.user) if ts.student.user else ts.student.nombre_completo,
             'matricula': ts.student.matricula,
             'semestre': ts.semester.numero,
             'resumen': ts.resumen,
@@ -189,8 +257,8 @@ class DashboardService:
             'descripcion': a.descripcion,
             'estado': a.get_estado_display(),
             'fecha_limite': a.fecha_limite,
-            'responsable': a.responsable.get_full_name(),
-            'estudiante': a.student.user.get_full_name(),
+            'responsable': cls._user_name(a.responsable),
+            'estudiante': cls._user_name(a.student.user) if a.student.user else a.student.nombre_completo,
             'matricula': a.student.matricula,
         } for a in acuerdos]
 
@@ -198,9 +266,9 @@ class DashboardService:
     def get_acuerdos_vencidos(cls):
         """Return list of overdue agreements."""
         today = timezone.localdate()
-        acuerdos = Agreement.objects.filter(
-            is_vencido=True
-        ).select_related('student', 'student__user', 'responsable').order_by('fecha_limite')
+        acuerdos = cls._overdue_agreements(today).select_related(
+            'student', 'student__user', 'responsable'
+        ).order_by('fecha_limite')
 
         return [{
             'id': a.id,
@@ -208,8 +276,8 @@ class DashboardService:
             'estado': a.get_estado_display(),
             'fecha_limite': a.fecha_limite,
             'fecha_conclusion': a.fecha_conclusion,
-            'responsable': a.responsable.get_full_name(),
-            'estudiante': a.student.user.get_full_name(),
+            'responsable': cls._user_name(a.responsable),
+            'estudiante': cls._user_name(a.student.user) if a.student.user else a.student.nombre_completo,
             'matricula': a.student.matricula,
             'dias_vencido': (today - a.fecha_limite).days,
         } for a in acuerdos]
@@ -221,45 +289,72 @@ class DashboardService:
         cutoff_date = today - timedelta(days=cls.TUTORING_RECENCY_DAYS)
 
         # Estudiantes con acuerdos vencidos
-        students_with_overdue = Student.objects.filter(
-            agreements__is_vencido=True,
-            semesters__isnull=False
-        ).distinct().select_related('user', 'current_semester')
+        students_with_overdue = cls._active_students().filter(
+            agreements__in=cls._overdue_agreements(today),
+        ).distinct().select_related('user').prefetch_related(
+            'academic_committee__memberships__user',
+        )
 
         # Estudiantes sin tutoría reciente
-        students_without_recent_tutoring = Student.objects.exclude(
-            tutoring_sessions__fecha_sesion__gte=cutoff_date
-        ).filter(
-            semesters__isnull=False
-        ).distinct().select_related('user', 'current_semester')
+        students_with_recent_or_scheduled_tutoring = Student.objects.filter(
+            Q(tutoring_sessions__fecha_sesion__gte=cutoff_date)
+            | Q(
+                tutoring_sessions__proxima_reunion_fecha__gte=today,
+                tutoring_sessions__proxima_reunion_fecha__lte=today + timedelta(days=cls.TUTORING_RECENCY_DAYS),
+            )
+        ).distinct()
+        students_without_recent_tutoring = cls._active_students().exclude(
+            pk__in=students_with_recent_or_scheduled_tutoring.values('pk')
+        ).select_related('user').prefetch_related(
+            'academic_committee__memberships__user',
+        )
 
         # Combinar y deduplicar
         rezagados = {}
         for s in students_with_overdue:
-            overdue_count = Agreement.objects.filter(
-                student=s, is_vencido=True
-            ).count()
+            overdue_count = cls._overdue_agreements(today).filter(student=s).count()
+            committee = getattr(s, 'academic_committee', None)
+            advisor = next(
+                (
+                    membership.user
+                    for membership in committee.memberships.all()
+                    if membership.role == 'ASESOR'
+                ),
+                None,
+            ) if committee else None
             rezagados[s.id] = {
                 'student_id': s.id,
                 'matricula': s.matricula,
-                'nombre_completo': s.user.get_full_name(),
+                'nombre_completo': cls._user_name(s.user) if s.user else s.nombre_completo,
                 'motivo_rezago': f'{overdue_count} acuerdo(s) vencido(s)',
-                'asesor_principal': s.asesor_principal.user.get_full_name() if s.asesor_principal else '—',
+                'asesor_principal': cls._user_name(advisor) if advisor else '—',
             }
 
         for s in students_without_recent_tutoring:
             if s.id in rezagados:
-                rezagados[s.id]['motivo_rezago'] += f'; {cls.TUTORING_RECENCY_DAYS} días sin tutoría'
+                latest = TutoringSession.objects.filter(student=s).order_by('-fecha_sesion').first()
+                dias = (today - latest.fecha_sesion).days if latest else None
+                motivo = f'{dias} días sin tutoría registrada' if dias is not None else 'Sin tutorías registradas'
+                rezagados[s.id]['motivo_rezago'] += f'; {motivo}'
             else:
                 # Calcular días desde última tutoría
                 latest = TutoringSession.objects.filter(student=s).order_by('-fecha_sesion').first()
-                dias = (today - latest.fecha_sesion).days if latest else 'N/A'
+                dias = (today - latest.fecha_sesion).days if latest else None
+                committee = getattr(s, 'academic_committee', None)
+                advisor = next(
+                    (
+                        membership.user
+                        for membership in committee.memberships.all()
+                        if membership.role == 'ASESOR'
+                    ),
+                    None,
+                ) if committee else None
                 rezagados[s.id] = {
                     'student_id': s.id,
                     'matricula': s.matricula,
-                    'nombre_completo': s.user.get_full_name(),
-                    'motivo_rezago': f'{dias} días sin tutoría registrada' if isinstance(dias, int) else 'Sin tutorías registradas',
-                    'asesor_principal': s.asesor_principal.user.get_full_name() if s.asesor_principal else '—',
+                    'nombre_completo': cls._user_name(s.user) if s.user else s.nombre_completo,
+                    'motivo_rezago': f'{dias} días sin tutoría registrada' if dias is not None else 'Sin tutorías registradas',
+                    'asesor_principal': cls._user_name(advisor) if advisor else '—',
                 }
 
         return list(rezagados.values())

@@ -35,6 +35,10 @@ export interface EstudianteActivo {
   id: number;
   matricula: string;
   nombre: string;
+  nombre_completo?: string;
+  programa_doctoral?: string;
+  cohorte?: string;
+  estatus_activo?: boolean;
   semestre: string | number;
   asesor: string;
 }
@@ -76,6 +80,7 @@ export interface DashboardResponse {
   distribucion_semestres: DistribucionSemestre[];
   distribucion_avance_tesis: DistribucionAvanceTesis;
   estudiantes_en_rezago: EstudianteEnRezago[];
+  estudiantes_sin_tutoria_reciente: EstudianteEnRezago[];
   estudiantes_activos: EstudianteActivo[];
   tutorias_periodo: TutoriaPeriodo[];
   acuerdos_segumiento: AcuerdoSegumiento[];

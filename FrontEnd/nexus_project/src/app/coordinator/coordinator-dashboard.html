@@ -60,13 +60,13 @@
       </article>
 
       <article class="kpi-card kpi-info" aria-live="polite">
-        <button mat-button class="kpi-button" (click)="openAcuerdosSegumientoModal()" aria-label="Ver detalles de acuerdos en seguimiento">
+        <div class="kpi-button">
           <div class="kpi-icon" aria-hidden="true">📅</div>
           <div class="kpi-content">
             <span class="kpi-value">{{ data.kpis.estudiantes_sin_tutoria_reciente }}</span>
-            <span class="kpi-label">Acuerdos en Seguimiento</span>
+            <span class="kpi-label">Sin tutoría reciente</span>
           </div>
-        </button>
+        </div>
       </article>
 
       <article class="kpi-card kpi-success" aria-live="polite">
@@ -76,6 +76,49 @@
           <span class="kpi-label">Promedio Avance Tesis</span>
         </div>
       </article>
+    </section>
+
+    <!-- Student registry -->
+    <section class="assigned-section" aria-labelledby="active-students-title">
+      <div class="registry-heading">
+        <div>
+          <span class="eyebrow">PADRÓN ACADÉMICO</span>
+          <h2 id="active-students-title">Estudiantes activos</h2>
+          <span>{{ data.estudiantes_activos.length }} registrados</span>
+        </div>
+      </div>
+
+      @if (data.estudiantes_activos.length === 0) {
+        <div class="empty-alerts" role="status">
+          <p>No hay estudiantes activos registrados.</p>
+        </div>
+      } @else {
+        <div class="assigned-grid">
+          @for (student of data.estudiantes_activos; track student.id) {
+            <article class="student-card">
+              <div class="student-card-top">
+                <span class="mono">{{ student.matricula }}</span>
+                <span class="badge active-badge">ACTIVO</span>
+              </div>
+              <div>
+                <h3>{{ student.nombre_completo || student.nombre }}</h3>
+                <p>{{ student.programa_doctoral || 'Programa doctoral' }}</p>
+                <span>Cohorte {{ student.cohorte || 'Sin cohorte' }}</span>
+              </div>
+              <div class="student-actions">
+                <a [routerLink]="['/expediente', student.id]">Ver expediente</a>
+                <a
+                  [routerLink]="['/expediente', student.id]"
+                  [queryParams]="{ accion: 'tutoria' }"
+                  class="btn-primary"
+                >
+                  + Registrar tutoría
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+      }
     </section>
 
     <!-- Charts Row -->
@@ -192,9 +235,68 @@
       </article>
     </section>
 
+    <!-- Estudiantes sin tutoría reciente -->
+    <section class="alerts-section tutoring-gap-section" aria-labelledby="tutoring-gap-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="tutoring-gap-title" class="section-title">📅 Alumnos sin tutoría reciente</h2>
+          <p class="section-description">
+            Alumnos activos sin una tutoría registrada en los últimos 21 días ni una tutoría agendada
+            dentro de los próximos 21 días.
+          </p>
+        </div>
+        <span class="alert-count" [attr.aria-label]="data.estudiantes_sin_tutoria_reciente.length + ' alumnos sin tutoría reciente'">
+          {{ data.estudiantes_sin_tutoria_reciente.length }}
+        </span>
+      </div>
+
+      @if (data.estudiantes_sin_tutoria_reciente.length === 0) {
+        <div class="empty-alerts" role="status">
+          <p>✅ Todos los alumnos tienen una tutoría reciente o agendada.</p>
+        </div>
+      } @else {
+        <div class="table-wrapper" role="region" aria-label="Alumnos sin tutoría reciente" tabindex="0">
+          <table class="alerts-table">
+            <thead>
+              <tr>
+                <th scope="col">Matrícula</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Seguimiento</th>
+                <th scope="col">Asesor Principal</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (est of data.estudiantes_sin_tutoria_reciente; track est.student_id) {
+                <tr>
+                  <td>{{ est.matricula }}</td>
+                  <td>{{ est.nombre_completo }}</td>
+                  <td class="motivo-cell">{{ est.motivo_rezago }}</td>
+                  <td>{{ est.asesor_principal }}</td>
+                  <td>
+                    <a
+                      [routerLink]="['/expediente', est.student_id]"
+                      class="btn-link"
+                      aria-label="Ver expediente de {{ est.nombre_completo }}"
+                    >
+                      Ver expediente
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
     <!-- Alertas de Rezago -->
     <section class="alerts-section" aria-labelledby="alerts-title">
       <h2 id="alerts-title" class="section-title">⚠️ Estudiantes en Situación de Rezago</h2>
+      <p class="section-description">
+        Aviso de rezago de seguimiento: no hay asesoría registrada en los últimos 21 días ni asesoría
+        agendada dentro de los próximos 21 días.
+      </p>
 
       @if (data.estudiantes_en_rezago.length === 0) {
         <div class="empty-alerts" role="status">

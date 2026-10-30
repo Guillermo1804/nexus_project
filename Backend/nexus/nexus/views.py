@@ -832,6 +832,7 @@ class DashboardView(APIView):
         distribucion_semestres = DashboardService.get_distribucion_semestres()
         distribucion_avance_tesis = DashboardService.get_distribucion_avance_tesis()
         estudiantes_en_rezago = DashboardService.get_estudiantes_en_rezago()
+        estudiantes_sin_tutoria_reciente = DashboardService.get_estudiantes_sin_tutoria_reciente()
         estudiantes_activos = DashboardService.get_estudiantes_activos()
         tutorias_periodo = DashboardService.get_tutorias_periodo()
         acuerdos_segumiento = DashboardService.get_acuerdos_segumiento()
@@ -842,6 +843,7 @@ class DashboardView(APIView):
             'distribucion_semestres': distribucion_semestres,
             'distribucion_avance_tesis': distribucion_avance_tesis,
             'estudiantes_en_rezago': estudiantes_en_rezago,
+            'estudiantes_sin_tutoria_reciente': estudiantes_sin_tutoria_reciente,
             'estudiantes_activos': estudiantes_activos,
             'tutorias_periodo': tutorias_periodo,
             'acuerdos_segumiento': acuerdos_segumiento,

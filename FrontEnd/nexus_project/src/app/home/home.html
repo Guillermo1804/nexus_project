@@ -130,6 +130,47 @@
           }
         </section>
 
+        <section class="assigned-section" aria-labelledby="active-students-title">
+          <div class="registry-heading">
+            <div>
+              <p class="eyebrow">SEGUIMIENTO DE TUTORÍAS</p>
+              <h2 id="active-students-title">Alumnos sin tutoría reciente</h2>
+              <span>{{ activeStudentRecords.length }} requieren seguimiento</span>
+            </div>
+          </div>
+          @if (activeStudentRecords.length) {
+            <div class="assigned-grid">
+              @for (student of activeStudentRecords; track student.id) {
+                <article class="student-card nexus-card">
+                  <div class="student-card-top">
+                    <span class="mono">{{ student.matricula }}</span>
+                    <span class="badge active-badge">ACTIVO</span>
+                  </div>
+                  <div>
+                    <h3>{{ student.nombre_completo }}</h3>
+                    <p>{{ student.programa_doctoral }}</p>
+                    <span>Cohorte {{ student.cohorte }}</span>
+                  </div>
+                  <div class="student-actions">
+                    <a [routerLink]="['/expediente', student.id]">Ver expediente</a>
+                    <a
+                      [routerLink]="['/expediente', student.id]"
+                      [queryParams]="{ accion: 'tutoria' }"
+                      class="btn-primary"
+                    >
+                      + Registrar tutoría
+                    </a>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="empty-state nexus-card">
+              <p>Todos los alumnos tienen una tutoría reciente o agendada.</p>
+            </div>
+          }
+        </section>
+
         <section class="registry-section" aria-labelledby="registry-title">
           <div class="registry-heading">
             <div>
