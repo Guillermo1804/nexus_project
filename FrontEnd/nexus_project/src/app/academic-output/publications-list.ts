@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AcademicService } from '../core/academic/academic.service';
 import { Publication, PaginatedResponse, OtherProduct } from '../core/academic/academic.models';
 import { ToastService } from '../shared/toast.service';
+import { ConfirmDialogComponent, ConfirmRequest } from '../shared/confirm-dialog.component';
+import { AuthService } from '../core/auth/auth.service';
 
 @Component({
   selector: 'app-publications-list',
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, RouterLink, ConfirmDialogComponent],
   templateUrl: './publications-list.html',
   styleUrls: ['./publications-list.scss']
 })
@@ -16,13 +18,28 @@ export class PublicationsListComponent implements OnInit {
   publications: Publication[] = [];
   studentId = 0;
   loading = false;
+  readonly auth: AuthService;
+  pendingDelete: Publication | null = null;
+  readonly deleteRequest: ConfirmRequest = {
+    title: 'Eliminar publicación',
+    message: '',
+    warning: 'Esta acción no se puede deshacer.',
+    confirmLabel: 'Eliminar',
+    cancelLabel: 'Cancelar',
+    tone: 'danger',
+  };
 
   constructor(
     private academicService: AcademicService,
     private route: ActivatedRoute,
     private router: Router,
-    private toastService: ToastService
-  ) {}
+    private toastService: ToastService,
+    auth: AuthService
+  ) { this.auth = auth; }
+
+  get canManage(): boolean {
+    return this.auth.user?.role === 'STUDENT' && this.auth.user.student_id === this.studentId;
+  }
 
   ngOnInit(): void {
     const studentIdParam = this.route.snapshot.paramMap.get('id');
@@ -57,18 +74,29 @@ export class PublicationsListComponent implements OnInit {
   }
 
   deletePublication(publication: Publication): void {
-    if (confirm(`¿Está seguro de eliminar la publicación "${publication.titulo}"?`)) {
-      this.academicService.deletePublication(publication.id).subscribe({
-        next: () => {
-          this.toastService.exito('Publicación eliminada exitosamente');
-          this.loadPublications();
-        },
-        error: (err) => {
-          this.toastService.error('Error al eliminar la publicación');
-          console.error(err);
-        }
-      });
-    }
+    this.pendingDelete = publication;
+    this.deleteRequest.message = `¿Está seguro de eliminar la publicación "${publication.titulo}"?`;
+  }
+
+  confirmDelete(): void {
+    const publication = this.pendingDelete;
+    if (!publication) return;
+
+    this.pendingDelete = null;
+    this.academicService.deletePublication(publication.id).subscribe({
+      next: () => {
+        this.toastService.exito('Publicación eliminada exitosamente');
+        this.loadPublications();
+      },
+      error: (err) => {
+        this.toastService.error('Error al eliminar la publicación');
+        console.error(err);
+      }
+    });
+  }
+
+  cancelDelete(): void {
+    this.pendingDelete = null;
   }
 
   getStatusClass(estado: string): string {

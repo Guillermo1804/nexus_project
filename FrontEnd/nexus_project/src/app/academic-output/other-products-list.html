@@ -5,7 +5,10 @@
       <h2>Otros Productos Académicos</h2>
       <p>Registra productos de valor tecnológico o transferencia académica.</p>
     </div>
-    <button type="button" class="btn-primary" (click)="newOtherProduct()">Registrar producto</button>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button type="button" class="btn-primary" (click)="newOtherProduct()">Registrar producto</button> }
+    </div>
   </div>
 
   @if (loading) {
@@ -23,10 +26,10 @@
                 {{ typeLabel(product.tipo_producto) }}
               </span>
             </div>
-            <div class="output-card-actions">
-              <button type="button" class="output-icon-button" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
+            @if (canManage) { <div class="output-card-actions">
+              <button type="button" class="output-icon-button edit" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
               <button type="button" class="output-icon-button delete" (click)="deleteOtherProduct(product)" aria-label="Eliminar producto">🗑</button>
-            </div>
+            </div> }
           </header>
           <div class="output-card-body">
             <div class="output-meta-item">
@@ -62,3 +65,11 @@
     <p class="output-empty" role="status">Aún no hay productos registrados.</p>
   }
 </section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

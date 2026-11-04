@@ -324,7 +324,7 @@ export interface PublicationType {}
 // Pipes para el componente de otros productos
 export function typeLabel(value: string): string {
   const type = OTHER_PRODUCT_TYPES.find(t => t.value === value);
-  return type ? `${type.icon} ${type.label}` : value;
+  return type ? type.label : value;
 }
 
 export function badgeClass(value: string): string {

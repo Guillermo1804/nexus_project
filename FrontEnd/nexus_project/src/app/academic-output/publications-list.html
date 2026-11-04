@@ -5,7 +5,10 @@
       <h2>Producción Científica</h2>
       <p>Registra publicaciones y evidencias de tu producción científica.</p>
     </div>
-    <button class="btn-primary" type="button" (click)="newPublication()">Registrar publicación</button>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button class="btn-primary" type="button" (click)="newPublication()">Registrar publicación</button> }
+    </div>
   </div>
 
   @if (loading) {
@@ -16,7 +19,7 @@
   } @else if (publications.length === 0) {
     <div class="output-empty" role="status">
       <p>No hay publicaciones registradas.</p>
-      <button class="btn-primary" (click)="newPublication()">Registrar primera publicación</button>
+      @if (canManage) { <button class="btn-primary" (click)="newPublication()">Registrar primera publicación</button> }
     </div>
   } @else {
     <div class="output-grid">
@@ -28,10 +31,10 @@
             {{ getStatusLabel(publication.estado) }}
             </span>
           </div>
-          <div class="output-card-actions">
+          @if (canManage) { <div class="output-card-actions">
             <button type="button" class="output-icon-button" (click)="editPublication(publication)" aria-label="Editar publicación">✎</button>
             <button type="button" class="output-icon-button delete" (click)="deletePublication(publication)" aria-label="Eliminar publicación">🗑</button>
-          </div>
+          </div> }
         </div>
         <div class="output-card-body">
           <div class="output-meta-item"><span class="output-meta-label">Autores</span><span class="output-meta-value">{{ publication.autores }}</span></div>
@@ -51,3 +54,11 @@
     </div>
   }
 </section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

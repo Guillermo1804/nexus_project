@@ -48,7 +48,7 @@ export class StudentOverviewComponent implements OnInit {
   protected guardandoAcuerdo = false;
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
-  protected activeView: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' = 'resumen';
+  protected activeView: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' | 'produccion' = 'resumen';
   protected activeViewOtherProducts: boolean = false;
   protected timelineInitialFilter: TimelineEventType | null = null;
   protected timeline: TimelineResponse | null = null;
@@ -73,6 +73,7 @@ export class StudentOverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
+    if (this.route.snapshot.queryParamMap.get('vista') === 'produccion') this.activeView = 'produccion';
     if (Number.isInteger(this.studentId) && this.studentId > 0) this.cargarExpediente();
     else { this.error = 'Identificador de estudiante inválido.'; this.cargando = false; }
   }
@@ -212,7 +213,7 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected selectSemester(id: number): void { this.selectedSemesterId = id; }
-  protected selectView(view: 'resumen' | 'timeline' | 'evidencias' | 'evolucion', initialFilter: TimelineEventType | null = null): void {
+  protected selectView(view: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' | 'produccion', initialFilter: TimelineEventType | null = null): void {
     this.activeView = view;
     this.timelineInitialFilter = view === 'timeline' ? initialFilter : null;
     if (view === 'timeline' || view === 'evidencias') {

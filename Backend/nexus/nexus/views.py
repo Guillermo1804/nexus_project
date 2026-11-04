@@ -348,6 +348,11 @@ def can_access_student(user, student, write=False):
     return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
 
 
+def can_manage_academic_output(user, student):
+    """Academic output is authored and managed only by the student owner."""
+    return student.user_id == user.id and user.role == CustomUser.Role.STUDENT
+
+
 def buscar_en_descripcion(queryset, termino):
     """Filtra `queryset` por texto sobre la descripción, sin distinguir acentos ni mayúsculas.
 
@@ -511,13 +516,13 @@ class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixin
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         event = self.get_object()
-        if not can_access_student(self.request.user, event.student, write=True):
+        if not can_manage_academic_output(self.request.user, event.student):
             raise PermissionDenied('No puede modificar este evento académico.')
         serializer.save()
 
     def perform_destroy(self, instance):
         from rest_framework.exceptions import PermissionDenied
-        if not can_access_student(self.request.user, instance.student, write=True):
+        if not can_manage_academic_output(self.request.user, instance.student):
             raise PermissionDenied('No puede eliminar este evento académico.')
         instance.delete()
 
@@ -753,14 +758,14 @@ class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins
     def perform_create(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         student = serializer.validated_data.get('student')
-        if not can_access_student(self.request.user, student, write=True):
+        if not can_manage_academic_output(self.request.user, student):
             raise PermissionDenied('No puede registrar estancias para este estudiante.')
         serializer.save()
 
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         stay = self.get_object()
-        if not can_access_student(self.request.user, stay.student, write=True):
+        if not can_manage_academic_output(self.request.user, stay.student):
             raise PermissionDenied('No puede modificar esta estancia.')
         serializer.save()
 
@@ -780,9 +785,22 @@ class OtherProductViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins
     def perform_create(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         student = serializer.validated_data.get('student')
-        if not can_access_student(self.request.user, student, write=True):
+        if not can_manage_academic_output(self.request.user, student):
             raise PermissionDenied('No puede registrar otros productos para este estudiante.')
         serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        product = self.get_object()
+        if not can_manage_academic_output(self.request.user, product.student):
+            raise PermissionDenied('No puede modificar este producto académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_manage_academic_output(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar este producto académico.')
+        instance.delete()
 
 
 class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -977,20 +995,20 @@ class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.
     def perform_create(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         student = serializer.validated_data['student']
-        if not can_access_student(self.request.user, student):
+        if not can_manage_academic_output(self.request.user, student):
             raise PermissionDenied('No puede registrar publicaciones para este estudiante.')
         serializer.save()
 
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         publication = self.get_object()
-        if not can_access_student(self.request.user, publication.student, write=True):
+        if not can_manage_academic_output(self.request.user, publication.student):
             raise PermissionDenied('No puede modificar esta publicación.')
         serializer.save()
 
     def perform_destroy(self, instance):
         from rest_framework.exceptions import PermissionDenied
-        if not can_access_student(self.request.user, instance.student, write=True):
+        if not can_manage_academic_output(self.request.user, instance.student):
             raise PermissionDenied('No puede eliminar esta publicación.')
         instance.delete()
 
@@ -1012,19 +1030,19 @@ class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixin
     def perform_create(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         student = serializer.validated_data['student']
-        if not can_access_student(self.request.user, student):
+        if not can_manage_academic_output(self.request.user, student):
             raise PermissionDenied('No puede registrar eventos académicos para este estudiante.')
         serializer.save()
 
     def perform_update(self, serializer):
         from rest_framework.exceptions import PermissionDenied
         event = self.get_object()
-        if not can_access_student(self.request.user, event.student, write=True):
+        if not can_manage_academic_output(self.request.user, event.student):
             raise PermissionDenied('No puede modificar este evento académico.')
         serializer.save()
 
     def perform_destroy(self, instance):
         from rest_framework.exceptions import PermissionDenied
-        if not can_access_student(self.request.user, instance.student, write=True):
+        if not can_manage_academic_output(self.request.user, instance.student):
             raise PermissionDenied('No puede eliminar este evento académico.')
         instance.delete()

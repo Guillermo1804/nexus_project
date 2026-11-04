@@ -12,7 +12,7 @@
     <select id="tipo_producto" formControlName="tipo_producto" class="form-control">
       <option value="">Seleccione un tipo</option>
       @for (type of productTypes; track type.value) {
-        <option [value]="type.value">{{ type.icon }} {{ type.label }}</option>
+        <option [value]="type.value">{{ type.label }}</option>
       }
     </select>
     @if (form.get('tipo_producto')!.invalid && form.get('tipo_producto')!.touched) {

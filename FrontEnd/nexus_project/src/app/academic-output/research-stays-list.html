@@ -5,7 +5,10 @@
       <h2>Estancias de investigación</h2>
       <p>Registra estancias nacionales e internacionales en instituciones receptoras.</p>
     </div>
-    <button type="button" class="btn-primary" (click)="newStay()">Registrar estancia</button>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button type="button" class="btn-primary" (click)="newStay()">Registrar estancia</button> }
+    </div>
   </div>
 
   @if (loading) {
@@ -21,14 +24,14 @@
               <h3>{{ stay.institucion_destino }}</h3>
               <span class="output-badge country-badge">{{ stay.pais }}</span>
             </div>
-            <div class="output-card-actions">
+            @if (canManage) { <div class="output-card-actions">
               <button type="button" class="output-icon-button" (click)="editStay(stay)" aria-label="Editar estancia">
                 <span class="icon">✎</span>
               </button>
               <button type="button" class="output-icon-button delete" (click)="deleteStay(stay)" aria-label="Eliminar estancia">
                 <span class="icon">🗑</span>
               </button>
-            </div>
+            </div> }
           </header>
           <div class="output-card-body">
             <div class="output-meta-item">
@@ -63,3 +66,11 @@
     </div>
   }
 </section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

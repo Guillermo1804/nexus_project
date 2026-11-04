@@ -96,6 +96,17 @@
   gap: 0.5rem;
 }
 
+.output-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.output-list-actions a {
+  text-decoration: none;
+}
+
 .output-icon-button {
   display: flex;
   align-items: center;
@@ -107,6 +118,20 @@
   background: #fff;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.output-icon-button:not(.delete) {
+  color: #2563eb;
+}
+
+.output-icon-button:not(.delete):hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.output-icon-button.delete {
+  color: #dc2626;
 }
 
 .output-icon-button:hover {

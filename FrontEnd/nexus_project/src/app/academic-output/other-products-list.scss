@@ -6,3 +6,23 @@
 .product-type-badge.PROTOTIPO { background: #fef3c7; color: #a16207; border-color: #fde047; }
 .product-type-badge.CAPITULO_LIBRO { background: #e0f2fe; color: #0369a1; border-color: #7dd3fc; }
 .product-type-badge.OTRO { background: #f3f4f6; color: #6b7280; border-color: #d1d5db; }
+
+.output-icon-button.edit {
+  color: #2563eb;
+}
+
+.output-icon-button.edit:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.output-icon-button.delete {
+  color: #dc2626;
+}
+
+.output-icon-button.delete:hover {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}

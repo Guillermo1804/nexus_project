@@ -90,6 +90,7 @@ h3 { color: var(--heading); font-size: 13px; }
    declaraba se eliminó por error en el commit «Bug del sprint 2 arreglados» (1a8c1e2),
    y la vista de evidencias (tercera pestaña) quedaba sin tratamiento visual. */
 .evidence-list-panel { padding: 22px; min-width: 0; }
+.academic-output-panel { padding: 22px; min-width: 0; }
 .evidence-table-wrap { overflow-x: auto; margin-top: 20px; }
 .evidence-table { width: 100%; min-width: 760px; border-collapse: collapse; color: var(--text-secondary); font-size: 13px; }
 .evidence-table th { background: var(--surface-warm); color: var(--text-muted); font-size: 11px; font-weight: 700; text-align: left; text-transform: uppercase; }
@@ -123,3 +124,12 @@ h3 { color: var(--heading); font-size: 13px; }
 @media (max-width: 1200px) { .student-header { flex-wrap: wrap; }.header-actions { margin-left: 120px; } }
 @media (max-width: 1000px) { .dashboard-grid { grid-template-columns: minmax(0, 1fr); }.side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }.committee-modal-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 680px) { .overview-shell { padding: 16px; }.student-header { align-items: flex-start; }.avatar { width: 64px; height: 64px; font-size: 24px; }.student-details { flex-basis: calc(100% - 88px); }.header-actions { margin: 0; width: 100%; }.header-actions button { flex: 1; }.mini-stats { gap: 16px 0; }.side-column { grid-template-columns: minmax(0, 1fr); }.section-heading { flex-wrap: wrap; }.session-item { align-items: flex-start; flex-direction: column; }.modal-backdrop { padding: 10px; }.modal-panel { max-height: calc(100vh - 20px); }.committee-modal-list { grid-template-columns: minmax(0, 1fr); } }
+
+.academic-output-links { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
+.academic-output-link { align-items: flex-start; display: flex; flex-direction: column; gap: 8px; padding: 18px; text-decoration: none; }
+
+.academic-output-link .text-action { margin-top: 0; padding-left: 0; }
+
+@media (max-width: 680px) {
+  .academic-output-links { grid-template-columns: 1fr; }
+}

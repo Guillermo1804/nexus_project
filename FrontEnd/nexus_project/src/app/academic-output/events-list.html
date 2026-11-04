@@ -5,7 +5,10 @@
       <h2>Congresos y Coloquios</h2>
       <p>Registra tu participación en congresos, coloquios y simposios.</p>
     </div>
-    <button class="btn-primary" type="button" (click)="newEvent()">Registrar congreso</button>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button class="btn-primary" type="button" (click)="newEvent()">Registrar congreso</button> }
+    </div>
   </div>
 
   @if (loading) {
@@ -16,7 +19,7 @@
   } @else if (events.length === 0) {
     <div class="output-empty" role="status">
       <p>No hay eventos registrados.</p>
-      <button class="btn-primary" (click)="newEvent()">Registrar primer evento</button>
+      @if (canManage) { <button class="btn-primary" (click)="newEvent()">Registrar primer evento</button> }
     </div>
   } @else {
     <div class="output-grid">
@@ -28,10 +31,10 @@
             {{ getTypeLabel(event.tipo_evento) }}
             </span>
           </div>
-          <div class="output-card-actions">
+          @if (canManage) { <div class="output-card-actions">
             <button type="button" class="output-icon-button" (click)="editEvent(event)" aria-label="Editar congreso">✎</button>
             <button type="button" class="output-icon-button delete" (click)="deleteEvent(event)" aria-label="Eliminar congreso">🗑</button>
-          </div>
+          </div> }
         </div>
         <div class="output-card-body">
           <div class="output-meta-item"><span class="output-meta-label">Evento</span><span class="output-meta-value">{{ event.nombre_evento }}</span></div>
@@ -49,3 +52,11 @@
     </div>
   }
 </section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
