@@ -10,7 +10,7 @@
 }
 
 .session-dialog {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
   box-shadow: 0 16px 40px rgb(17 24 39 / 24%);
   max-width: 26rem;
@@ -18,7 +18,7 @@
 }
 
 .session-dialog h2 { margin: 0; }
-.session-dialog p { color: #4b5563; line-height: 1.5; }
+.session-dialog p { color: var(--text-secondary); line-height: 1.5; }
 .session-dialog button {
   background: #007f86;
   border: 0;

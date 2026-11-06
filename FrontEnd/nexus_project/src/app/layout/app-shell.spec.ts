@@ -67,6 +67,20 @@ describe('AppShell (menú lateral)', () => {
     expect(button.textContent?.trim()).toBe('Cerrar sesión');
   });
 
+  it('permite alternar el modo oscuro desde la barra superior', async () => {
+    await configure(user('STUDENT', ['records.read.own']));
+
+    const button = fixture.nativeElement.querySelector('.theme-toggle') as HTMLButtonElement;
+
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    button.click();
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('Activar modo claro');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
   it('muestra las etiquetas académicas actualizadas para el alumno', async () => {
     await configure(user('STUDENT', ['records.read.own', 'academic_events.create'], { student_id: 7 }));
 

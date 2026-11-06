@@ -7,6 +7,7 @@ import { AcademicService } from '../core/academic/academic.service';
 import { AgreementAlertsResponse } from '../core/academic/academic.models';
 import { UserRole } from '../core/auth/auth.models';
 import { AuthService } from '../core/auth/auth.service';
+import { ThemeService } from '../core/theme/theme.service';
 import { getRoleLabelByGender } from '../shared/presentation/role-labels';
 
 /** Mirrors the `allowedRoles` of the agreements route so the link never leads to a redirect. */
@@ -29,6 +30,7 @@ const MENU_ANIMATION_MS = 220;
 })
 export class AppShell implements OnInit {
   protected readonly auth = inject(AuthService);
+  protected readonly theme = inject(ThemeService);
   private readonly academic = inject(AcademicService);
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef);

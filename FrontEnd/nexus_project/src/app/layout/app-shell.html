@@ -19,6 +19,16 @@
         <strong>{{ userName() }}</strong>
         <span>{{ roleLabel() }}</span>
       </div>
+      <button
+        class="theme-toggle"
+        type="button"
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.isDark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+        [attr.aria-pressed]="theme.isDark()"
+        [title]="theme.isDark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+      >
+        <span aria-hidden="true">{{ theme.isDark() ? '☀' : '☾' }}</span>
+      </button>
       <button class="btn-secondary" type="button" (click)="logout()" [disabled]="isLeaving">
         {{ isLeaving ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>

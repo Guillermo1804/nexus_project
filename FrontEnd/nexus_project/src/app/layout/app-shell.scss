@@ -102,6 +102,22 @@
 .identity { display: grid; text-align: right; }
 .identity strong { color: var(--text); font-size: 13px; }
 .identity span { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+.theme-toggle {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 18px;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+  width: 36px;
+}
+.theme-toggle:hover { background: var(--surface-soft); color: var(--heading); }
 .account button { padding: 7px 14px; }
 .content { padding: 24px; }
 
@@ -183,5 +199,6 @@
 }
 
 @media (max-width: 520px) {
+  .account { gap: 8px; }
   .account button { padding: 7px 10px; }
 }
