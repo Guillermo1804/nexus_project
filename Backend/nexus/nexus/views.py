@@ -40,6 +40,7 @@ from .permissions import (
 )
 from .services import ThesisHistoryService, TimelineService
 from .services.dashboard_service import DashboardService
+from .services.realtime_events import publish_agreement_event
 from .serializers import AcademicEventSerializer, ResearchStaySerializer, OtherProductSerializer
 
 
@@ -482,13 +483,15 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if request.method == 'GET':
             return Response(AgreementSerializer(session.agreements.select_related('responsable'), many=True).data)
-        serializer = AgreementSerializer(data=request.data, context={'session': session})
-        serializer.is_valid(raise_exception=True)
-        agreement = serializer.save(session=session, student=session.student, created_by=request.user)
-        AgreementAuditLog.objects.create(
-            agreement=agreement, user=request.user, estado_anterior='',
-            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
-        )
+        with transaction.atomic():
+            serializer = AgreementSerializer(data=request.data, context={'session': session})
+            serializer.is_valid(raise_exception=True)
+            agreement = serializer.save(session=session, student=session.student, created_by=request.user)
+            AgreementAuditLog.objects.create(
+                agreement=agreement, user=request.user, estado_anterior='',
+                estado_nuevo=agreement.estado, comentario=agreement.descripcion,
+            )
+            publish_agreement_event(agreement, 'agreement.created')
         return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
 
 
@@ -675,6 +678,7 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
         agreement.save(update_fields=['estado', 'fecha_conclusion', 'updated_at'])
         AgreementAuditLog.objects.create(agreement=agreement, user=request.user, estado_anterior=previous,
                                          estado_nuevo=new_status, comentario=serializer.validated_data['comentario'])
+        publish_agreement_event(agreement, 'agreement.status_changed')
         return Response(AgreementSerializer(agreement).data)
 
     @action(detail=True, methods=['get'], url_path='audit-log')

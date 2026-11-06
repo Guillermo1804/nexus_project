@@ -63,3 +63,71 @@ python populate_data.py
 python manage.py runserver 8000
 python manage.py test nexus
 ```
+
+En Windows, instala las dependencias con el mismo intérprete del entorno virtual que
+ejecutará Django para evitar que paquetes como Daphne queden instalados sólo en el
+Python global:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe nexus\manage.py runserver
+```
+
+### Infraestructura de tiempo real
+
+El backend ya está preparado para ejecutarse con ASGI mediante Channels. En esta fase
+los acuerdos se distribuyen por WebSocket y REST continúa siendo la fuente de verdad.
+
+- `ASGI_APPLICATION=nexus.asgi.application` queda configurado por defecto.
+- Sin `REDIS_URL`, el channel layer usa `InMemoryChannelLayer`, adecuado sólo para
+  desarrollo local con un único proceso.
+- Con `REDIS_URL=redis://localhost:6379/0`, se usa Redis para distribuir eventos entre
+  procesos.
+- El contenedor usa Daphne por defecto. Para conservar el servidor local de Django,
+  establece `NEXUS_SERVER=runserver`.
+- `docker compose up` expone el backend en `8000`, Redis internamente en `6379` y el
+  frontend en `4200`. Redis no se expone al host.
+
+La configuración local REST no requiere Redis: ejecuta `python manage.py runserver 8000`
+sin `REDIS_URL`. Docker Compose arranca Redis para el perfil multi-proceso.
+
+Para activar o desactivar el transporte sin cambiar modelos ni endpoints:
+
+```text
+NEXUS_REALTIME_ENABLED=true
+NEXUS_REALTIME_LOG_LEVEL=INFO
+```
+
+Con `NEXUS_REALTIME_ENABLED=false`, los endpoints REST siguen disponibles y el handshake
+WebSocket se rechaza con `4403`. Esto permite rollback operativo a REST sin revertir código.
+Los logs del logger `nexus.realtime` incluyen conexión, rechazo, desconexión, publicación,
+entrega fallida y el estado de la publicación. La resincronización del cliente se mide
+mediante `RealtimeService.metrics$`.
+
+### Suscripciones WebSocket (fase 2)
+
+La ruta `/ws/students/<student_id>/` ya valida el access token JWT durante el handshake.
+El navegador debe ofrecer los subprotocolos `nexus.jwt` y el token, en ese orden; el token
+no se coloca en la URL. El servidor acepta la conexión sólo para el estudiante propio,
+usuarios con `academic.read.global` o miembros del comité de ese estudiante.
+
+La conexión responde inicialmente con `connection.ready` y entrega eventos versionados de
+acuerdos publicados después del commit. Para desactivar la entrega en una instancia, usa
+`NEXUS_REALTIME_ENABLED=false`; la aplicación debe continuar consumiendo REST.
+
+### Checklist de operación de fase 6
+
+1. Ejecutar `python manage.py test nexus` con Redis detenido para comprobar el fallback REST.
+2. Ejecutar la suite Angular y el build de producción.
+3. Abrir tres sesiones autorizadas (alumno, tutor y coordinador), crear/cambiar un acuerdo
+   y comprobar que sólo los usuarios autorizados reciben el evento.
+4. Reiniciar Redis y confirmar que las operaciones REST confirmadas no fallan; al volver
+   Redis, los clientes deben resincronizar por REST.
+5. Simular expiración del access token y caída de red; comprobar reconexión y ausencia de
+   duplicados.
+6. Antes de producción, cambiar SQLite por PostgreSQL y ejecutar Daphne detrás de un proxy
+   TLS. SQLite sólo es válido para desarrollo de un proceso.
+
+Las métricas `connected`, `reconnected`, `resynchronized` y `degraded` se exponen mediante
+`RealtimeService.metrics$`; deben recopilarse en el sistema de observabilidad de la
+aplicación sin registrar tokens ni payloads sensibles.

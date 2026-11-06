@@ -29,6 +29,7 @@ def env_bool(name, default=False):
 
 
 DEBUG = env_bool('DJANGO_DEBUG', True)
+REALTIME_ENABLED = env_bool('NEXUS_REALTIME_ENABLED', True)
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     if not DEBUG:
@@ -54,6 +55,7 @@ if DEBUG:
 
 INSTALLED_APPS = [
     'nexus',
+    'daphne',
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
@@ -139,6 +141,19 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'nexus.wsgi.application'
+ASGI_APPLICATION = 'nexus.asgi.application'
+
+REDIS_URL = os.getenv('REDIS_URL', '').strip()
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': (
+            'channels_redis.core.RedisChannelLayer'
+            if REDIS_URL
+            else 'channels.layers.InMemoryChannelLayer'
+        ),
+        'CONFIG': {'hosts': [REDIS_URL]} if REDIS_URL else {},
+    },
+}
 
 
 # Database
@@ -220,4 +235,27 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'realtime': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'realtime',
+        },
+    },
+    'loggers': {
+        'nexus.realtime': {
+            'handlers': ['console'],
+            'level': os.getenv('NEXUS_REALTIME_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
 }

@@ -7,10 +7,24 @@ services:
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}
       SQLITE_PATH: /app/nexus/data/db.sqlite3
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      NEXUS_SERVER: ${NEXUS_SERVER:-asgi}
     ports:
       - "8000:8000"
     volumes:
       - nexus_sqlite:/app/nexus/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   frontend:
     build:
