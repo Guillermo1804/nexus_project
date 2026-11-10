@@ -333,6 +333,25 @@ describe('StudentOverviewComponent', () => {
     expect(text).not.toContain('Otros Productos');
   });
 
+  it('muestra al coordinador el acceso directo al reporte integral', () => {
+    tokenService.user.set({
+      id: 99, email: 'coordinator@nexus.edu', first_name: 'Coord', last_name: 'Nexus',
+      role: 'PROGRAM_COORDINATOR', roles: ['PROGRAM_COORDINATOR'],
+      permissions: ['academic.read.global'], student_id: null, grammatical_gender: 'UNSPECIFIED',
+    });
+
+    fixture.detectChanges();
+    http.expectOne('http://localhost:8000/api/v1/students/10/overview/').flush(mockOverview);
+    fixture.detectChanges();
+    flushTutoringSideRequests(http, 5);
+    fixture.detectChanges();
+
+    const reportLink = Array.from(fixture.nativeElement.querySelectorAll('a'))
+      .find((link): link is HTMLAnchorElement => link.textContent?.trim() === 'Reporte');
+    expect(reportLink).toBeTruthy();
+    expect(reportLink?.getAttribute('href')).toBe('/students/10/report');
+  });
+
   it('muestra mensaje de error cuando la llamada HTTP retorna 404', () => {
     fixture.detectChanges();
     const req = http.expectOne('http://localhost:8000/api/v1/students/10/overview/');

@@ -13,7 +13,7 @@
         <p class="program">{{ overview.programa_doctoral }}</p>
         <div class="student-meta"><span class="mono">{{ overview.matricula }}</span><span>Cohorte {{ overview.cohorte }}</span><span>Semestre {{ overview.current_semester?.numero ?? 'sin registrar' }}</span></div>
       </div>
-      <div class="header-actions"><a class="btn-secondary" [routerLink]="['/students', studentId, 'report']" aria-label="Abrir reporte integral para imprimir o guardar como PDF">Descargar PDF</a>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
+      <div class="header-actions">@if (auth.user?.role === 'PROGRAM_COORDINATOR') { <a class="btn-secondary" [routerLink]="['/students', studentId, 'report']" aria-label="Abrir reporte integral del estudiante">Reporte</a> }<a class="btn-secondary" [routerLink]="['/students', studentId, 'report']" aria-label="Abrir reporte integral para imprimir o guardar como PDF">Descargar PDF</a>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
     </section>
 
     @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
