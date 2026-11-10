@@ -36,11 +36,14 @@ from .permissions import (
     CanManageCommittee,
     CanManageSemesters,
     CanReadGlobalAcademics,
+    CanReadSupervisionAlerts,
     permissions_for_user,
 )
 from .services import ThesisHistoryService, TimelineService
 from .services.dashboard_service import DashboardService
 from .services.realtime_events import publish_agreement_event
+from .services.supervision_rules import SupervisionRulesEngine
+from .services.dossier_engine import DossierReportEngine
 from .serializers import AcademicEventSerializer, ResearchStaySerializer, OtherProductSerializer
 
 
@@ -871,6 +874,46 @@ class DashboardView(APIView):
             'acuerdos_segumiento': acuerdos_segumiento,
             'acuerdos_vencidos': acuerdos_vencidos,
         })
+
+
+class SupervisionAlertsView(APIView):
+    """Supervision alerts for coordinators and principal advisors (HU-26)."""
+    permission_classes = [CanReadSupervisionAlerts]
+
+    def get(self, request):
+        alerts = SupervisionRulesEngine.get_alerts(request.user)
+        return Response({
+            'total_casos_rezago': len(alerts),
+            'alertas': alerts,
+            'configuracion': SupervisionRulesEngine.config(),
+        })
+
+
+class DossierView(APIView):
+    """Return the complete trajectory report for one student (HU-27)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        raw_student_id = request.query_params.get('student')
+        if not raw_student_id:
+            return Response(
+                {'detail': 'El parámetro student es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            student_id = int(raw_student_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'El parámetro student debe ser un entero.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        dossier = DossierReportEngine.build(request.user, student_id, request)
+        if dossier is None:
+            return Response(
+                {'detail': 'Reporte no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(dossier)
 
     def get_estudiantes_activos(self, request):
         return Response(DashboardService.get_estudiantes_activos())

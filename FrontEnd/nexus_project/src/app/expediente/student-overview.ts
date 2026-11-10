@@ -201,13 +201,11 @@ export class StudentOverviewComponent implements OnInit {
     return !!user && (user.student_id === this.studentId || this.overview?.student.user_id === user.id || this.auth.hasPermission('records.read.assigned'));
   }
   protected get canCreateAgreement(): boolean { return this.canAccessStudent && this.canCreateTutoring; }
-  protected get canUploadEvidence(): boolean { return this.canAccessStudent; }
   protected get canRegisterThesisProgress(): boolean { return this.canAccessStudent; }
   protected get canDeleteThesisProgress(): boolean {
     const role = this.auth.user?.role;
     return (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || role === 'PROGRAM_COORDINATOR' || role === 'SYSTEM_ADMIN') && this.canAccessStudent;
   }
-  protected get canCreatePublication(): boolean { return this.canAccessStudent; }
   protected get initials(): string {
     return (this.overview?.nombre_completo ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }

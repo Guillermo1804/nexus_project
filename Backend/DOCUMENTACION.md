@@ -131,3 +131,26 @@ acuerdos publicados después del commit. Para desactivar la entrega en una insta
 Las métricas `connected`, `reconnected`, `resynchronized` y `degraded` se exponen mediante
 `RealtimeService.metrics$`; deben recopilarse en el sistema de observabilidad de la
 aplicación sin registrar tokens ni payloads sensibles.
+
+### Alertas de supervisión HU-26
+
+El endpoint `GET /api/v1/monitoring/supervision-alerts/` devuelve alertas de tutoría
+rezagada, reunión próxima y evidencia faltante. Los coordinadores reciben todos los
+estudiantes activos; los asesores principales sólo reciben los estudiantes asignados
+en su comité.
+
+Los valores predeterminados son 45 días sin tutoría, 15 días para exigir evidencia y
+3 días hábiles para una próxima reunión. Se pueden cambiar centralizadamente mediante
+`NEXUS_DIAS_MAX_SIN_TUTORIA`, `NEXUS_DIAS_MAX_SIN_EVIDENCIA_TUTORIA` y
+`NEXUS_DIAS_ANTICIPACION_PROXIMA_REUNION`.
+
+### Reporte integral HU-27
+
+El reporte se consulta mediante `GET /api/v1/reporting/dossier/?student=<id>` y consolida
+la trayectoria del estudiante en JSON: identidad, comité, semestres, tutorías, acuerdos,
+tesis, publicaciones, eventos, estancias, otros productos y evidencias. El endpoint permite
+al estudiante consultar su propio expediente, a miembros del comité consultar estudiantes
+asignados y a usuarios con `academic.read.global` consultar globalmente.
+
+La vista Angular `/students/<id>/report` está preparada para impresión o guardado como PDF
+desde el navegador. Los controles de navegación se ocultan mediante `@media print`.

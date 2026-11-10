@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MonitoringService, DashboardResponse, DistribucionAvanceTesis, DistribucionSemestre } from '../core/monitoring/monitoring.service';
+import {
+  MonitoringService,
+  DashboardResponse,
+  DistribucionAvanceTesis,
+  DistribucionSemestre,
+  SupervisionAlert,
+  SupervisionAlertsResponse,
+} from '../core/monitoring/monitoring.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -62,6 +69,8 @@ export class CoordinatorDashboardComponent implements OnInit {
   protected loading = true;
   protected error = '';
   protected data: DashboardResponse | null = null;
+  protected supervisionAlerts: SupervisionAlertsResponse | null = null;
+  protected supervisionTypeFilter: SupervisionAlert['tipo_alerta'] | 'TODAS' = 'TODAS';
 
   private readonly SEMESTRE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
   private readonly DONUT_RADIUS = 80;
@@ -77,7 +86,16 @@ export class CoordinatorDashboardComponent implements OnInit {
     this.monitoringService.getDashboard().subscribe({
       next: (res) => {
         this.data = res;
-        this.loading = false;
+        this.monitoringService.getSupervisionAlerts().subscribe({
+          next: alerts => {
+            this.supervisionAlerts = alerts;
+            this.loading = false;
+          },
+          error: () => {
+            this.supervisionAlerts = null;
+            this.loading = false;
+          },
+        });
       },
       error: (err) => {
         this.error = err.status === 403
@@ -86,6 +104,51 @@ export class CoordinatorDashboardComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  protected getFilteredSupervisionAlerts(): SupervisionAlert[] {
+    const alerts = this.supervisionAlerts?.alertas ?? [];
+    if (this.supervisionTypeFilter === 'TODAS') return alerts;
+    return alerts.filter(alert => alert.tipo_alerta === this.supervisionTypeFilter);
+  }
+
+  protected getSupervisionGroups(): Array<{
+    key: string;
+    advisor: string;
+    cohort: string;
+    semester: number | null;
+    alerts: SupervisionAlert[];
+  }> {
+    const groups = new Map<string, {
+      key: string;
+      advisor: string;
+      cohort: string;
+      semester: number | null;
+      alerts: SupervisionAlert[];
+    }>();
+    for (const alert of this.getFilteredSupervisionAlerts()) {
+      const cohort = alert.cohorte || 'Sin cohorte';
+      const semester = alert.semestre ?? null;
+      const key = `${alert.asesor_principal}|${cohort}|${semester ?? 'N/A'}`;
+      const group = groups.get(key) ?? {
+        key,
+        advisor: alert.asesor_principal,
+        cohort,
+        semester,
+        alerts: [],
+      };
+      group.alerts.push(alert);
+      groups.set(key, group);
+    }
+    return [...groups.values()];
+  }
+
+  protected supervisionAlertLabel(type: SupervisionAlert['tipo_alerta']): string {
+    return {
+      SIN_TUTORIA_PROLONGADA: 'Tutoría rezagada',
+      REUNION_PROXIMA: 'Tutoría próxima',
+      EVIDENCIA_FALTANTE: 'Evidencia pendiente',
+    }[type];
   }
 
   protected getAvanceRanges(): { label: string; value: number; color: string }[] {

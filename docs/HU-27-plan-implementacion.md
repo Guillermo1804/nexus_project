@@ -115,6 +115,16 @@
 ---
 
 ## 6. Definition of Done (DoD)
-- [ ] Endpoint `/api/v1/reporting/dossier/` probado y validado con datos consolidados.
+- [x] Endpoint `/api/v1/reporting/dossier/` probado y validado con datos consolidados.
 - [ ] Maquetación CSS de impresión probada y validada en Chrome/Firefox.
-- [ ] Pruebas unitarias backend (`test_hu27.py`) y frontend aprobadas al 100%.
+- [x] Pruebas unitarias backend (`test_hu27.py`) aprobadas; el build Angular pasa.
+
+## 7. Implementación entregada
+
+- El endpoint consolida identidad, comité, semestres, tutorías, acuerdos, tesis,
+  publicaciones, eventos, estancias, otros productos y evidencias.
+- La autorización permite estudiante propio, miembros del comité asignado y usuarios
+  con `academic.read.global`.
+- La vista Angular `/students/:id/report` permite imprimir o guardar el reporte como PDF.
+- Los controles de navegación se ocultan mediante `@media print` y las secciones evitan
+  cortes de página innecesarios.

@@ -51,6 +51,24 @@ class CanReadGlobalAcademics(BasePermission):
         return 'academic.read.global' in permissions_for_user(request.user)
 
 
+class CanReadSupervisionAlerts(BasePermission):
+    def has_permission(self, request, view):
+        if 'academic.read.global' in permissions_for_user(request.user):
+            return True
+        return (
+            request.user.is_authenticated
+            and request.user.is_active
+            and request.user.role in {
+                CustomUser.Role.TUTOR,
+                CustomUser.Role.COMMITTEE_MEMBER,
+            }
+            and Student.objects.filter(
+                academic_committee__memberships__user=request.user,
+                academic_committee__memberships__role='ASESOR',
+            ).exists()
+        )
+
+
 class CanCreateTutoring(BasePermission):
     def has_permission(self, request, view):
         return 'tutoring.create' in permissions_for_user(request.user)

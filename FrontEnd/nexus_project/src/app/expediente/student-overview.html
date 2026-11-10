@@ -13,7 +13,7 @@
         <p class="program">{{ overview.programa_doctoral }}</p>
         <div class="student-meta"><span class="mono">{{ overview.matricula }}</span><span>Cohorte {{ overview.cohorte }}</span><span>Semestre {{ overview.current_semester?.numero ?? 'sin registrar' }}</span></div>
       </div>
-      <div class="header-actions"><button class="btn-secondary" disabled title="Próximamente">Descargar PDF</button>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
+      <div class="header-actions"><a class="btn-secondary" [routerLink]="['/students', studentId, 'report']" aria-label="Abrir reporte integral para imprimir o guardar como PDF">Descargar PDF</a>@if (canRegisterThesisProgress) { <button class="btn-primary" [disabled]="!overview.current_semester" [title]="motivoSinSemestreActivo" (click)="openModal('avance')">Registrar avance de tesis</button> }</div>
     </section>
 
     @if (exitoTutoria) { <p class="success-banner" role="status">{{ exitoTutoria }}</p> }
@@ -118,13 +118,15 @@
           <div class="section-heading"><h2>Última Tutoría</h2>@if (canCreateTutoring) { <button class="link-button" (click)="openModal('tutoria')">+ Registrar tutoría</button> }</div>
           @if (overview.last_tutoring; as last) { <time>{{ last.fecha_sesion | date:'longDate' }}</time><span class="status-pill">{{ last.modalidad }}</span><p>{{ last.resumen }}</p><app-tutoring-observations [studentId]="studentId" [preferredSessionId]="last.id" /> } @else { <p class="empty-state">Aún no hay tutorías registradas.</p> }
         </article>
-        @if (canUploadEvidence) { 
+        @if (canAccessStudent) {
+        @if (auth.user?.role !== 'PROGRAM_COORDINATOR') {
         <button class="btn-secondary evidence-button" (click)="openModal('evidencia')">Subir evidencia</button>
         <button class="btn-primary evidence-button" (click)="selectOtherProductsView()">Otros Productos</button>
         <button class="btn-primary evidence-button" [routerLink]="['/students', studentId, 'academic-output', 'new']">Subir Publicación</button>
+        }
         <button class="btn-primary evidence-button" [routerLink]="['/students', studentId, 'academic-output']">Ver Producción Académica</button>
         <button type="button" class="btn-primary evidence-timeline-button" (click)="openEvidenceTimeline()">Ver evidencias en línea de tiempo</button>
-      }
+        }
       </aside>
     </div>
     } @else if (activeView === 'timeline') {

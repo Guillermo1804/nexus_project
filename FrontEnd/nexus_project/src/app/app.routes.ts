@@ -19,6 +19,7 @@ import { OtherProductsListComponent } from './academic-output/other-products-lis
 import { OtherProductFormPageComponent } from './academic-output/other-product-form-page';
 import { CoordinatorDashboardComponent } from './coordinator/coordinator-dashboard';
 import { AppShell } from './layout/app-shell';
+import { StudentDossierViewComponent } from './reporting/student-dossier-view';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -31,6 +32,12 @@ export const routes: Routes = [
       {
         path: 'expediente/:id',
         component: StudentOverviewComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/report',
+        component: StudentDossierViewComponent,
         canActivate: [authGuard, roleGuard],
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },

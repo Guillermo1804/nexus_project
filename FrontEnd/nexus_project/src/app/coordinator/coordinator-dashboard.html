@@ -114,6 +114,9 @@
                 >
                   + Registrar tutoría
                 </a>
+                <a [routerLink]="['/students', student.id, 'report']" class="btn-link">
+                  Generar reporte integral
+                </a>
               </div>
             </article>
           }
@@ -346,6 +349,86 @@
             </li>
           }
         </ul>
+      }
+    </section>
+
+    <section class="alerts-section" aria-labelledby="supervision-alerts-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="supervision-alerts-title" class="section-title">🔎 Seguimiento incompleto</h2>
+          <p class="section-description">
+            Alertas centralizadas por tutoría rezagada, reunión próxima o evidencia pendiente.
+            Los umbrales se administran en la configuración del backend.
+          </p>
+        </div>
+        @if (supervisionAlerts) {
+          <span class="alert-count" aria-live="polite">
+            {{ getFilteredSupervisionAlerts().length }}
+          </span>
+        }
+      </div>
+
+      @if (supervisionAlerts) {
+        <label class="supervision-filter">
+          Tipo de alerta
+          <select [(ngModel)]="supervisionTypeFilter" aria-label="Filtrar alertas de seguimiento">
+            <option value="TODAS">Todas</option>
+            <option value="SIN_TUTORIA_PROLONGADA">Tutoría rezagada</option>
+            <option value="REUNION_PROXIMA">Tutoría próxima</option>
+            <option value="EVIDENCIA_FALTANTE">Evidencia pendiente</option>
+          </select>
+        </label>
+
+        @if (getSupervisionGroups().length === 0) {
+          <div class="empty-alerts" role="status">
+            <p>✅ No hay alertas de seguimiento incompleto.</p>
+          </div>
+        } @else {
+          @for (group of getSupervisionGroups(); track group.key) {
+            <article class="supervision-group">
+              <h3>
+                {{ group.advisor }} · {{ group.cohort }} ·
+                Semestre {{ group.semester ?? 'N/A' }}
+              </h3>
+              <div class="table-wrapper" role="region" [attr.aria-label]="'Alertas de ' + group.advisor">
+                <table class="alerts-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Matrícula</th>
+                      <th scope="col">Estudiante</th>
+                      <th scope="col">Tipo</th>
+                      <th scope="col">Detalle</th>
+                      <th scope="col">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (alert of group.alerts; track alert.tipo_alerta + '-' + alert.student_id + '-' + (alert.tutoria_id ?? 'none')) {
+                      <tr>
+                        <td>{{ alert.matricula }}</td>
+                        <td>{{ alert.nombre_completo }}</td>
+                        <td>
+                          <span class="badge" [class.badge-danger]="alert.severidad === 'ALTA'" [class.badge-warning]="alert.severidad === 'MEDIA'">
+                            {{ supervisionAlertLabel(alert.tipo_alerta) }}
+                          </span>
+                        </td>
+                        <td class="motivo-cell">{{ alert.detalle }}</td>
+                        <td>
+                          <a
+                            [routerLink]="['/expediente', alert.student_id]"
+                            class="btn-link"
+                            [attr.aria-label]="'Ver expediente de ' + alert.nombre_completo"
+                          >
+                            Ver expediente
+                          </a>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          }
+        }
       }
     </section>
   }

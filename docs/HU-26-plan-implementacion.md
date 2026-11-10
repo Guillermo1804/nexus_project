@@ -104,6 +104,18 @@
 ---
 
 ## 6. Definition of Done (DoD)
-- [ ] Endpoint `/api/v1/monitoring/supervision-alerts/` probado y validado con umbrales configurables.
-- [ ] Reglas de 45 días de tutoría y 15 días de evidencia aprobadas en tests backend (`test_hu26.py`).
-- [ ] Panel integrado en el módulo de coordinación del frontend con diseño accesible.
+- [x] Endpoint `/api/v1/monitoring/supervision-alerts/` probado y validado con umbrales configurables.
+- [x] Reglas de 45 días de tutoría, 15 días de evidencia y 3 días hábiles de próxima reunión
+  aprobadas en tests backend (`test_hu26.py`).
+- [x] Panel integrado en el módulo de coordinación del frontend con filtros y agrupación
+  accesible por asesor, cohorte y semestre.
+
+## 7. Implementación entregada
+
+- Los umbrales se centralizan en `SUPERVISION_CONFIG` y pueden ajustarse mediante
+  `NEXUS_DIAS_MAX_SIN_TUTORIA`, `NEXUS_DIAS_MAX_SIN_EVIDENCIA_TUTORIA` y
+  `NEXUS_DIAS_ANTICIPACION_PROXIMA_REUNION`.
+- Coordinación recibe todos los estudiantes activos; un asesor principal sólo recibe
+  estudiantes asignados a su comité. Otros usuarios reciben `403`.
+- Las evidencias de tutoría se relacionan por `actividad_tipo=TUTORIA` y
+  `actividad_id=<tutoria_id>`.

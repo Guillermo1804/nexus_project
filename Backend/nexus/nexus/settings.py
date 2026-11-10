@@ -28,8 +28,23 @@ def env_bool(name, default=False):
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def env_int(name, default):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise RuntimeError(f'{name} debe ser un entero.') from exc
+
+
 DEBUG = env_bool('DJANGO_DEBUG', True)
 REALTIME_ENABLED = env_bool('NEXUS_REALTIME_ENABLED', True)
+SUPERVISION_CONFIG = {
+    'DIAS_MAX_SIN_TUTORIA': env_int('NEXUS_DIAS_MAX_SIN_TUTORIA', 45),
+    'DIAS_MAX_SIN_EVIDENCIA_TUTORIA': env_int('NEXUS_DIAS_MAX_SIN_EVIDENCIA_TUTORIA', 15),
+    'DIAS_ANTICIPACION_PROXIMA_REUNION': env_int('NEXUS_DIAS_ANTICIPACION_PROXIMA_REUNION', 3),
+}
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     if not DEBUG:
