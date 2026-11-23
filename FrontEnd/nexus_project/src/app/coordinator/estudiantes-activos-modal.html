@@ -1,0 +1,36 @@
+<div class="modal-container">
+  <h2 mat-dialog-title>Estudiantes Activos</h2>
+  <mat-dialog-content class="mat-elevation-z8">
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="nombre" matSortDirection="asc">
+        <ng-container matColumnDef="matricula">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Matrícula</th>
+          <td mat-cell *matCellDef="let estudiante">{{ estudiante.matricula }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+          <td mat-cell *matCellDef="let estudiante">{{ estudiante.nombre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="semestre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Semestre</th>
+          <td mat-cell *matCellDef="let estudiante">{{ estudiante.semestre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="asesor">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Asesor</th>
+          <td mat-cell *matCellDef="let estudiante">{{ estudiante.asesor }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onNoClick()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

@@ -35,7 +35,7 @@ describe('AuthService session validation', () => {
     http.expectOne(request => request.url.endsWith('/auth/me/')).flush({ ...user, first_name: 'Updated' });
 
     expect(valid).toBeTrue();
-    expect(service.user()?.first_name).toBe('Updated');
+    expect(service.user?.first_name).toBe('Updated');
   });
 
   it('discards storage containing a removed role', () => {

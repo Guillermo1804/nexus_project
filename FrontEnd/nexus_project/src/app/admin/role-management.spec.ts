@@ -16,7 +16,7 @@ describe('RoleManagement', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(RoleManagement);
     fixture.detectChanges();
-    http.expectOne('http://localhost:8000/api/v1/auth/users/').flush({ count: [{
+    http.expectOne('http://localhost:8000/api/v1/auth/users/?page=1').flush({ count: [{
       id: 1, email: 'student@example.com', first_name: 'Ana', last_name: 'Lopez', role: 'STUDENT',
       roles: ['STUDENT'], permissions: ['records.read.own'],
     }].length, next: null, previous: null, results: [{
@@ -46,6 +46,27 @@ describe('RoleManagement', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Asesor / Tutor');
+  });
+
+  it('loads the next page of users when requested', () => {
+    const component = fixture.componentInstance;
+
+    http.expectNone('http://localhost:8000/api/v1/auth/users/?page=2');
+    (component as any).goToPage(2);
+    http.expectOne('http://localhost:8000/api/v1/auth/users/?page=2').flush({
+      count: 11,
+      next: null,
+      previous: 'http://localhost:8000/api/v1/auth/users/?page=1',
+      results: [{
+        id: 2, email: 'tutor@example.com', first_name: 'Luis', last_name: 'Perez', role: 'TUTOR',
+        roles: ['TUTOR'], permissions: ['tutoring.create'],
+      }],
+    });
+    fixture.detectChanges();
+
+    expect((component as any).currentPage).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('tutor@example.com');
+    expect(fixture.nativeElement.textContent).toContain('Página 2');
   });
 
   it('does not allow changing the protected administrator role', () => {

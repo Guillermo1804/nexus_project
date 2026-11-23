@@ -1,0 +1,62 @@
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="events-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">CONGRESOS Y COLOQUIOS</span>
+      <h2>Congresos y Coloquios</h2>
+      <p>Registra tu participación en congresos, coloquios y simposios.</p>
+    </div>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button class="btn-primary" type="button" (click)="newEvent()">Registrar congreso</button> }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="output-state" role="status">
+      <div class="output-spinner"></div>
+      <p>Cargando eventos...</p>
+    </div>
+  } @else if (events.length === 0) {
+    <div class="output-empty" role="status">
+      <p>No hay eventos registrados.</p>
+      @if (canManage) { <button class="btn-primary" (click)="newEvent()">Registrar primer evento</button> }
+    </div>
+  } @else {
+    <div class="output-grid">
+      <article *ngFor="let event of events" class="output-card">
+        <div class="output-card-header">
+          <div class="output-card-title">
+            <h3>{{ event.titulo_trabajo }}</h3>
+            <span class="output-badge" [class]="getTypeClass(event.tipo_evento)">
+            {{ getTypeLabel(event.tipo_evento) }}
+            </span>
+          </div>
+          @if (canManage) { <div class="output-card-actions">
+            <button type="button" class="output-icon-button" (click)="editEvent(event)" aria-label="Editar congreso">✎</button>
+            <button type="button" class="output-icon-button delete" (click)="deleteEvent(event)" aria-label="Eliminar congreso">🗑</button>
+          </div> }
+        </div>
+        <div class="output-card-body">
+          <div class="output-meta-item"><span class="output-meta-label">Evento</span><span class="output-meta-value">{{ event.nombre_evento }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Rol</span><span class="output-meta-value">{{ getRoleLabel(event.rol_participacion) }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Modalidad</span><span class="output-meta-value">{{ getModalityLabel(event.modalidad) }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Fecha</span><span class="output-meta-value">{{ event.fecha_evento | date }}</span></div>
+          @if (event.lugar) {
+            <div class="output-meta-item"><span class="output-meta-label">Lugar</span><span class="output-meta-value">{{ event.lugar }}</span></div>
+          }
+          @if (event.evidencia_archivo) {
+            <div class="output-meta-item"><span class="output-meta-label">Constancia</span><a class="output-meta-value" [href]="event.evidencia_archivo" target="_blank" rel="noopener">Ver archivo adjunto</a></div>
+          }
+        </div>
+      </article>
+    </div>
+  }
+</section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

@@ -250,7 +250,7 @@ class Evidence(models.Model):
 	actividad_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
 	titulo = models.CharField(max_length=255)
 	descripcion = models.TextField(blank=True, default='')
-	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])])
+	archivo_adjunto = models.FileField(upload_to='evidence/%Y/%m/', null=True, blank=True, validators=[FileExtensionValidator(['pdf', 'png', 'jpg', 'jpeg', 'docx', 'zip'])]) 
 	enlace_url = models.CharField(max_length=500, blank=True, default='')
 	mime_type = models.CharField(max_length=100, blank=True, default='')
 	file_size_bytes = models.BigIntegerField(default=0)
@@ -278,31 +278,82 @@ class AcademicOutputBase(models.Model):
 		abstract = True
 
 
+class PublicationType(models.TextChoices):
+    JCR = 'JCR', 'JCR'
+    SCOPUS = 'SCOPUS', 'Scopus'
+    CONACYT = 'CONACYT', 'Conacyt'
+    OTRO_INDEXADO = 'OTRO_INDEXADO', 'Otro Indexado'
+
+
+class PublicationStatus(models.TextChoices):
+    PREPARACION = 'PREPARACION', 'Preparación'
+    ENVIADO = 'ENVIADO', 'Enviado'
+    EN_REVISION = 'EN_REVISION', 'En Revisión'
+    ACEPTADO = 'ACEPTADO', 'Aceptado'
+    PUBLICADO = 'PUBLICADO', 'Publicado'
+
+
+class EventType(models.TextChoices):
+    CONGRESO = 'CONGRESO', 'Congreso'
+    COLOQUIO = 'COLOQUIO', 'Coloquio'
+    SIMPOSIO = 'SIMPOSIO', 'Simposio'
+
+
+class RoleParticipation(models.TextChoices):
+    PONENTE = 'PONENTE', 'Ponente'
+    ASISTENTE = 'ASISTENTE', 'Asistente'
+
+
+class Modality(models.TextChoices):
+    PRESENCIAL = 'PRESENCIAL', 'Presencial'
+    VIRTUAL = 'VIRTUAL', 'Virtual'
+    HIBRIDA = 'HIBRIDA', 'Híbrida'
+
+
 class Publication(AcademicOutputBase):
-	titulo = models.CharField(max_length=255)
-	autores_texto = models.TextField()
-	tipo = models.CharField(max_length=30)
-	revista_editorial = models.CharField(max_length=255)
-	estado = models.CharField(max_length=30, default='PREPARACION')
-	fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
-	doi_url = models.CharField(max_length=500, blank=True, default='')
+    titulo = models.CharField(max_length=255)
+    autores_texto = models.TextField()
+    tipo = models.CharField(max_length=50, choices=PublicationType.choices)
+    revista_editorial = models.CharField(max_length=255)
+    estado = models.CharField(max_length=30, choices=PublicationStatus.choices, default='PREPARACION')
+    fecha_publicacion = models.DateField(null=True, blank=True, db_index=True)
+    doi_url = models.CharField(blank=True, default='', max_length=500)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.estado in (PublicationStatus.ACEPTADO, PublicationStatus.PUBLICADO):
+            if not self.doi_url and not self.evidencia_id:
+                raise ValidationError({'doi_url': 'Debe proporcionar DOI o evidencia para un artículo aceptado o publicado.'})
+        if self.fecha_publicacion and self.fecha_publicacion > timezone.localdate():
+            raise ValidationError({'fecha_publicacion': 'La fecha de publicación no puede ser futura.'})
 
 
 class AcademicEvent(AcademicOutputBase):
-	tipo_evento = models.CharField(max_length=40)
-	nombre_evento = models.CharField(max_length=255)
-	titulo_ponencia = models.CharField(max_length=255)
-	fecha_presentacion = models.DateField(db_index=True)
-	sede_lugar = models.CharField(max_length=255)
-	modalidad = models.CharField(max_length=20, default='PRESENCIAL')
+    titulo_trabajo = models.CharField(max_length=255)
+    nombre_evento = models.CharField(max_length=255)
+    tipo_evento = models.CharField(max_length=50, choices=EventType.choices)
+    modalidad = models.CharField(max_length=20, choices=Modality.choices, default=Modality.PRESENCIAL)
+    rol_participacion = models.CharField(max_length=50, choices=RoleParticipation.choices, default=RoleParticipation.PONENTE)
+    fecha_evento = models.DateField(db_index=True)
+    lugar = models.CharField(max_length=255, blank=True, default='')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.rol_participacion == RoleParticipation.PONENTE:
+            if not self.evidencia_id:
+                raise ValidationError({'evidencia': 'Debe adjuntar constancia o carta de aceptación para ponentes.'})
+        if self.fecha_evento and self.fecha_evento > timezone.localdate():
+            raise ValidationError({'fecha_evento': 'La fecha del evento no puede ser futura.'})
 
 
 class ResearchStay(AcademicOutputBase):
-	institucion_receptora = models.CharField(max_length=255)
+	institucion_destino = models.CharField(max_length=255, db_column='institucion_receptora')
 	pais = models.CharField(max_length=100)
 	fecha_inicio = models.DateField(db_index=True)
 	fecha_fin = models.DateField()
-	responsable_estancia = models.CharField(max_length=255)
+	investigador_anfitrion = models.CharField(max_length=255, db_column='responsable_estancia')
 	objetivos = models.TextField(blank=True, default='')
 	resultados = models.TextField(blank=True, default='')
 
@@ -310,8 +361,18 @@ class ResearchStay(AcademicOutputBase):
 		constraints = [models.CheckConstraint(condition=Q(fecha_fin__gte=models.F('fecha_inicio')), name='research_stay_end_after_start')]
 
 
+class OtherProductType(models.TextChoices):
+	SOFTWARE = 'SOFTWARE', 'Software'
+	PATENTE = 'PATENTE', 'Patente'
+	BASE_DATOS = 'BASE_DATOS', 'Base de datos'
+	PROTOTIPO = 'PROTOTIPO', 'Prototipo'
+	CAPITULO_LIBRO = 'CAPITULO_LIBRO', 'Capítulo de libro'
+	OTRO = 'OTRO', 'Otro'
+
+
 class OtherProduct(AcademicOutputBase):
-	tipo_producto = models.CharField(max_length=30)
+	tipo_producto = models.CharField(max_length=50, choices=OtherProductType.choices)
 	titulo = models.CharField(max_length=255)
 	descripcion = models.TextField()
 	fecha_registro = models.DateField(default=timezone.now, db_index=True)
+	enlace_web = models.URLField(blank=True, null=True)

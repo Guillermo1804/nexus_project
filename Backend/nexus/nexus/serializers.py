@@ -19,6 +19,7 @@ from .models import (
     CustomUser,
     OtherProduct,
     Publication,
+    PublicationStatus,
     ResearchStay,
     Semester,
     Student,
@@ -28,8 +29,84 @@ from .models import (
     TutoringObservation,
     AgreementAuditLog,
     Evidence,
+    RoleParticipation,
+    Modality,
+    EventType,
 )
 from .permissions import permissions_for_user
+
+
+class PublicationSerializer(serializers.ModelSerializer):
+    autores = serializers.CharField(source='autores_texto')
+    revista = serializers.CharField(source='revista_editorial')
+    doi = serializers.CharField(source='doi_url', allow_blank=True, required=False)
+    evidencia_archivo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Publication
+        fields = (
+            'id', 'student', 'semester', 'titulo', 'autores', 'tipo', 'revista',
+            'estado', 'fecha_publicacion', 'doi', 'evidencia', 'evidencia_archivo', 'created_at',
+        )
+        read_only_fields = ('id', 'created_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, publication):
+        if not publication.evidencia or not publication.evidencia.archivo_adjunto:
+            return None
+
+        url = publication.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
+
+    def validate(self, attrs):
+        estado = attrs.get('estado', getattr(self.instance, 'estado', None))
+        # map from attributes possibly still in db names
+        doi = attrs.get('doi_url', attrs.get('doi', getattr(self.instance, 'doi_url', '') if self.instance else ''))
+        evidencia = attrs.get('evidencia', getattr(self.instance, 'evidencia', None))
+        if estado in (PublicationStatus.ACEPTADO, PublicationStatus.PUBLICADO):
+            if not doi and not evidencia:
+                raise serializers.ValidationError(
+                    {'doi': 'Debe proporcionar DOI o evidencia para un artículo aceptado o publicado.'}
+                )
+        fecha_publicacion = attrs.get('fecha_publicacion', getattr(self.instance, 'fecha_publicacion', None))
+        if fecha_publicacion and fecha_publicacion > timezone.localdate():
+            raise serializers.ValidationError(
+                {'fecha_publicacion': 'La fecha de publicación no puede ser futura.'}
+            )
+        return attrs
+
+
+class AcademicEventSerializer(serializers.ModelSerializer):
+    evidencia_archivo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AcademicEvent
+        fields = (
+            'id', 'student', 'semester', 'titulo_trabajo', 'nombre_evento',
+            'tipo_evento', 'modalidad', 'rol_participacion', 'lugar',
+            'fecha_evento', 'evidencia', 'evidencia_archivo', 'created_at',
+        )
+        read_only_fields = ('id', 'created_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, event):
+        if event.evidencia and event.evidencia.archivo_adjunto:
+            return event.evidencia.archivo_adjunto.url
+        return None
+
+    def validate(self, attrs):
+        rol = attrs.get('rol_participacion', getattr(self.instance, 'rol_participacion', None))
+        evidencia = attrs.get('evidencia', getattr(self.instance, 'evidencia', None))
+        if rol == RoleParticipation.PONENTE:
+            if not evidencia:
+                raise serializers.ValidationError(
+                    {'evidencia': 'Debe adjuntar constancia o carta de aceptación para ponentes.'}
+                )
+        fecha_evento = attrs.get('fecha_evento', getattr(self.instance, 'fecha_evento', None))
+        if fecha_evento and fecha_evento > timezone.localdate():
+            raise serializers.ValidationError(
+                {'fecha_evento': 'La fecha del evento no puede ser futura.'}
+            )
+        return attrs
 
 
 INVALID_CREDENTIALS = 'Correo o contrasena incorrectos.'
@@ -455,16 +532,16 @@ class StudentOverviewSerializer(serializers.ModelSerializer):
         for ev in list(student.academicevent_set.all())[:3]:
             activities.append({
                 'tipo': 'EVENTO',
-                'titulo': ev.titulo_ponencia or ev.nombre_evento,
-                'fecha': str(ev.fecha_presentacion) if ev.fecha_presentacion else '',
-                'detalle': f"{ev.tipo_evento} - {ev.sede_lugar}",
+                'titulo': ev.titulo_trabajo or ev.nombre_evento,
+                'fecha': str(ev.fecha_evento) if ev.fecha_evento else '',
+                'detalle': f"{ev.tipo_evento} - {ev.lugar}",
             })
         for stay in list(student.researchstay_set.all())[:3]:
             activities.append({
                 'tipo': 'ESTANCIA',
-                'titulo': f"Estancia en {stay.institucion_receptora} ({stay.pais})",
-                'fecha': str(stay.fecha_inicio),
-                'detalle': stay.responsable_estancia,
+                'titulo': f"Estancia en {stay.institucion_destino} ({stay.pais})",
+                'fecha': str(stay.fecha_inicio) if stay.fecha_inicio else '',
+                'detalle': stay.investigador_anfitrion,
             })
         return sorted(activities, key=lambda x: x['fecha'] or '', reverse=True)[:5]
 
@@ -710,6 +787,60 @@ class TutoringSessionSerializer(serializers.ModelSerializer):
             'agreements',
         )
         read_only_fields = fields
+
+
+class ResearchStaySerializer(serializers.ModelSerializer):
+    duracion_dias = serializers.SerializerMethodField(read_only=True)
+    evidencia_archivo = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ResearchStay
+        fields = (
+            'id', 'student', 'semester', 'institucion_destino', 'pais',
+            'fecha_inicio', 'fecha_fin', 'investigador_anfitrion',
+            'objetivos', 'resultados', 'evidencia',
+            'evidencia_archivo', 'duracion_dias', 'created_at'
+        )
+        read_only_fields = ('id', 'created_at', 'duracion_dias', 'evidencia_archivo')
+        extra_kwargs = {
+            'semester': {'required': False},
+            'student': {'required': False},
+            'evidencia': {'required': False},
+        }
+
+    def get_duracion_dias(self, obj):
+        if obj.fecha_inicio and obj.fecha_fin:
+            return (obj.fecha_fin - obj.fecha_inicio).days
+        return None
+
+    def get_evidencia_archivo(self, stay):
+        if not stay.evidencia or not stay.evidencia.archivo_adjunto:
+            return None
+
+        url = stay.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
+
+
+class OtherProductSerializer(serializers.ModelSerializer):
+    evidencia_archivo = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = OtherProduct
+        fields = (
+            'id', 'student', 'semester', 'tipo_producto', 'titulo',
+            'descripcion', 'fecha_registro', 'enlace_web', 'evidencia',
+            'evidencia_archivo', 'created_at', 'updated_at',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at', 'evidencia_archivo')
+
+    def get_evidencia_archivo(self, product):
+        if not product.evidencia or not product.evidencia.archivo_adjunto:
+            return None
+
+        url = product.evidencia.archivo_adjunto.url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
 
 class LoginSerializer(serializers.Serializer):

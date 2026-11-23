@@ -56,7 +56,7 @@ export class Home implements OnInit {
       return;
     }
 
-    const role = this.auth.user()?.role;
+    const role = this.auth.user?.role;
     if (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || this.auth.hasPermission('records.read.assigned')) {
       this.studentService.loadStudents();
     }
@@ -67,12 +67,12 @@ export class Home implements OnInit {
   }
 
   protected getWelcomeText(): string {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return formatWelcomeGreeting(user?.first_name || user?.email, user?.grammatical_gender);
   }
 
   protected getRoleLabel(role?: string): string {
-    return getRoleLabelByGender(role, this.auth.user()?.grammatical_gender);
+    return getRoleLabelByGender(role, this.auth.user?.grammatical_gender);
   }
 
   protected loadDashboard(): void {
@@ -81,7 +81,7 @@ export class Home implements OnInit {
 
     forkJoin({
       students: this.loadStudentPages(),
-      sessions: this.academicService.getTutoringSessions(1),
+      sessions: this.loadTutoringPages(),
       pending: this.academicService.getAgreements({ estado: 'PENDIENTE' }),
       inProgress: this.academicService.getAgreements({ estado: 'EN_PROCESO' }),
       overdue: this.academicService.getAgreements({ vencido: true }),
@@ -112,8 +112,47 @@ export class Home implements OnInit {
     );
   }
 
+  private loadTutoringPages(
+    page = 1,
+    accumulated: TutoringSession[] = [],
+  ): Observable<{ results: TutoringSession[]; count: number }> {
+    return this.academicService.getTutoringSessions(page).pipe(
+      switchMap(response => {
+        const sessions = [...accumulated, ...response.results];
+        return response.next && page < 5
+          ? this.loadTutoringPages(page + 1, sessions)
+          : of({ results: sessions, count: response.count });
+      }),
+    );
+  }
+
   protected get activeStudents(): number {
     return this.students.filter(student => student.estatus_activo).length;
+  }
+
+  protected get activeStudentRecords(): StudentRecord[] {
+    const today = new Date();
+    const cutoff = new Date(today);
+    cutoff.setDate(today.getDate() - 21);
+    const scheduledUntil = new Date(today);
+    scheduledUntil.setDate(today.getDate() + 21);
+
+    const studentIdsWithRecentOrScheduledTutoring = new Set(
+      this.tutoringSessions
+        .filter(session => {
+          const sessionDate = new Date(session.fecha_sesion);
+          const nextMeeting = session.proxima_reunion_fecha
+            ? new Date(session.proxima_reunion_fecha)
+            : null;
+          return sessionDate >= cutoff
+            || (!!nextMeeting && nextMeeting >= today && nextMeeting <= scheduledUntil);
+        })
+        .map(session => session.student),
+    );
+
+    return this.students.filter(student =>
+      student.estatus_activo && !studentIdsWithRecentOrScheduledTutoring.has(student.id),
+    );
   }
 
   protected get agreementsInFollowUp(): number {

@@ -1,0 +1,75 @@
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="other-products-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">TRANSFERENCIA TECNOLÓGICA</span>
+      <h2>Otros Productos Académicos</h2>
+      <p>Registra productos de valor tecnológico o transferencia académica.</p>
+    </div>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button type="button" class="btn-primary" (click)="newOtherProduct()">Registrar producto</button> }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="output-state" role="status"><div class="output-spinner"></div><p>Cargando productos...</p></div>
+  } @else if (error) {
+    <div class="output-state" role="alert"><p>{{ error }}</p><button class="btn-secondary" (click)="loadOtherProducts()">Reintentar</button></div>
+  } @else if (otherProducts.length) {
+    <div class="output-grid">
+      @for (product of otherProducts; track product.id) {
+        <article class="output-card">
+          <header class="output-card-header">
+            <div class="output-card-title">
+              <h3>{{ product.titulo }}</h3>
+              <span class="output-badge product-type-badge" [class]="badgeClass(product.tipo_producto)">
+                {{ typeLabel(product.tipo_producto) }}
+              </span>
+            </div>
+            @if (canManage) { <div class="output-card-actions">
+              <button type="button" class="output-icon-button edit" (click)="editOtherProduct(product)" aria-label="Editar producto">✎</button>
+              <button type="button" class="output-icon-button delete" (click)="deleteOtherProduct(product)" aria-label="Eliminar producto">🗑</button>
+            </div> }
+          </header>
+          <div class="output-card-body">
+            <div class="output-meta-item">
+              <span class="output-meta-label">Tipo</span>
+              <span class="output-meta-value">{{ typeLabel(product.tipo_producto) }}</span>
+            </div>
+            <div class="output-meta-item">
+              <span class="output-meta-label">Fecha</span>
+              <span class="output-meta-value">{{ product.fecha_registro | date:'mediumDate' }}</span>
+            </div>
+            @if (product.enlace_web) {
+              <div class="output-meta-item">
+                <span class="output-meta-label">Enlace</span>
+                <a [href]="product.enlace_web" target="_blank" rel="noopener" class="output-meta-value">Ver enlace</a>
+              </div>
+            }
+            @if (product.evidencia_archivo) {
+              <div class="output-meta-item">
+                <span class="output-meta-label">Evidencia</span>
+                <a [href]="product.evidencia_archivo" target="_blank" rel="noopener" class="output-meta-value">
+                  Ver archivo adjunto
+                </a>
+              </div>
+            }
+            <div class="output-description product-description">
+              <p>{{ product.descripcion }}</p>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <p class="output-empty" role="status">Aún no hay productos registrados.</p>
+  }
+</section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

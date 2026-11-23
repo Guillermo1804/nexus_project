@@ -9,10 +9,21 @@ import { Login } from './login/login';
 import { RegistroEstudiante } from './coordinador/registro-estudiante';
 import { StudentOverviewComponent } from './expediente/student-overview';
 import { AgreementsListComponent } from './agreements/agreements-list';
+import { PublicationsListComponent } from './academic-output/publications-list';
+import { PublicationFormComponent } from './academic-output/publication-form';
+import { EventsListComponent } from './academic-output/events-list';
+import { EventFormComponent } from './academic-output/event-form';
+import { ResearchStaysListComponent } from './academic-output/research-stays-list';
+import { ResearchStayFormPageComponent } from './academic-output/research-stay-form-page';
+import { OtherProductsListComponent } from './academic-output/other-products-list';
+import { OtherProductFormPageComponent } from './academic-output/other-product-form-page';
+import { CoordinatorDashboardComponent } from './coordinator/coordinator-dashboard';
 import { AppShell } from './layout/app-shell';
+import { StudentDossierViewComponent } from './reporting/student-dossier-view';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
     path: '',
     component: AppShell,
@@ -21,6 +32,84 @@ export const routes: Routes = [
       {
         path: 'expediente/:id',
         component: StudentOverviewComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/report',
+        component: StudentDossierViewComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output',
+        component: PublicationsListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/new',
+        component: PublicationFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/edit/:publicationId',
+        component: PublicationFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events',
+        component: EventsListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events/new',
+        component: EventFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/events/edit/:eventId',
+        component: EventFormComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays',
+        component: ResearchStaysListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays/new',
+        component: ResearchStayFormPageComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/research-stays/edit/:stayId',
+        component: ResearchStayFormPageComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/other-products',
+        component: OtherProductsListComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/other-products/new',
+        component: OtherProductFormPageComponent,
+        canActivate: [authGuard, roleGuard],
+        data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
+      },
+      {
+        path: 'students/:id/academic-output/other-products/edit/:productId',
+        component: OtherProductFormPageComponent,
         canActivate: [authGuard, roleGuard],
         data: { allowedRoles: ['STUDENT', 'TUTOR', 'COMMITTEE_MEMBER', 'PROGRAM_COORDINATOR'] },
       },
@@ -61,8 +150,13 @@ export const routes: Routes = [
         canActivate: [authGuard, roleGuard, permissionGuard],
         data: { requiredPermission: 'students.create', allowedRoles: ['PROGRAM_COORDINATOR'] },
       },
+      {
+        path: 'coordinator/dashboard',
+        component: CoordinatorDashboardComponent,
+        canActivate: [authGuard, roleGuard, permissionGuard],
+        data: { requiredPermission: 'academic.read.global', allowedRoles: ['PROGRAM_COORDINATOR'] },
+      },
     ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' },
 ];

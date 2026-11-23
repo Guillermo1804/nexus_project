@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AcademicService } from '../core/academic/academic.service';
-import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, TimelineEvent, TimelineEventType, TimelineResponse } from '../core/academic/academic.models';
+import { Agreement, AgreementAlert, AgreementAlertsResponse, Semester, SemesterTutoringSession, StudentOverview, ThesisHistoryResponse, TimelineEvent, TimelineEventType, TimelineResponse, OtherProduct } from '../core/academic/academic.models';
 import { AuthService } from '../core/auth/auth.service';
 import { SemesterFormComponent } from './semester-form';
 import { TutoringFormComponent } from './tutoring-form';
@@ -13,6 +13,7 @@ import { ResponsibleOption } from './tutoring-agreements';
 import { EvidenceUploadComponent } from './evidence-upload';
 import { TutoringConditionsComponent } from './tutoring-conditions';
 import { ThesisProgressFormComponent } from './thesis-progress-form';
+import { ThesisEvolutionChartComponent } from './thesis-evolution-chart';
 import { TimelineComponent } from '../shared/timeline';
 import { ModalFocusDirective } from '../shared/modal-focus.directive';
 import { ToastService } from '../shared/toast.service';
@@ -21,7 +22,7 @@ type Modal = 'tutoria' | 'acuerdo' | 'estado' | 'evidencia' | 'avance' | 'semest
 
 @Component({
   selector: 'app-student-overview',
-  imports: [CommonModule, FormsModule, RouterLink, ModalFocusDirective, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, TimelineComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ModalFocusDirective, SemesterFormComponent, TutoringFormComponent, TutoringObservationsComponent, EvidenceUploadComponent, TutoringConditionsComponent, ThesisProgressFormComponent, ThesisEvolutionChartComponent, TimelineComponent],
   templateUrl: './student-overview.html',
   styleUrl: './student-overview.scss',
 })
@@ -30,6 +31,7 @@ export class StudentOverviewComponent implements OnInit {
   private readonly academicService = inject(AcademicService);
   protected readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+   private readonly router = inject(Router);
   protected studentId = 0;
   protected overview: StudentOverview | null = null;
   protected agreements: Agreement[] = [];
@@ -46,12 +48,17 @@ export class StudentOverviewComponent implements OnInit {
   protected guardandoAcuerdo = false;
   protected errorAcuerdo = '';
   protected acuerdo = { sessionId: 0, descripcion: '', responsable: 0, fecha_limite: '' };
-  protected activeView: 'resumen' | 'timeline' | 'evidencias' = 'resumen';
+  protected activeView: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' | 'produccion' = 'resumen';
+  protected activeViewOtherProducts: boolean = false;
   protected timelineInitialFilter: TimelineEventType | null = null;
   protected timeline: TimelineResponse | null = null;
   protected timelineLoading = false;
   protected timelineError = '';
   protected agreementAlerts: AgreementAlertsResponse | null = null;
+  protected thesisHistory: ThesisHistoryResponse | null = null;
+  protected thesisHistoryLoading = false;
+  protected thesisHistoryError = '';
+  protected showThesisEvolution = false;
   protected alertsDismissed = false;
   /** Estado del aviso flotante de compromisos vencidos: entra, se descarta en dos fases
    * (para animar la salida) y vuelve a aparecer sólo si aparecen vencidos nuevos. */
@@ -66,6 +73,7 @@ export class StudentOverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.studentId = Number(this.route.snapshot.paramMap.get('id'));
+    if (this.route.snapshot.queryParamMap.get('vista') === 'produccion') this.activeView = 'produccion';
     if (Number.isInteger(this.studentId) && this.studentId > 0) this.cargarExpediente();
     else { this.error = 'Identificador de estudiante inválido.'; this.cargando = false; }
   }
@@ -187,24 +195,44 @@ export class StudentOverviewComponent implements OnInit {
   /** Explica por qué el avance de tesis queda apagado sin semestre activo. */
   protected readonly motivoSinSemestreActivo =
     'El avance de tesis se registra sobre el semestre en curso. Este expediente no tiene uno marcado como activo.';
+  protected readonly componentKeys: string[] = ['protocolo', 'marco_teorico', 'metodologia', 'recoleccion_datos', 'analisis_resultados', 'redaccion_capitulos'];
   protected get canAccessStudent(): boolean {
-    const user = this.auth.user();
+    const user = this.auth.user;
     return !!user && (user.student_id === this.studentId || this.overview?.student.user_id === user.id || this.auth.hasPermission('records.read.assigned'));
   }
   protected get canCreateAgreement(): boolean { return this.canAccessStudent && this.canCreateTutoring; }
-  protected get canUploadEvidence(): boolean { return this.canAccessStudent; }
   protected get canRegisterThesisProgress(): boolean { return this.canAccessStudent; }
+  protected get canDeleteThesisProgress(): boolean {
+    const role = this.auth.user?.role;
+    return (role === 'TUTOR' || role === 'COMMITTEE_MEMBER' || role === 'PROGRAM_COORDINATOR' || role === 'SYSTEM_ADMIN') && this.canAccessStudent;
+  }
   protected get initials(): string {
     return (this.overview?.nombre_completo ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }
 
   protected selectSemester(id: number): void { this.selectedSemesterId = id; }
-  protected selectView(view: 'resumen' | 'timeline' | 'evidencias', initialFilter: TimelineEventType | null = null): void {
+  protected selectView(view: 'resumen' | 'timeline' | 'evidencias' | 'evolucion' | 'produccion', initialFilter: TimelineEventType | null = null): void {
     this.activeView = view;
     this.timelineInitialFilter = view === 'timeline' ? initialFilter : null;
-    if ((view === 'timeline' || view === 'evidencias') && !this.timelineLoaded) this.loadTimeline();
+    if (view === 'timeline' || view === 'evidencias') {
+      if (!this.timelineLoaded) this.loadTimeline();
+    } else if (view === 'evolucion' && !this.thesisHistory && !this.thesisHistoryLoading) {
+      this.loadThesisHistory();
+    }
+  }
+
+  protected loadThesisHistory(): void {
+    this.thesisHistoryLoading = true;
+    this.thesisHistoryError = '';
+    this.academicService.getThesisHistory(this.studentId).pipe(finalize(() => this.thesisHistoryLoading = false)).subscribe({
+      next: data => { this.thesisHistory = data; this.showThesisEvolution = true; },
+      error: err => this.thesisHistoryError = err.status === 404
+        ? 'El histórico de tesis no existe o no tiene permisos para consultarlo.'
+        : 'No fue posible cargar el histórico de avances de tesis.',
+    });
   }
   protected openEvidenceTimeline(): void { this.selectView('timeline', 'EVIDENCIA'); }
+  protected openThesisEvolution(): void { this.selectView('evolucion'); }
   protected get evidenceEntries(): TimelineEvent[] {
     return this.timeline?.semestres.flatMap(semester => semester.eventos).filter(event => event.tipo === 'EVIDENCIA') ?? [];
   }
@@ -307,7 +335,7 @@ export class StudentOverviewComponent implements OnInit {
   }
 
   protected puedeActualizarAcuerdo(agreement: { responsable: number; estado: string; fecha_limite: string; is_vencido: boolean }): boolean {
-    return !this.esVencido(agreement) && this.auth.user()?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
+    return !this.esVencido(agreement) && this.auth.user?.id === agreement.responsable && this.siguienteEstado(agreement.estado) !== null;
   }
   protected siguienteEstado(estado: string): 'EN_PROCESO' | 'CONCLUIDO' | null {
     return estado === 'PENDIENTE' ? 'EN_PROCESO' : estado === 'EN_PROCESO' ? 'CONCLUIDO' : null;
@@ -322,7 +350,7 @@ export class StudentOverviewComponent implements OnInit {
     add(overview.student.user_id, overview.nombre_completo, 'Estudiante');
     add(overview.advisors.advisor?.id, overview.advisors.advisor?.nombre_completo ?? '', 'Asesor Principal');
     add(overview.advisors.coadvisor?.id, overview.advisors.coadvisor?.nombre_completo ?? '', 'Coasesor');
-    overview.advisors.members.forEach(m => add(m.id, m.nombre_completo, this.committeeRole(m.rol_comite)));
+    overview.advisors.members.forEach(m => add(m.id, m.nombre_completo, this.committeeRole(m.rol_comite ?? '')));
     return options;
   }
 
@@ -351,5 +379,30 @@ export class StudentOverviewComponent implements OnInit {
   protected semestreGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Semestre registrado.'); }
   protected evidenciaGuardada(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Evidencia vinculada al expediente.'); }
   protected avanceGuardado(): void { this.cerrarModal(); this.refrescar(); this.toasts.exito('Avance de tesis registrado.'); }
+
+  protected eliminarAvance(entry: ThesisHistoryResponse['historico'][number]): void {
+    const confirmed = window.confirm(
+      `¿Eliminar el avance del ${entry.fecha} (Semestre ${entry.semestre_numero}, ${entry.porcentaje_avance}%)? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    this.academicService.deleteThesisProgress(+entry.id).subscribe({
+      next: () => {
+        this.thesisHistory = null;
+        this.loadThesisHistory();
+        this.cargarExpediente(true);
+        this.toasts.exito('Registro de avance eliminado.');
+      },
+      error: err => {
+        this.toasts.error(err.status === 403
+          ? 'No tiene permisos para eliminar este avance.'
+          : 'No fue posible eliminar el registro de avance.');
+      },
+    });
+  }
   protected proximaReunionGuardada(): void { this.refrescar(); this.toasts.exito('Condiciones de tutoría actualizadas.'); }
+
+   protected selectOtherProductsView(): void {
+     this.router.navigate(['/students', this.studentId, 'academic-output']);
+   }
 }

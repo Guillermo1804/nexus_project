@@ -26,6 +26,7 @@ from .views import (
     GlobalAcademicOverviewView,
     AgreementAlertsView,
     AgreementViewSet,
+    AcademicEventViewSet,
     CommitteeAssignmentListCreateView,
     CommitteeAssignmentUpdateView,
     AdminStudentListView,
@@ -43,7 +44,18 @@ from .views import (
     UserRoleUpdateView,
     EvidenceViewSet,
     ThesisProgressViewSet,
+    ThesisHistoryView,
     TimelineView,
+    PublicationViewSet,
+    ResearchStayViewSet,
+    OtherProductViewSet,
+    DashboardView,
+    SupervisionAlertsView,
+    DossierView,
+    EstudiantesActivosView,
+    TutoriasPeriodoView,
+    AcuerdosSeguimientoView,
+    AcuerdosVencidosView,
 )
 from .views_health import health_check
 
@@ -53,10 +65,15 @@ router.register(r'tutoring-sessions', TutoringSessionViewSet, basename='tutoring
 router.register(r'agreements', AgreementViewSet, basename='agreements')
 router.register(r'evidence', EvidenceViewSet, basename='evidence')
 router.register(r'thesis', ThesisProgressViewSet, basename='thesis')
+router.register(r'academic-output/publications', PublicationViewSet, basename='publications')
+router.register(r'academic-output/events', AcademicEventViewSet, basename='academic-events')
+router.register(r'academic-output/research-stays', ResearchStayViewSet, basename='research-stays')
+router.register(r'academic-output/other-products', OtherProductViewSet, basename='other-products')
 
 urlpatterns = [
     path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
+    path('api/v1/thesis/history/', ThesisHistoryView.as_view(), name='thesis-history'),
     path('api/v1/', include(router.urls)),
     path('api/v1/auth/login/', LoginView.as_view(), name='auth-login'),
     path('api/v1/auth/token/refresh/', TokenRefreshView.as_view(), name='auth-token-refresh'),
@@ -76,6 +93,13 @@ urlpatterns = [
     path('api/v1/academic/overview/', GlobalAcademicOverviewView.as_view(), name='academic-overview'),
     path('api/v1/monitoring/timeline/', TimelineView.as_view(), name='timeline'),
     path('api/v1/monitoring/alerts/agreements/', AgreementAlertsView.as_view(), name='agreement-alerts'),
+    path('api/v1/monitoring/supervision-alerts/', SupervisionAlertsView.as_view(), name='supervision-alerts'),
+    path('api/v1/reporting/dossier/', DossierView.as_view(), name='reporting-dossier'),
+    path('api/v1/monitoring/dashboard/', DashboardView.as_view(), name='monitoring-dashboard'),
+    path('api/v1/monitoring/dashboard/estudiantes-activos/', EstudiantesActivosView.as_view(), name='dashboard-estudiantes-activos'),
+    path('api/v1/monitoring/dashboard/tutorias-periodo/', TutoriasPeriodoView.as_view(), name='dashboard-tutorias-periodo'),
+    path('api/v1/monitoring/dashboard/acuerdos-seguimiento/', AcuerdosSeguimientoView.as_view(), name='dashboard-acuerdos-seguimiento'),
+    path('api/v1/monitoring/dashboard/acuerdos-vencidos/', AcuerdosVencidosView.as_view(), name='dashboard-acuerdos-vencidos'),
 ]
 
 # Sin esta ruta, Django responde 404 a `/media/...` y la evidencia subida nunca se

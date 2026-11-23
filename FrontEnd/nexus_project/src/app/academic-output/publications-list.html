@@ -1,0 +1,64 @@
+<section class="nexus-card output-panel" role="tabpanel" aria-labelledby="publications-tab">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">PRODUCCIÓN ACADÉMICA</span>
+      <h2>Producción Científica</h2>
+      <p>Registra publicaciones y evidencias de tu producción científica.</p>
+    </div>
+    <div class="output-list-actions">
+      <a class="btn-secondary" [routerLink]="['/expediente', studentId]" [queryParams]="{ vista: 'produccion' }">Regresar a producción académica</a>
+      @if (canManage) { <button class="btn-primary" type="button" (click)="newPublication()">Registrar publicación</button> }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="output-state" role="status">
+      <div class="output-spinner"></div>
+      <p>Cargando publicaciones...</p>
+    </div>
+  } @else if (publications.length === 0) {
+    <div class="output-empty" role="status">
+      <p>No hay publicaciones registradas.</p>
+      @if (canManage) { <button class="btn-primary" (click)="newPublication()">Registrar primera publicación</button> }
+    </div>
+  } @else {
+    <div class="output-grid">
+      <article *ngFor="let publication of publications" class="output-card">
+        <div class="output-card-header">
+          <div class="output-card-title">
+            <h3>{{ publication.titulo }}</h3>
+            <span class="output-badge" [class]="getStatusClass(publication.estado)">
+            {{ getStatusLabel(publication.estado) }}
+            </span>
+          </div>
+          @if (canManage) { <div class="output-card-actions">
+            <button type="button" class="output-icon-button" (click)="editPublication(publication)" aria-label="Editar publicación">✎</button>
+            <button type="button" class="output-icon-button delete" (click)="deletePublication(publication)" aria-label="Eliminar publicación">🗑</button>
+          </div> }
+        </div>
+        <div class="output-card-body">
+          <div class="output-meta-item"><span class="output-meta-label">Autores</span><span class="output-meta-value">{{ publication.autores }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Tipo</span><span class="output-meta-value">{{ publication.tipo }}</span></div>
+          <div class="output-meta-item"><span class="output-meta-label">Revista / Editorial</span><span class="output-meta-value">{{ publication.revista }}</span></div>
+          @if (publication.fecha_publicacion) {
+            <div class="output-meta-item"><span class="output-meta-label">Fecha</span><span class="output-meta-value">{{ publication.fecha_publicacion | date }}</span></div>
+          }
+          @if (publication.doi) {
+            <div class="output-meta-item"><span class="output-meta-label">DOI / URL</span><a class="output-meta-value" [href]="publication.doi" target="_blank" rel="noopener">Ver enlace</a></div>
+          }
+          @if (publication.evidencia_archivo) {
+            <div class="output-meta-item"><span class="output-meta-label">Evidencia</span><a class="output-meta-value" [href]="publication.evidencia_archivo" target="_blank" rel="noopener">Ver archivo adjunto</a></div>
+          }
+        </div>
+      </article>
+    </div>
+  }
+</section>
+
+@if (pendingDelete) {
+  <app-confirm-dialog
+    [request]="deleteRequest"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

@@ -25,7 +25,10 @@ import {
   UpdateNextMeetingData,
   ThesisProgress,
   CreateThesisProgressData,
+  ThesisHistoryResponse,
   TimelineResponse,
+  Publication,
+  AcademicEvent,
 } from './academic.models';
 
 const API = environment.apiUrl;
@@ -123,6 +126,34 @@ export class AcademicService {
     return this.http.post<ThesisProgress>(`${API}/thesis/`, data);
   }
 
+  updateThesisProgress(progressId: number, data: Partial<CreateThesisProgressData>): Observable<ThesisProgress> {
+    return this.http.patch<ThesisProgress>(`${API}/thesis/${progressId}/`, data);
+  }
+
+  getResearchStays(studentId: number): Observable<any> {
+    return this.http.get<any>(`${API}/academic-output/research-stays/?student=${studentId}`);
+  }
+
+  createResearchStay(data: any): Observable<any> {
+    return this.http.post<any>(`${API}/academic-output/research-stays/`, data);
+  }
+
+  updateResearchStay(stayId: number, data: any): Observable<any> {
+    return this.http.patch<any>(`${API}/academic-output/research-stays/${stayId}/`, data);
+  }
+
+  deleteResearchStay(stayId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/research-stays/${stayId}/`);
+  }
+
+  getThesisHistory(studentId: number): Observable<ThesisHistoryResponse> {
+    return this.http.get<ThesisHistoryResponse>(`${API}/thesis/history/?student=${studentId}`);
+  }
+
+  deleteThesisProgress(progressId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/thesis/${progressId}/`);
+  }
+
   uploadEvidence(data: EvidenceUploadData): Observable<Evidence> {
     const form = new FormData();
     form.append('student', String(data.student));
@@ -137,5 +168,87 @@ export class AcademicService {
 
   linkEvidence(data: EvidenceLinkData): Observable<Evidence> {
     return this.http.post<Evidence>(`${API}/evidence/`, data);
+  }
+
+  getPublications(studentId: number): Observable<PaginatedResponse<Publication>> {
+    return this.http.get<PaginatedResponse<Publication>>(`${API}/academic-output/publications/?student=${studentId}`);
+  }
+
+  createPublication(studentId: number, data: Partial<Publication>): Observable<Publication> {
+    const payload = { ...data, student: studentId };
+    return this.http.post<Publication>(`${API}/academic-output/publications/`, payload);
+  }
+
+  updatePublication(publicationId: number, data: Partial<Publication>): Observable<Publication> {
+    return this.http.patch<Publication>(`${API}/academic-output/publications/${publicationId}/`, data);
+  }
+
+  deletePublication(publicationId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/publications/${publicationId}/`);
+  }
+
+  uploadPublicationEvidence(studentId: number, semesterId: number | null, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    if (semesterId) form.append('semester', String(semesterId));
+    form.append('tipo', 'ARCHIVO_LOCAL');
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
+  getEvents(studentId: number): Observable<PaginatedResponse<AcademicEvent>> {
+    return this.http.get<PaginatedResponse<AcademicEvent>>(`${API}/academic-output/events/?student=${studentId}`);
+  }
+
+  createEvent(studentId: number, data: Partial<AcademicEvent>): Observable<AcademicEvent> {
+    const payload = { ...data, student: studentId };
+    return this.http.post<AcademicEvent>(`${API}/academic-output/events/`, payload);
+  }
+
+  updateEvent(eventId: number, data: Partial<AcademicEvent>): Observable<AcademicEvent> {
+    return this.http.patch<AcademicEvent>(`${API}/academic-output/events/${eventId}/`, data);
+  }
+
+  deleteEvent(eventId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/events/${eventId}/`);
+  }
+
+  uploadEventEvidence(studentId: number, semesterId: number | null, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    if (semesterId) form.append('semester', String(semesterId));
+    form.append('tipo', 'ARCHIVO_LOCAL');
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
+  uploadOtherProductEvidence(studentId: number, semesterId: number, file: File): Observable<{ id: number }> {
+    const form = new FormData();
+    form.append('student', String(studentId));
+    form.append('semester', String(semesterId));
+    form.append('actividad_tipo', 'OTRO');
+    form.append('titulo', file.name);
+    form.append('archivo_adjunto', file);
+    return this.http.post<{ id: number }>(`${API}/evidence/`, form);
+  }
+
+  getOtherProducts(studentId: number): Observable<any> {
+    return this.http.get<any>(`${API}/academic-output/other-products/?student=${studentId}`);
+  }
+
+  createOtherProduct(data: any): Observable<any> {
+    return this.http.post<any>(`${API}/academic-output/other-products/`, data);
+  }
+
+  updateOtherProduct(productId: number, data: any): Observable<any> {
+    return this.http.patch<any>(`${API}/academic-output/other-products/${productId}/`, data);
+  }
+
+  deleteOtherProduct(productId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/academic-output/other-products/${productId}/`);
   }
 }

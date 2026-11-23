@@ -52,6 +52,31 @@
           </tbody>
         </table>
       </div>
+      @if (totalUsers > 0) {
+        <nav class="pagination" aria-label="Paginación de usuarios">
+          <span class="pagination-summary">
+            Página {{ currentPage }} · {{ totalUsers }} usuarios
+          </span>
+          <div class="pagination-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="!hasPreviousPage || loading"
+              (click)="goToPage(currentPage - 1)"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="!hasNextPage || loading"
+              (click)="goToPage(currentPage + 1)"
+            >
+              Siguiente
+            </button>
+          </div>
+        </nav>
+      }
     }
   </section>
 

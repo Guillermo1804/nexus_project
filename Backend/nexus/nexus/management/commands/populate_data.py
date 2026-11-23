@@ -148,10 +148,10 @@ def componentes_tesis(porcentaje):
 
 
 PLAN_PRODUCCION = [
-    ("Artículo JCR Q1", "ACEPTADO", -33),
-    ("Artículo de conferencia", "ACEPTADO", -19),
-    ("Capítulo de libro", "ENVIADO", -5),
-    ("Artículo en revista indexada", "PUBLICADO", -9),
+    ("JCR", "ACEPTADO", -33),
+    ("SCOPUS", "ACEPTADO", -19),
+    ("CONACYT", "ENVIADO", -5),
+    ("OTRO_INDEXADO", "PUBLICADO", -9),
 ]
 
 # Siete semanas de uso simulado para la segunda ola de doctorandos, con un
@@ -795,13 +795,13 @@ def populate():
             institucion, pais, responsable = sdata["estancia"]
             ResearchStay.objects.get_or_create(
                 student=student,
-                institucion_receptora=institucion,
+                institucion_destino=institucion,
                 defaults={
                     "semester": active_sem,
                     "pais": pais,
                     "fecha_inicio": today - datetime.timedelta(days=42),
                     "fecha_fin": today + datetime.timedelta(days=45),
-                    "responsable_estancia": responsable,
+                    "investigador_anfitrion": responsable,
                     "objetivos": "Validación experimental en clúster de alto rendimiento y GPU distribuida.",
                     "resultados": "Generación de benchmarks reproducibles y análisis comparativo preliminar.",
                 },
@@ -812,10 +812,10 @@ def populate():
                 nombre_evento=evento_nombre,
                 defaults={
                     "semester": active_sem,
-                    "tipo_evento": "CONGRESO_INTERNACIONAL",
-                    "titulo_ponencia": ponencia,
-                    "fecha_presentacion": today - datetime.timedelta(days=19),
-                    "sede_lugar": "Ciudad de México / Virtual",
+                    "tipo_evento": "CONGRESO",
+                    "titulo_trabajo": ponencia,
+                    "fecha_evento": today - datetime.timedelta(days=19),
+                    "lugar": "Ciudad de México / Virtual",
                     "modalidad": "HIBRIDA",
                 },
             )

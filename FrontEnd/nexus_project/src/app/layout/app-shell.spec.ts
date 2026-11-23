@@ -34,7 +34,7 @@ describe('AppShell (menú lateral)', () => {
     await TestBed.configureTestingModule({
       imports: [AppShell],
       providers: [
-        provideRouter([{ path: 'prueba', component: SpecEmpty }]),
+        provideRouter([{ path: '**', component: SpecEmpty }]),
         { provide: AuthService, useValue: { user: signal(current), isAuthenticated: () => true, hasPermission: () => false } },
         { provide: AcademicService, useValue: { getAgreementAlerts: alertSpy } },
       ],
@@ -57,6 +57,35 @@ describe('AppShell (menú lateral)', () => {
 
     expect(links()).toEqual(['Inicio', 'Roles', 'Usuarios', 'Auditoría']);
     expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it('muestra el botón de cerrar sesión en español', async () => {
+    await configure(user('STUDENT', ['records.read.own']));
+
+    const button = fixture.nativeElement.querySelector('.account .btn-secondary') as HTMLButtonElement;
+
+    expect(button.textContent?.trim()).toBe('Cerrar sesión');
+  });
+
+  it('permite alternar el modo oscuro desde la barra superior', async () => {
+    await configure(user('STUDENT', ['records.read.own']));
+
+    const button = fixture.nativeElement.querySelector('.theme-toggle') as HTMLButtonElement;
+
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    button.click();
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('Activar modo claro');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('muestra las etiquetas académicas actualizadas para el alumno', async () => {
+    await configure(user('STUDENT', ['records.read.own', 'academic_events.create'], { student_id: 7 }));
+
+    expect(links()).toContain('Registrar Congresos');
+    expect(links()).toContain('Estancias Académicas');
   });
 
   const AGREEMENT_ROLES: [UserRole, string[]][] = [
@@ -145,6 +174,19 @@ describe('AppShell (menú lateral)', () => {
       wide.remove();
       fixture.detectChanges();
       expect(shell.hasHorizontalOverflow()).withContext('tras retirarlo').toBeFalse();
+    });
+
+    it('no marca Producción Científica al estar en Estancias', async () => {
+      await configure(user('STUDENT', ['records.read.own'], { student_id: 1 }));
+
+      await TestBed.inject(Router).navigate(['/students/1/academic-output/research-stays']);
+      fixture.detectChanges();
+
+      const activeLinks = [...fixture.nativeElement.querySelectorAll('.nav-list a.active')]
+        .map((link: Element) => (link.textContent ?? '').replace(/\s+/g, ' ').trim());
+
+      expect(activeLinks).not.toContain('Producción Científica');
+      expect(activeLinks).toContain('Estancias');
     });
   });
 });

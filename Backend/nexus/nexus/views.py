@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from django.db import connection, transaction
-from django.db.models import Case, CharField, IntegerField, Prefetch, Q, Value, When
+from django.db.models import Case, CharField, Func, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
 
 from .models import (
@@ -18,6 +18,7 @@ from .models import (
     CommitteeMembership,
     AdminAuditLog,
     CustomUser,
+    OtherProduct,
     Publication,
     ResearchStay,
     Semester,
@@ -29,16 +30,42 @@ from .models import (
     Evidence,
 )
 from .services.alert_service import agreement_alerts_for_user
-from .text_utils import Unaccent, remove_accents
 from .permissions import (
     CanAssignRoles,
     CanCreateTutoring,
     CanManageCommittee,
     CanManageSemesters,
     CanReadGlobalAcademics,
+    CanReadSupervisionAlerts,
     permissions_for_user,
 )
-from .services import TimelineService
+from .services import ThesisHistoryService, TimelineService
+from .services.dashboard_service import DashboardService
+from .services.realtime_events import publish_agreement_event
+from .services.supervision_rules import SupervisionRulesEngine
+from .services.dossier_engine import DossierReportEngine
+from .serializers import AcademicEventSerializer, ResearchStaySerializer, OtherProductSerializer
+
+
+def remove_accents(texto: str) -> str:
+    """Elimina acentos y diacríticos de una cadena."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+
+class Unaccent(Func):
+    function = 'UNACCENT'
+    template = '%(function)s(%(expressions)s)'
+    output_field = CharField()
+
+    def __init__(self, expression, output_field=None, **extra):
+        if output_field is not None:
+            self.output_field = output_field
+        super().__init__(expression, **extra)
+
+
 from .serializers import (
     LoginSerializer,
     InstitutionalUserCreateSerializer,
@@ -59,6 +86,7 @@ from .serializers import (
     UserSerializer,
     EvidenceSerializer,
     ThesisProgressSerializer,
+    PublicationSerializer,
 )
 
 
@@ -268,7 +296,7 @@ class StudentRecordView(APIView):
             ),
             Prefetch('thesis_progresses', queryset=ThesisProgress.objects.order_by('-fecha_registro', '-id')),
             Prefetch('publication_set', queryset=Publication.objects.order_by('-fecha_publicacion', '-id')),
-            Prefetch('academicevent_set', queryset=AcademicEvent.objects.order_by('-fecha_presentacion', '-id')),
+            Prefetch('academicevent_set', queryset=AcademicEvent.objects.order_by('-fecha_evento', '-id')),
             Prefetch('researchstay_set', queryset=ResearchStay.objects.order_by('-fecha_inicio', '-id')),
         ).first()
         if student is None:
@@ -322,6 +350,11 @@ def can_access_student(user, student, write=False):
     if not write and 'academic.read.global' in permissions_for_user(user):
         return True
     return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
+
+
+def can_manage_academic_output(user, student):
+    """Academic output is authored and managed only by the student owner."""
+    return student.user_id == user.id and user.role == CustomUser.Role.STUDENT
 
 
 def buscar_en_descripcion(queryset, termino):
@@ -423,8 +456,6 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('No puede eliminar esta tutoría.')
         instance.delete()
 
-    from rest_framework.decorators import action
-
     @action(detail=True, methods=['get', 'post'], url_path='participants')
     def participants(self, request, pk=None):
         session = self.get_object()
@@ -440,8 +471,6 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if request.method == 'GET':
             return Response(TutoringObservationSerializer(session.observations.select_related('autor'), many=True).data)
-        # Una tutoría que aún no ocurre no tiene minuta: documentarla sólo daría lugar a
-        # observaciones sobre una sesión que todavía no hay.
         if session.fecha_sesion > timezone.localdate():
             return Response(
                 {'detail': 'No se pueden registrar observaciones en una tutoría que aún no se ha realizado.'},
@@ -457,17 +486,51 @@ class TutoringSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if request.method == 'GET':
             return Response(AgreementSerializer(session.agreements.select_related('responsable'), many=True).data)
-        serializer = AgreementSerializer(data=request.data, context={'session': session})
-        serializer.is_valid(raise_exception=True)
-        agreement = serializer.save(session=session, student=session.student, created_by=request.user)
-        # El alta también es un movimiento de la bitácora: sin ella el acuerdo aparecía
-        # recién creado con «Sin cambios registrados aún», como si le faltara información.
-        AgreementAuditLog.objects.create(
-            agreement=agreement, user=request.user, estado_anterior='',
-            estado_nuevo=agreement.estado, comentario=agreement.descripcion,
-        )
+        with transaction.atomic():
+            serializer = AgreementSerializer(data=request.data, context={'session': session})
+            serializer.is_valid(raise_exception=True)
+            agreement = serializer.save(session=session, student=session.student, created_by=request.user)
+            AgreementAuditLog.objects.create(
+                agreement=agreement, user=request.user, estado_anterior='',
+                estado_nuevo=agreement.estado, comentario=agreement.descripcion,
+            )
+            publish_agreement_event(agreement, 'agreement.created')
         return Response(AgreementSerializer(agreement).data, status=status.HTTP_201_CREATED)
 
+
+class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AcademicEventSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AcademicEvent.objects.all() if 'academic.read.global' in permissions_for_user(user) else AcademicEvent.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-fecha_evento', '-id')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_access_student(self.request.user, student):
+            raise PermissionDenied('No puede registrar eventos académicos para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        event = self.get_object()
+        if not can_manage_academic_output(self.request.user, event.student):
+            raise PermissionDenied('No puede modificar este evento académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_manage_academic_output(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar este evento académico.')
+        instance.delete()
 
 class AgreementAlertsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -618,6 +681,7 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
         agreement.save(update_fields=['estado', 'fecha_conclusion', 'updated_at'])
         AgreementAuditLog.objects.create(agreement=agreement, user=request.user, estado_anterior=previous,
                                          estado_nuevo=new_status, comentario=serializer.validated_data['comentario'])
+        publish_agreement_event(agreement, 'agreement.status_changed')
         return Response(AgreementSerializer(agreement).data)
 
     @action(detail=True, methods=['get'], url_path='audit-log')
@@ -625,7 +689,7 @@ class AgreementViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
         return Response(AgreementAuditLogSerializer(self.get_object().audit_logs.select_related('user'), many=True).data)
 
 
-class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class ThesisProgressViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ThesisProgressSerializer
     queryset = ThesisProgress.objects.select_related('student', 'semester', 'registrado_por')
@@ -636,6 +700,21 @@ class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if not can_access_student(self.request.user, student):
             raise PermissionDenied('No puede registrar avances para este estudiante.')
         serializer.save(registrado_por=self.request.user)
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        allowed_roles = {CustomUser.Role.TUTOR, CustomUser.Role.COMMITTEE_MEMBER, CustomUser.Role.PROGRAM_COORDINATOR, CustomUser.Role.SYSTEM_ADMIN}
+        instance = serializer.instance
+        if self.request.user.role not in allowed_roles or not can_access_student(self.request.user, instance.student):
+            raise PermissionDenied('No puede editar avances para este estudiante.')
+        serializer.save(registrado_por=self.request.user)
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        allowed_roles = {CustomUser.Role.TUTOR, CustomUser.Role.COMMITTEE_MEMBER, CustomUser.Role.PROGRAM_COORDINATOR, CustomUser.Role.SYSTEM_ADMIN}
+        if self.request.user.role not in allowed_roles or not can_access_student(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar avances para este estudiante.')
+        instance.delete()
 
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):
@@ -648,6 +727,87 @@ class ThesisProgressViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             raise PermissionDenied('No puede consultar avances para este estudiante.')
         progress = self.get_queryset().filter(student=student).order_by('-created_at', '-id').first()
         return Response(self.get_serializer(progress).data if progress else None)
+
+
+class ThesisHistoryView(APIView):
+    """Endpoint para consultar el histórico de avances de tesis por semestre con deltas y detección de estancamiento."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student_id = request.query_params.get('student')
+        if not student_id:
+            return Response({'student': ['Este parámetro es obligatorio.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            student = Student.objects.filter(pk=student_id).first()
+        except (TypeError, ValueError):
+            student = None
+
+        if student is None or not can_access_student(request.user, student):
+            return Response({'detail': 'Estudiante no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        history = ThesisHistoryService(student).build_history()
+        return Response(history, status=status.HTTP_200_OK)
+
+
+class ResearchStayViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ResearchStaySerializer
+    queryset = ResearchStay.objects.select_related('student', 'semester', 'evidencia')
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+        return qs
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data.get('student')
+        if not can_manage_academic_output(self.request.user, student):
+            raise PermissionDenied('No puede registrar estancias para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        stay = self.get_object()
+        if not can_manage_academic_output(self.request.user, stay.student):
+            raise PermissionDenied('No puede modificar esta estancia.')
+        serializer.save()
+
+
+class OtherProductViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OtherProductSerializer
+    queryset = OtherProduct.objects.select_related('student', 'semester', 'evidencia')
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        student_id = self.request.query_params.get('student')
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+        return qs
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data.get('student')
+        if not can_manage_academic_output(self.request.user, student):
+            raise PermissionDenied('No puede registrar otros productos para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        product = self.get_object()
+        if not can_manage_academic_output(self.request.user, product.student):
+            raise PermissionDenied('No puede modificar este producto académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_manage_academic_output(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar este producto académico.')
+        instance.delete()
 
 
 class EvidenceViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -686,6 +846,118 @@ class GlobalAcademicOverviewView(APIView):
     def get(self, request):
         students = Student.objects.filter(estatus_activo=True).order_by('matricula')
         return paginated_response(request, students, StudentRecordSerializer)
+
+
+class DashboardView(APIView):
+    """Executive dashboard for program coordinators - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        kpis = DashboardService.get_kpis()
+        distribucion_semestres = DashboardService.get_distribucion_semestres()
+        distribucion_avance_tesis = DashboardService.get_distribucion_avance_tesis()
+        estudiantes_en_rezago = DashboardService.get_estudiantes_en_rezago()
+        estudiantes_sin_tutoria_reciente = DashboardService.get_estudiantes_sin_tutoria_reciente()
+        estudiantes_activos = DashboardService.get_estudiantes_activos()
+        tutorias_periodo = DashboardService.get_tutorias_periodo()
+        acuerdos_segumiento = DashboardService.get_acuerdos_segumiento()
+        acuerdos_vencidos = DashboardService.get_acuerdos_vencidos()
+
+        return Response({
+            'kpis': kpis,
+            'distribucion_semestres': distribucion_semestres,
+            'distribucion_avance_tesis': distribucion_avance_tesis,
+            'estudiantes_en_rezago': estudiantes_en_rezago,
+            'estudiantes_sin_tutoria_reciente': estudiantes_sin_tutoria_reciente,
+            'estudiantes_activos': estudiantes_activos,
+            'tutorias_periodo': tutorias_periodo,
+            'acuerdos_segumiento': acuerdos_segumiento,
+            'acuerdos_vencidos': acuerdos_vencidos,
+        })
+
+
+class SupervisionAlertsView(APIView):
+    """Supervision alerts for coordinators and principal advisors (HU-26)."""
+    permission_classes = [CanReadSupervisionAlerts]
+
+    def get(self, request):
+        alerts = SupervisionRulesEngine.get_alerts(request.user)
+        return Response({
+            'total_casos_rezago': len(alerts),
+            'alertas': alerts,
+            'configuracion': SupervisionRulesEngine.config(),
+        })
+
+
+class DossierView(APIView):
+    """Return the complete trajectory report for one student (HU-27)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        raw_student_id = request.query_params.get('student')
+        if not raw_student_id:
+            return Response(
+                {'detail': 'El parámetro student es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            student_id = int(raw_student_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'El parámetro student debe ser un entero.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        dossier = DossierReportEngine.build(request.user, student_id, request)
+        if dossier is None:
+            return Response(
+                {'detail': 'Reporte no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(dossier)
+
+    def get_estudiantes_activos(self, request):
+        return Response(DashboardService.get_estudiantes_activos())
+
+    def get_tutorias_periodo(self, request):
+        return Response(DashboardService.get_tutorias_periodo())
+
+    def get_acuerdos_segumiento(self, request):
+        return Response(DashboardService.get_acuerdos_segumiento())
+
+    def get_acuerdos_vencidos(self, request):
+        return Response(DashboardService.get_acuerdos_vencidos())
+
+
+class EstudiantesActivosView(APIView):
+    """Endpoint para lista detallada de estudiantes activos - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_estudiantes_activos())
+
+
+class TutoriasPeriodoView(APIView):
+    """Endpoint para lista detallada de tutorías del período - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_tutorias_periodo())
+
+
+class AcuerdosSeguimientoView(APIView):
+    """Endpoint para lista detallada de acuerdos en seguimiento - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_acuerdos_segumiento())
+
+
+class AcuerdosVencidosView(APIView):
+    """Endpoint para lista detallada de acuerdos vencidos - HU-24."""
+    permission_classes = [CanReadGlobalAcademics]
+
+    def get(self, request):
+        return Response(DashboardService.get_acuerdos_vencidos())
 
 
 class StudentSemesterListCreateView(APIView):
@@ -744,3 +1016,80 @@ class StudentSemesterDetailView(APIView):
                 Semester.objects.filter(student=semester.student).exclude(pk=semester.pk).update(is_active=False)
             semester = serializer.save()
         return Response(SemesterSerializer(semester).data, status=status.HTTP_200_OK)
+
+def can_access_student(user, student, write=False):
+    if student.user_id == user.id:
+        return not write or user.role == CustomUser.Role.STUDENT
+    if not write and 'academic.read.global' in permissions_for_user(user):
+        return True
+    return CommitteeMembership.objects.filter(committee__student=student, user=user).exists()
+
+
+class PublicationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PublicationSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Publication.objects.all() if 'academic.read.global' in permissions_for_user(user) else Publication.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_manage_academic_output(self.request.user, student):
+            raise PermissionDenied('No puede registrar publicaciones para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        publication = self.get_object()
+        if not can_manage_academic_output(self.request.user, publication.student):
+            raise PermissionDenied('No puede modificar esta publicación.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_manage_academic_output(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar esta publicación.')
+        instance.delete()
+
+
+class AcademicEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AcademicEventSerializer
+    pagination_class = NexusPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AcademicEvent.objects.all() if 'academic.read.global' in permissions_for_user(user) else AcademicEvent.objects.filter(
+            Q(student__user=user) | Q(student__academic_committee__memberships__user=user)
+        )
+        if student := self.request.query_params.get('student'):
+            queryset = queryset.filter(student_id=student)
+        return queryset.distinct().order_by('-fecha_evento', '-id')
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        student = serializer.validated_data['student']
+        if not can_manage_academic_output(self.request.user, student):
+            raise PermissionDenied('No puede registrar eventos académicos para este estudiante.')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+        event = self.get_object()
+        if not can_manage_academic_output(self.request.user, event.student):
+            raise PermissionDenied('No puede modificar este evento académico.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+        if not can_manage_academic_output(self.request.user, instance.student):
+            raise PermissionDenied('No puede eliminar este evento académico.')
+        instance.delete()

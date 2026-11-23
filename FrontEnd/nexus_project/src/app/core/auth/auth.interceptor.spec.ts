@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
+import { TokenService } from './token.service';
 
 const API = 'http://localhost:8000/api/v1';
 const ACUERDOS = `${API}/agreements/`;
@@ -22,8 +23,9 @@ function setup(): { http: HttpClient; controller: HttpTestingController; auth: A
 
 /** Deja una sesión ya iniciada sin pasar por el formulario de acceso. */
 function sesion(auth: AuthService, access: string, refresh: string): void {
-  auth['access'].set(access);
-  auth['refresh'].set(refresh);
+  const tokenService = TestBed.inject(TokenService);
+  tokenService.access.set(access);
+  tokenService.refresh.set(refresh);
 }
 
 describe('authInterceptor', () => {
@@ -77,7 +79,7 @@ describe('authInterceptor', () => {
     controller.expectOne(REFRESH).flush({}, { status: 503, statusText: 'Service Unavailable' });
 
     expect(auth.isAuthenticated()).withContext('la sesión sobrevive a un fallo del servidor').toBeTrue();
-    expect(auth.sessionExpired()).toBeFalse();
+    expect(auth.sessionExpired).toBeFalse();
   });
 
   it('cierra la sesión cuando el backend rechaza el token de refresco', () => {
@@ -89,7 +91,7 @@ describe('authInterceptor', () => {
     controller.expectOne(REFRESH).flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(auth.isAuthenticated()).toBeFalse();
-    expect(auth.sessionExpired()).toBeTrue();
+    expect(auth.sessionExpired).toBeTrue();
   });
 
   it('deja pasar intactos los errores que no son de sesión', () => {

@@ -1,0 +1,147 @@
+<main class="dossier-page">
+  @if (loading) {
+    <p class="status" role="status">Generando reporte integral...</p>
+  } @else if (error) {
+    <section class="status error" role="alert">
+      <p>{{ error }}</p>
+      <a routerLink="/home">Volver al inicio</a>
+    </section>
+  } @else if (dossier) {
+    <header class="dossier-header">
+      <div>
+        <p class="eyebrow">N.E.X.U.S. · REPORTE INTEGRAL</p>
+        <h1>Cédula académica del estudiante</h1>
+        <p>Generado el {{ formatDate(dossier.generado_el) }} por {{ dossier.generado_por }}</p>
+      </div>
+      <div class="screen-actions no-print">
+        <a [routerLink]="['/expediente', dossier.estudiante.id]">Ver expediente</a>
+        <button type="button" (click)="print()">Imprimir / Guardar PDF</button>
+      </div>
+    </header>
+
+    <section class="identity dossier-section" aria-labelledby="identity-title">
+      <h2 id="identity-title">Ficha de identidad</h2>
+      <dl class="identity-grid">
+        <div><dt>Matrícula</dt><dd>{{ dossier.estudiante.matricula }}</dd></div>
+        <div><dt>Nombre</dt><dd>{{ dossier.estudiante.nombre_completo }}</dd></div>
+        <div><dt>Programa</dt><dd>{{ dossier.estudiante.programa_doctoral }}</dd></div>
+        <div><dt>Cohorte</dt><dd>{{ dossier.estudiante.cohorte }}</dd></div>
+        <div><dt>Fecha de ingreso</dt><dd>{{ formatDate(dossier.estudiante.fecha_ingreso) }}</dd></div>
+        <div><dt>Estatus</dt><dd>{{ dossier.estudiante.estatus_activo ? 'Activo' : 'Inactivo' }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="summary-title">
+      <h2 id="summary-title">Resumen ejecutivo</h2>
+      <div class="summary-grid">
+        <div><strong>{{ dossier.resumen_ejecutivo.semestre_actual ?? '—' }}</strong><span>Semestre actual</span></div>
+        <div><strong>{{ dossier.resumen_ejecutivo.porcentaje_tesis_actual }}%</strong><span>Avance de tesis</span></div>
+        <div><strong>{{ dossier.resumen_ejecutivo.total_tutorias }}</strong><span>Tutorías</span></div>
+        <div><strong>{{ dossier.resumen_ejecutivo.total_acuerdos }}</strong><span>Acuerdos</span></div>
+        <div><strong>{{ dossier.resumen_ejecutivo.publicaciones_count }}</strong><span>Publicaciones</span></div>
+        <div><strong>{{ dossier.resumen_ejecutivo.estancias_count }}</strong><span>Estancias</span></div>
+      </div>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="committee-title">
+      <h2 id="committee-title">Comité tutorial</h2>
+      <p><strong>Asesor principal:</strong> {{ text(dossier.comite.asesor) }}</p>
+      <p><strong>Coasesor:</strong> {{ text(dossier.comite.coasesor) }}</p>
+      <ul>
+        @for (member of dossier.comite.miembros; track member.nombre + member.rol) {
+          <li>{{ member.nombre }} · {{ member.rol }}</li>
+        }
+      </ul>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="semesters-title">
+      <h2 id="semesters-title">Historial de semestres</h2>
+      <table>
+        <thead><tr><th>Semestre</th><th>Inicio</th><th>Fin</th><th>Estatus</th></tr></thead>
+        <tbody>
+          @for (semester of dossier.secciones_detalladas.semestres; track semester.id) {
+            <tr>
+              <td>{{ semester.numero }}</td>
+              <td>{{ formatDate(semester.fecha_inicio) }}</td>
+              <td>{{ formatDate(semester.fecha_fin) }}</td>
+              <td>{{ semester.is_active ? 'Activo' : 'Cursado' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="tutoring-title">
+      <h2 id="tutoring-title">Tutorías y acuerdos</h2>
+      <table>
+        <thead><tr><th>Fecha</th><th>Modalidad</th><th>Resumen</th></tr></thead>
+        <tbody>
+          @for (session of dossier.secciones_detalladas.tutorias; track session['id']) {
+            <tr>
+              <td>{{ formatDate(session['fecha_sesion']) }}</td>
+              <td>{{ text(session['modalidad']) }}</td>
+              <td>{{ text(session['resumen']) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Acuerdo</th><th>Estado</th><th>Fecha límite</th></tr></thead>
+        <tbody>
+          @for (agreement of dossier.secciones_detalladas.acuerdos; track agreement['id']) {
+            <tr>
+              <td>{{ text(agreement['descripcion']) }}</td>
+              <td>{{ text(agreement['estado']) }}</td>
+              <td>{{ formatDate(agreement['fecha_limite']) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="thesis-title">
+      <h2 id="thesis-title">Evolución de la tesis</h2>
+      <table>
+        <thead><tr><th>Fecha</th><th>Avance</th><th>Observaciones</th></tr></thead>
+        <tbody>
+          @for (progress of dossier.secciones_detalladas.tesis_historico; track progress['id']) {
+            <tr>
+              <td>{{ formatDate(progress['fecha_registro']) }}</td>
+              <td>{{ progress['porcentaje_avance'] }}%</td>
+              <td>{{ text(progress['observaciones']) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="outputs-title">
+      <h2 id="outputs-title">Producción científica y movilidad</h2>
+      <h3>Publicaciones</h3>
+      <ul>@for (item of dossier.secciones_detalladas.publicaciones; track item['id']) { <li>{{ text(item['titulo']) }} · {{ text(item['estado']) }}</li> }</ul>
+      <h3>Eventos</h3>
+      <ul>@for (item of dossier.secciones_detalladas.eventos; track item['id']) { <li>{{ text(item['nombre_evento']) }} · {{ formatDate(item['fecha_evento']) }}</li> }</ul>
+      <h3>Estancias</h3>
+      <ul>@for (item of dossier.secciones_detalladas.estancias; track item['id']) { <li>{{ text(item['institucion_destino']) }} · {{ text(item['pais']) }}</li> }</ul>
+      <h3>Otros productos</h3>
+      <ul>@for (item of dossier.secciones_detalladas.otros_productos; track item['id']) { <li>{{ text(item['titulo']) }}</li> }</ul>
+    </section>
+
+    <section class="dossier-section" aria-labelledby="evidence-title">
+      <h2 id="evidence-title">Índice de evidencias</h2>
+      <table>
+        <thead><tr><th>Título</th><th>Tipo</th><th>Actividad</th><th>Fecha</th></tr></thead>
+        <tbody>
+          @for (evidence of dossier.secciones_detalladas.evidencias; track evidence['id']) {
+            <tr>
+              <td>{{ text(evidence['titulo']) }}</td>
+              <td>{{ text(evidence['tipo']) }}</td>
+              <td>{{ text(evidence['actividad_tipo']) }} #{{ text(evidence['actividad_id']) }}</td>
+              <td>{{ formatDate(evidence['fecha_carga']) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</main>

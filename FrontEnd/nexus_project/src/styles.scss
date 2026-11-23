@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
+  color-scheme: light;
   --bg-canvas: #F5F7FB;
   --surface: #FFFFFF;
   --surface-warm: #FCF8FF;
@@ -69,6 +70,44 @@
   --badge-info-text: #3B82F6;
   --danger-text: var(--danger);
   --danger-border: #FECDCA;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-canvas: #12131a;
+  --surface: #1b1d27;
+  --surface-warm: #20232f;
+  --surface-soft: #292c3a;
+  --brand: #9ea0ff;
+  --cta: #8587f5;
+  --heading: #f2f1ff;
+  --text: #e8e8f0;
+  --text-secondary: #c2c2d0;
+  --text-muted: #9b9baa;
+  --placeholder: #77788a;
+  --border: #383b4a;
+  --success: #8bd1a2;
+  --success-bg: #1d3828;
+  --warning: #e2a76e;
+  --warning-bg: #3a2c20;
+  --danger: #ff938b;
+  --danger-bg: #432522;
+  --info: #8bcbd2;
+  --magenta: #d78aca;
+  --primary-hover: #9b9dff;
+  --primary-light: #2a2a46;
+  --primary-subtle: #22233a;
+  --emphasis: #c6b8ff;
+  --border-light: #30323e;
+  --text-subtle: #a7a8b8;
+  --text-inverse: #161720;
+  --badge-pending-bg: #1e3338;
+  --badge-in-progress-bg: #3a2c20;
+  --badge-concluded-bg: #1d3828;
+  --badge-overdue-bg: #38253b;
+  --badge-inactive-bg: #2b2d37;
+  --badge-info-bg: #202d43;
+  --danger-border: #793b39;
 }
 
 * { box-sizing: border-box; }

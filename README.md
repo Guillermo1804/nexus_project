@@ -63,6 +63,7 @@ Detalles, cuentas de prueba y límites en [entorno-de-pruebas.md](docs/entorno-d
 - [Contrato API](docs/architecture/api_contract_v1.md)
 - [Esquema](docs/architecture/database_schema_specification.md)
 - [ERD](docs/architecture/ERD.mermaid)
+- [Diagramas de sitio, actividades y flujo](docs/architecture/diagramas-nexus.md)
 - [Dependencias/HU](docs/architecture/dependencies_matrix.md)
 - [Diseño](docs/design/DESIGN.md)
 - [Equipos](docs/teams/)

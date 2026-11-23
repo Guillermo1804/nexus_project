@@ -1,0 +1,86 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="event-form" aria-label="Formulario de evento académico">
+  <div class="form-group">
+    <label for="titulo_trabajo">Título del trabajo <span class="required">*</span></label>
+    <input type="text" id="titulo_trabajo" formControlName="titulo_trabajo" class="form-control" placeholder="Título de la ponencia o trabajo presentado">
+    @if (form.get('titulo_trabajo')!.invalid && form.get('titulo_trabajo')!.touched) {
+      <div class="text-danger">El título es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="nombre_evento">Nombre del evento <span class="required">*</span></label>
+    <input type="text" id="nombre_evento" formControlName="nombre_evento" class="form-control" placeholder="Nombre formal del evento">
+    @if (form.get('nombre_evento')!.invalid && form.get('nombre_evento')!.touched) {
+      <div class="text-danger">El nombre del evento es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="tipo_evento">Tipo de evento <span class="required">*</span></label>
+    <select id="tipo_evento" formControlName="tipo_evento" class="form-control">
+      <option value="">Seleccionar tipo...</option>
+      @for (type of eventTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+      }
+    </select>
+    @if (form.get('tipo_evento')!.invalid && form.get('tipo_evento')!.touched) {
+      <div class="text-danger">El tipo de evento es obligatorio.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="modalidad">Modalidad <span class="required">*</span></label>
+    <select id="modalidad" formControlName="modalidad" class="form-control">
+      @for (mod of modalities; track mod.value) {
+        <option [value]="mod.value">{{ mod.label }}</option>
+      }
+    </select>
+    @if (form.get('modalidad')!.invalid && form.get('modalidad')!.touched) {
+      <div class="text-danger">La modalidad es obligatoria.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="rol_participacion">Rol de participación <span class="required">*</span></label>
+    <select id="rol_participacion" formControlName="rol_participacion" class="form-control">
+      @for (role of roles; track role.value) {
+        <option [value]="role.value">{{ role.label }}</option>
+      }
+    </select>
+    @if (form.get('rol_participacion')!.invalid && form.get('rol_participacion')!.touched) {
+      <div class="text-danger">El rol de participación es obligatorio.</div>
+    }
+    <small class="form-hint">Para Ponente se requiere adjuntar constancia</small>
+  </div>
+
+  <div class="form-group">
+    <label for="fecha_evento">Fecha del evento <span class="required">*</span></label>
+    <input type="date" id="fecha_evento" formControlName="fecha_evento" class="form-control" [max]="maxDate">
+    @if (form.get('fecha_evento')!.invalid && form.get('fecha_evento')!.touched) {
+      <div class="text-danger">La fecha es obligatoria.</div>
+    }
+    @if (form.hasError('futureDate')) {
+      <div class="text-danger">La fecha no puede ser futura.</div>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="lugar">Lugar / Ciudad / País</label>
+    <input type="text" id="lugar" formControlName="lugar" class="form-control" placeholder="Ciudad, País">
+  </div>
+
+  <div class="form-group">
+    <label for="evidencia">Constancia / Evidencia</label>
+    <input type="file" id="evidencia" (change)="onFileChange($event)" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.docx">
+    @if (uploadedEvidenceId) {
+      <small class="form-hint text-success">Evidencia subida (ID: {{ uploadedEvidenceId }})</small>
+    }
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+      @if (saving) { <span class="spinner-sm"></span> Guardando... } @else { {{ isEditMode() ? 'Actualizar' : 'Registrar' }} Evento }
+    </button>
+  </div>
+</form>
